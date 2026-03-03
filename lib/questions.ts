@@ -552,7 +552,7 @@ const questionsDB: Question[] = [
     correctAnswer: 0,
     category: "Pertanian Teknologi",
     points: 20,
-    explanation: "Pertanian presisi menggunakan GPS dan sensor untuk mengoptimalkan penggunaan input secara efisien.",
+    explanation: "Pertanian presisi menggunakan GPS dan sensor supaya penggunaan input lebih tepat sasaran.",
     difficulty: "sulit",
   },
   {
@@ -676,7 +676,7 @@ const questionsDB: Question[] = [
     category: "Kebijakan Pertanian",
     points: 20,
     explanation:
-      "Food estate adalah pengembangan lahan pertanian besar yang terintegrasi untuk ketahanan pangan nasional.",
+      "Food estate adalah pengembangan lahan pertanian besar secara terpadu untuk ketahanan pangan nasional.",
     difficulty: "sulit",
   },
   {

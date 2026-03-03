@@ -4,7 +4,7 @@ import type React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { AlertCircle, Eye, EyeOff, GraduationCap, Lock, Mail, School } from "lucide-react"
 import { toast } from "sonner"
 
@@ -30,11 +30,18 @@ type StudentOption = {
   name: string
 }
 
+type StaffField = "email" | "password"
+type StudentField = "schoolId" | "classId" | "studentName" | "pin"
+
 const inputClassName =
   "w-full rounded-xl border border-border/50 bg-card/50 px-4 py-3 text-foreground placeholder-muted-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
 
 const selectClassName =
   "w-full rounded-xl border border-border/50 bg-card/50 px-4 py-3 text-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" ")
 
 export default function LoginPage() {
   const router = useRouter()
@@ -47,7 +54,7 @@ export default function LoginPage() {
 
   const [schools, setSchools] = useState<SchoolOption[]>([])
   const [classes, setClasses] = useState<ClassOption[]>([])
-  const [students, setStudents] = useState<StudentOption[]>([])
+  const [, setStudents] = useState<StudentOption[]>([])
   const [selectedSchoolId, setSelectedSchoolId] = useState("")
   const [selectedClassId, setSelectedClassId] = useState("")
   const [selectedStudentName, setSelectedStudentName] = useState("")
@@ -59,6 +66,15 @@ export default function LoginPage() {
   const [optionsMessage, setOptionsMessage] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showPin, setShowPin] = useState(false)
+  const [staffFieldErrors, setStaffFieldErrors] = useState<Partial<Record<StaffField, string>>>({})
+  const [studentFieldErrors, setStudentFieldErrors] = useState<Partial<Record<StudentField, string>>>({})
+
+  const studentSchoolRef = useRef<HTMLSelectElement>(null)
+  const studentClassRef = useRef<HTMLSelectElement>(null)
+  const studentNameRef = useRef<HTMLInputElement>(null)
+  const studentPinRef = useRef<HTMLInputElement>(null)
+  const staffEmailRef = useRef<HTMLInputElement>(null)
+  const staffPasswordRef = useRef<HTMLInputElement>(null)
 
   const saveMatchPromptFlag = () => {
     if (typeof window !== "undefined") {
@@ -123,6 +139,75 @@ export default function LoginPage() {
     void loadSchools()
   }, [])
 
+  const validateStaffFields = () => {
+    const errors: Partial<Record<StaffField, string>> = {}
+    const trimmedEmail = staffEmail.trim()
+
+    if (!trimmedEmail) {
+      errors.email = "Email wajib diisi."
+    } else if (!emailRegex.test(trimmedEmail)) {
+      errors.email = "Format email belum valid."
+    }
+
+    if (!staffPassword) {
+      errors.password = "Kata sandi wajib diisi."
+    }
+
+    return errors
+  }
+
+  const validateStudentFields = () => {
+    const errors: Partial<Record<StudentField, string>> = {}
+    const trimmedName = selectedStudentName.trim()
+
+    if (!selectedSchoolId) {
+      errors.schoolId = "Pilih sekolah terlebih dahulu."
+    }
+    if (!selectedClassId) {
+      errors.classId = "Pilih kelas terlebih dahulu."
+    }
+    if (!trimmedName) {
+      errors.studentName = "Nama siswa wajib diisi."
+    } else if (trimmedName.length < 3) {
+      errors.studentName = "Nama siswa minimal 3 karakter."
+    }
+    if (!studentPin) {
+      errors.pin = "PIN siswa wajib diisi."
+    } else if (!/^\d{6}$/.test(studentPin)) {
+      errors.pin = "PIN harus 6 digit angka."
+    }
+
+    return errors
+  }
+
+  const focusFirstInvalidStaffField = (errors: Partial<Record<StaffField, string>>) => {
+    if (errors.email) {
+      staffEmailRef.current?.focus()
+      return
+    }
+    if (errors.password) {
+      staffPasswordRef.current?.focus()
+    }
+  }
+
+  const focusFirstInvalidStudentField = (errors: Partial<Record<StudentField, string>>) => {
+    if (errors.schoolId) {
+      studentSchoolRef.current?.focus()
+      return
+    }
+    if (errors.classId) {
+      studentClassRef.current?.focus()
+      return
+    }
+    if (errors.studentName) {
+      studentNameRef.current?.focus()
+      return
+    }
+    if (errors.pin) {
+      studentPinRef.current?.focus()
+    }
+  }
+
   const handleSchoolChange = (schoolId: string) => {
     setSelectedSchoolId(schoolId)
     setSelectedClassId("")
@@ -130,6 +215,13 @@ export default function LoginPage() {
     setClasses([])
     setStudents([])
     setStudentError("")
+    setStudentFieldErrors((prev) => ({
+      ...prev,
+      schoolId: schoolId ? undefined : "Pilih sekolah terlebih dahulu.",
+      classId: undefined,
+      studentName: undefined,
+      pin: prev.pin,
+    }))
 
     if (schoolId) {
       void loadClasses(schoolId)
@@ -140,18 +232,32 @@ export default function LoginPage() {
     setSelectedClassId(classId)
     setSelectedStudentName("")
     setStudentError("")
+    setStudentFieldErrors((prev) => ({
+      ...prev,
+      classId: classId ? undefined : "Pilih kelas terlebih dahulu.",
+      studentName: undefined,
+    }))
   }
 
   const handleStaffSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setStaffError("")
+
+    const validationErrors = validateStaffFields()
+    setStaffFieldErrors(validationErrors)
+    if (Object.keys(validationErrors).length > 0) {
+      setStaffError("Periksa kembali email dan kata sandi.")
+      focusFirstInvalidStaffField(validationErrors)
+      return
+    }
+
     setStaffLoading(true)
 
     try {
       const response = await fetchWithCsrf("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: staffEmail, password: staffPassword }),
+        body: JSON.stringify({ email: staffEmail.trim(), password: staffPassword }),
       })
 
       const data = await response.json()
@@ -175,20 +281,25 @@ export default function LoginPage() {
   const handleStudentSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setStudentError("")
+
+    const validationErrors = validateStudentFields()
+    setStudentFieldErrors(validationErrors)
+    if (Object.keys(validationErrors).length > 0) {
+      setStudentError("Periksa kembali data login siswa.")
+      focusFirstInvalidStudentField(validationErrors)
+      return
+    }
+
     setStudentLoading(true)
 
     try {
-      if (!selectedSchoolId || !selectedClassId || !selectedStudentName || !studentPin) {
-        throw new Error("Lengkapi sekolah, kelas, nama siswa, dan PIN")
-      }
-
       const response = await fetchWithCsrf("/api/auth/student", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           schoolId: selectedSchoolId,
           classId: selectedClassId,
-          studentName: selectedStudentName,
+          studentName: selectedStudentName.trim(),
           pin: studentPin,
         }),
       })
@@ -251,7 +362,11 @@ export default function LoginPage() {
             <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-border/40 bg-card/40 p-1">
               <button
                 type="button"
-                onClick={() => setActiveTab("student")}
+                onClick={() => {
+                  setActiveTab("student")
+                  setStaffError("")
+                  setStaffFieldErrors({})
+                }}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                   activeTab === "student" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -260,7 +375,11 @@ export default function LoginPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("staff")}
+                onClick={() => {
+                  setActiveTab("staff")
+                  setStudentError("")
+                  setStudentFieldErrors({})
+                }}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                   activeTab === "staff" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -290,11 +409,17 @@ export default function LoginPage() {
                     Pilih Sekolah
                   </label>
                   <select
+                    ref={studentSchoolRef}
                     id="student-school"
                     value={selectedSchoolId}
                     onChange={(event) => handleSchoolChange(event.target.value)}
                     disabled={optionsLoading || !supabaseConfigured}
-                    className={selectClassName}
+                    aria-invalid={Boolean(studentFieldErrors.schoolId)}
+                    aria-describedby={studentFieldErrors.schoolId ? "student-school-error" : undefined}
+                    className={cn(
+                      selectClassName,
+                      studentFieldErrors.schoolId && "border-destructive focus:border-destructive focus:ring-destructive/20"
+                    )}
                   >
                     <option value="">Pilih sekolah...</option>
                     {schools.map((school) => (
@@ -303,6 +428,11 @@ export default function LoginPage() {
                       </option>
                     ))}
                   </select>
+                  {studentFieldErrors.schoolId ? (
+                    <p id="student-school-error" className="text-xs font-medium text-destructive">
+                      {studentFieldErrors.schoolId}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -310,11 +440,17 @@ export default function LoginPage() {
                     Pilih Kelas
                   </label>
                   <select
+                    ref={studentClassRef}
                     id="student-class"
                     value={selectedClassId}
                     onChange={(event) => handleClassChange(event.target.value)}
                     disabled={!selectedSchoolId || optionsLoading || !supabaseConfigured}
-                    className={selectClassName}
+                    aria-invalid={Boolean(studentFieldErrors.classId)}
+                    aria-describedby={studentFieldErrors.classId ? "student-class-error" : undefined}
+                    className={cn(
+                      selectClassName,
+                      studentFieldErrors.classId && "border-destructive focus:border-destructive focus:ring-destructive/20"
+                    )}
                   >
                     <option value="">Pilih kelas...</option>
                     {classes.map((schoolClass) => (
@@ -324,6 +460,11 @@ export default function LoginPage() {
                       </option>
                     ))}
                   </select>
+                  {studentFieldErrors.classId ? (
+                    <p id="student-class-error" className="text-xs font-medium text-destructive">
+                      {studentFieldErrors.classId}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -331,15 +472,38 @@ export default function LoginPage() {
                     Nama Lengkap Siswa
                   </label>
                   <input
+                    ref={studentNameRef}
                     id="student-name"
                     type="text"
                     placeholder="Ketik nama lengkapmu..."
                     value={selectedStudentName}
-                    onChange={(event) => setSelectedStudentName(event.target.value)}
+                    onChange={(event) => {
+                      const nextName = event.target.value
+                      setSelectedStudentName(nextName)
+                      setStudentError("")
+                      setStudentFieldErrors((prev) => ({
+                        ...prev,
+                        studentName: !nextName.trim()
+                          ? "Nama siswa wajib diisi."
+                          : nextName.trim().length < 3
+                            ? "Nama siswa minimal 3 karakter."
+                            : undefined,
+                      }))
+                    }}
                     disabled={!selectedClassId || optionsLoading || !supabaseConfigured}
-                    className={inputClassName}
+                    aria-invalid={Boolean(studentFieldErrors.studentName)}
+                    aria-describedby={studentFieldErrors.studentName ? "student-name-error" : undefined}
+                    className={cn(
+                      inputClassName,
+                      studentFieldErrors.studentName && "border-destructive focus:border-destructive focus:ring-destructive/20"
+                    )}
                     autoComplete="name"
                   />
+                  {studentFieldErrors.studentName ? (
+                    <p id="student-name-error" className="text-xs font-medium text-destructive">
+                      {studentFieldErrors.studentName}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -348,6 +512,7 @@ export default function LoginPage() {
                   </label>
                   <div className="relative">
                     <input
+                      ref={studentPinRef}
                       id="student-pin"
                       type={showPin ? "text" : "password"}
                       inputMode="numeric"
@@ -355,9 +520,22 @@ export default function LoginPage() {
                       maxLength={6}
                       placeholder="6 digit PIN"
                       value={studentPin}
-                      onChange={(event) => setStudentPin(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                      onChange={(event) => {
+                        const nextPin = event.target.value.replace(/\D/g, "").slice(0, 6)
+                        setStudentPin(nextPin)
+                        setStudentError("")
+                        setStudentFieldErrors((prev) => ({
+                          ...prev,
+                          pin: !nextPin ? "PIN siswa wajib diisi." : /^\d{6}$/.test(nextPin) ? undefined : "PIN harus 6 digit angka.",
+                        }))
+                      }}
                       disabled={studentLoading || !supabaseConfigured}
-                      className={inputClassName}
+                      aria-invalid={Boolean(studentFieldErrors.pin)}
+                      aria-describedby={studentFieldErrors.pin ? "student-pin-error" : undefined}
+                      className={cn(
+                        inputClassName,
+                        studentFieldErrors.pin && "border-destructive focus:border-destructive focus:ring-destructive/20"
+                      )}
                     />
                     <button
                       type="button"
@@ -369,6 +547,11 @@ export default function LoginPage() {
                       {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  {studentFieldErrors.pin ? (
+                    <p id="student-pin-error" className="text-xs font-medium text-destructive">
+                      {studentFieldErrors.pin}
+                    </p>
+                  ) : null}
                 </div>
 
                 <button
@@ -407,16 +590,35 @@ export default function LoginPage() {
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
+                      ref={staffEmailRef}
                       id="staff-email"
                       type="email"
                       placeholder="nama@sekolah.sch.id"
                       value={staffEmail}
-                      onChange={(event) => setStaffEmail(event.target.value)}
+                      onChange={(event) => {
+                        const nextEmail = event.target.value
+                        setStaffEmail(nextEmail)
+                        setStaffError("")
+                        setStaffFieldErrors((prev) => ({
+                          ...prev,
+                          email: !nextEmail.trim() ? "Email wajib diisi." : emailRegex.test(nextEmail.trim()) ? undefined : "Format email belum valid.",
+                        }))
+                      }}
                       required
                       disabled={staffLoading}
-                      className="w-full rounded-xl border border-border/50 bg-card/50 py-3 pl-10 pr-4 text-foreground placeholder-muted-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      aria-invalid={Boolean(staffFieldErrors.email)}
+                      aria-describedby={staffFieldErrors.email ? "staff-email-error" : undefined}
+                      className={cn(
+                        "w-full rounded-xl border border-border/50 bg-card/50 py-3 pl-10 pr-4 text-foreground placeholder-muted-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50",
+                        staffFieldErrors.email && "border-destructive focus:border-destructive focus:ring-destructive/20"
+                      )}
                     />
                   </div>
+                  {staffFieldErrors.email ? (
+                    <p id="staff-email-error" className="text-xs font-medium text-destructive">
+                      {staffFieldErrors.email}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -426,14 +628,28 @@ export default function LoginPage() {
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
+                      ref={staffPasswordRef}
                       id="staff-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={staffPassword}
-                      onChange={(event) => setStaffPassword(event.target.value)}
+                      onChange={(event) => {
+                        const nextPassword = event.target.value
+                        setStaffPassword(nextPassword)
+                        setStaffError("")
+                        setStaffFieldErrors((prev) => ({
+                          ...prev,
+                          password: nextPassword ? undefined : "Kata sandi wajib diisi.",
+                        }))
+                      }}
                       required
                       disabled={staffLoading}
-                      className="w-full rounded-xl border border-border/50 bg-card/50 py-3 pl-10 pr-10 text-foreground placeholder-muted-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
+                      aria-invalid={Boolean(staffFieldErrors.password)}
+                      aria-describedby={staffFieldErrors.password ? "staff-password-error" : undefined}
+                      className={cn(
+                        "w-full rounded-xl border border-border/50 bg-card/50 py-3 pl-10 pr-10 text-foreground placeholder-muted-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50",
+                        staffFieldErrors.password && "border-destructive focus:border-destructive focus:ring-destructive/20"
+                      )}
                     />
                     <button
                       type="button"
@@ -445,6 +661,11 @@ export default function LoginPage() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  {staffFieldErrors.password ? (
+                    <p id="staff-password-error" className="text-xs font-medium text-destructive">
+                      {staffFieldErrors.password}
+                    </p>
+                  ) : null}
                 </div>
 
                 <button

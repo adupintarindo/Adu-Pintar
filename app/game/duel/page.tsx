@@ -10,12 +10,12 @@ const gradeOptions = [
   {
     value: "SD",
     label: "Sekolah Dasar",
-    description: "Yuk kenalan sama dunia pertanian. Seru, sederhana, dan gampang dipahami.",
+    description: "Yuk kenalan sama dunia pertanian. Sederhana dan gampang dipahami.",
   },
   {
     value: "SMP",
     label: "Sekolah Menengah Pertama",
-    description: "Pelajari cara menanam yang lebih keren, rahasia tanah subur, dan kehidupan di kebun.",
+    description: "Pelajari cara menanam yang lebih canggih, rahasia tanah subur, dan kehidupan di kebun.",
   },
   {
     value: "SMA",

@@ -3,16 +3,19 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { BookOpen, GraduationCap, HelpCircle, Home, ImageIcon, Info, Menu, MessageSquare, ShieldCheck, Trophy, UserRound, X } from "lucide-react"
+import { BookOpen, GraduationCap, HelpCircle, Home, Menu, MessageSquare, ShieldCheck, Swords, Trophy, UserRound, X } from "lucide-react"
 import Image from "next/image"
 import { fetchWithCsrf } from "@/lib/client-security"
 import { ThemeToggle } from "@/components/theme-toggle"
+
+type NavbarRole = "school_admin" | "teacher" | "student"
 
 type NavbarUser = {
   id: string
   name: string
   email: string
   grade?: string
+  role?: NavbarRole
 }
 
 type NavbarSessionCache = {
@@ -23,7 +26,7 @@ type NavbarSessionCache = {
 const authenticatedNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/profile", label: "Profil", icon: UserRound },
-  { href: "/achievements", label: "Badge & Awards", icon: ShieldCheck },
+  { href: "/achievements", label: "Badge", icon: ShieldCheck },
   { href: "/materials", label: "Materi", icon: BookOpen },
   { href: "/activity", label: "Aktivitas", icon: MessageSquare },
 ] as const
@@ -31,12 +34,16 @@ const authenticatedNavItems = [
 const publicNavItems = [
   { href: "/", label: "Beranda", icon: Home },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/tutorial", label: "Tutorial", icon: GraduationCap },
   { href: "/materials", label: "Materi", icon: BookOpen },
-  { href: "/gallery", label: "Galeri", icon: ImageIcon },
-  { href: "/about", label: "Tentang", icon: Info },
+  { href: "/tutorial", label: "Tutorial", icon: GraduationCap },
   { href: "/faq", label: "FAQ", icon: HelpCircle },
-]
+] as const
+
+const ROLE_LABELS: Record<NavbarRole, string> = {
+  student: "Siswa",
+  teacher: "Guru",
+  school_admin: "Admin Sekolah",
+}
 
 // Cache session in-module so navbar remounts on client navigation do not flash guest state.
 let navbarSessionCache: NavbarSessionCache = {
@@ -107,6 +114,7 @@ export function Navbar() {
   }, [pathname])
 
   const firstName = user?.name?.split(" ")[0] || "Player"
+  const roleLabel = user?.role ? ROLE_LABELS[user.role] : null
   const isAuthenticatedArea = Boolean(
     pathname &&
       authenticatedAreaPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
@@ -201,6 +209,14 @@ export function Navbar() {
 
             {/* Right Section */}
             <div className="flex items-center gap-3 2xl:gap-4">
+              <Link
+                href="/game/duel"
+                className="hidden md:inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition hover:shadow-lg"
+                style={{ boxShadow: "var(--shadow-glow-primary)" }}
+              >
+                <Swords className="h-4 w-4" />
+                Mulai Duel
+              </Link>
               <ThemeToggle />
 
               {/* #293: Mobile hamburger — 44x44 touch target */}
@@ -225,6 +241,11 @@ export function Navbar() {
                     <div className="hidden text-right sm:block leading-tight">
                       <p className="text-xs text-muted-foreground 2xl:text-sm">Halo,</p>
                       <p className="text-sm font-semibold text-foreground 2xl:text-base">{firstName}</p>
+                      {roleLabel ? (
+                        <p className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
+                          {roleLabel}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-base font-display font-bold uppercase text-primary 2xl:h-12 2xl:w-12 2xl:text-lg">
                       {user.name?.charAt(0) || "A"}
@@ -299,7 +320,7 @@ export function Navbar() {
                   <Link href="/register">
                     <button className="rounded-2xl bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground shadow-md transition hover:shadow-lg hover:scale-105"
                       style={{ boxShadow: "var(--shadow-glow-primary)" }}>
-                      Daftar Sekarang
+                      Daftar
                     </button>
                   </Link>
                 </div>
@@ -333,6 +354,15 @@ export function Navbar() {
               </button>
             </div>
 
+            <Link
+              href="/game/duel"
+              className="mb-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-md"
+              style={{ boxShadow: "var(--shadow-glow-primary)" }}
+            >
+              <Swords className="h-4 w-4" />
+              Mulai Duel
+            </Link>
+
             <div className="space-y-1.5">
               {showPublicNavItems ? (
                 <>
@@ -364,7 +394,7 @@ export function Navbar() {
                       <Link href="/register" className="block">
                         <button className="w-full rounded-2xl bg-primary px-5 py-3.5 text-base font-bold text-primary-foreground shadow-md"
                           style={{ boxShadow: "var(--shadow-glow-primary)" }}>
-                          Daftar Sekarang
+                          Daftar
                         </button>
                       </Link>
                     </div>

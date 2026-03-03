@@ -32,7 +32,7 @@ const highlights = [
     icon: Sparkles,
     title: "Keinginan Kami",
     description:
-      "Mendorong literasi pangan dan pertanian modern, memastikan pelaksanaan program edukasi berjalan akuntabel, dan menghadirkan ruang partisipasi publik yang memberdayakan siswa di seluruh Indonesia.",
+      "Mendorong literasi pangan dan pertanian modern, memastikan pelaksanaan program edukasi berjalan akuntabel, dan membuka ruang partisipasi publik bagi siswa di seluruh Indonesia.",
     tags: ["Literasi Modern", "Akuntabel", "Partisipasi Publik"],
   },
 ]
@@ -127,7 +127,7 @@ const visionObjectives = [
     icon: ShieldCheck,
   },
   {
-    title: "Partisipasi publik yang memberdayakan",
+    title: "Partisipasi publik yang bermakna",
     description: "Membuka ruang kontribusi dari sekolah dan komunitas.",
     icon: Users,
   },
@@ -271,10 +271,10 @@ export default function AboutPage() {
                   #TentangAduPintar
                 </p>
                 <h1 className="text-4xl leading-tight font-display font-bold tracking-tight text-foreground md:text-5xl">
-                  Belajar Pertanian yang Lebih Seru, Terbuka, dan Kolaboratif
+                  Belajar Pertanian yang Terbuka, Kolaboratif, dan Menyenangkan
                 </h1>
                 <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-                  Kami menjaga semangat advokasi pendidikan pertanian dengan menghadirkan kompetisi yang menyenangkan,
+                  Kami menjaga semangat advokasi pendidikan pertanian lewat kompetisi yang menyenangkan,
                   transparan, dan berpihak pada publik. Platform ini terus berkembang melalui keterlibatan para ahli,
                   relawan, serta inisiator lintas profesi.
                 </p>

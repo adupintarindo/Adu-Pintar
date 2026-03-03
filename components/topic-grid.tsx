@@ -217,7 +217,7 @@ export function TopicGrid({ topics }: TopicGridProps) {
                 <div className="flex items-start gap-3 rounded-xl bg-white p-4 shadow-sm">
                   <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Materi Belajar Seru</p>
+                    <p className="text-sm font-semibold text-slate-900">Materi Belajar</p>
                     <p className="mt-0.5 text-xs text-slate-500">
                       Modul bergambar, kata-kata penting, dan panduan cepat sebelum ikut duel!
                     </p>

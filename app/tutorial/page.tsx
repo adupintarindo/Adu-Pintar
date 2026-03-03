@@ -176,7 +176,7 @@ const tips: TipCard[] = [
   {
     icon: Users,
     title: "Ajak Teman untuk Mode Tim",
-    text: "Mode Tim 5v5 lebih seru dan bisa jadi latihan koordinasi. Tim aktif biasanya progresnya lebih stabil.",
+    text: "Mode Tim 5v5 bisa jadi latihan koordinasi yang bagus. Tim aktif biasanya progresnya lebih stabil.",
     accent: "bg-teal-50 text-teal-700 border-teal-200",
     category: "Kolaborasi",
   },
@@ -337,7 +337,7 @@ export default function TutorialPage() {
                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-primary to-primary/90 px-5 py-3 text-sm font-display font-bold text-primary-foreground transition hover:opacity-95"
                     style={{ boxShadow: "var(--shadow-glow-primary)" }}
                   >
-                    Mulai Sekarang
+                    Mulai Main
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
@@ -837,7 +837,7 @@ export default function TutorialPage() {
                     href="/register"
                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-display font-bold text-primary transition hover:bg-white/90"
                   >
-                    Daftar Sekarang
+                    Daftar
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
@@ -859,7 +859,7 @@ export default function TutorialPage() {
                 {[
                   { icon: Trophy, title: "Leaderboard", desc: "Naikkan rank dengan poin mingguan." },
                   { icon: Timer, title: "Ronde cepat", desc: "Satu pertandingan cukup 5-7 menit." },
-                  { icon: Users, title: "Mode tim", desc: "Ajak teman untuk 5v5 yang lebih seru." },
+                  { icon: Users, title: "Mode tim", desc: "Ajak teman untuk main 5v5 bareng." },
                   { icon: Target, title: "Belajar sambil main", desc: "Cek pembahasan untuk upgrade skill." },
                 ].map((item) => {
                   const Icon = item.icon

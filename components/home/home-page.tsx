@@ -152,7 +152,7 @@ const heroHighlights: Highlight[] = [
   },
   {
     title: "Dibimbing Kakak Mentor",
-    description: "Kakak-kakak mentor siap membantu belajar setiap minggu lewat sesi online yang seru dan menyenangkan.",
+    description: "Kakak-kakak mentor siap membantu belajar setiap minggu lewat sesi online yang santai dan mudah dipahami.",
     icon: ShieldCheck,
     accent: "border-teal-100",
     iconWrap: "bg-teal-50 text-teal-600",
@@ -161,7 +161,7 @@ const heroHighlights: Highlight[] = [
 
 const oversightChallenges: OversightChallenge[] = [
   {
-    title: "Pelajaran Pertanian Masih Kurang Seru",
+    title: "Pelajaran Pertanian Masih Kurang Menarik",
     description: "Banyak siswa merasa bosan karena belajar pertanian tidak interaktif",
     icon: AlertTriangle,
     border: "border-l-violet-500",
@@ -192,7 +192,7 @@ const oversightChallenges: OversightChallenge[] = [
 
 const oversightSolutions: OversightSolution[] = [
   {
-    title: "Platform Belajar Online Seru",
+    title: "Platform Belajar Online",
     description: "Semua materi pertanian tersedia online, bisa diakses kapan saja dan di mana saja",
     subtitle: "Platform",
     icon: Layers,
@@ -207,14 +207,14 @@ const oversightSolutions: OversightSolution[] = [
   },
   {
     title: "Badge & Hadiah Setiap Pencapaian",
-    description: "Kumpulkan badge keren dan hadiah nyata untuk setiap prestasi yang kamu raih",
+    description: "Kumpulkan badge dan hadiah nyata untuk setiap prestasi yang kamu raih",
     subtitle: "Hadiah",
     icon: Award,
     accent: "text-lime-600 bg-lime-50",
   },
   {
     title: "Notifikasi & Pengingat Belajar",
-    description: "Pengingat seru agar kamu tidak ketinggalan sesi latihan dan turnamen seru",
+    description: "Pengingat rutin supaya kamu tidak ketinggalan sesi latihan dan turnamen",
     subtitle: "Pengingat",
     icon: BellRing,
     accent: "text-violet-600 bg-violet-50",
@@ -232,11 +232,11 @@ const impactHighlights: Highlight[] = [
   {
     title: "Belajar Sambil Bermain",
     description:
-      "Materi pertanian dikemas dalam soal kuis yang seru dan interaktif. Belajar jadi menyenangkan untuk semua pelajar SD, SMP, dan SMA!",
+      "Materi pertanian dikemas dalam soal kuis yang interaktif dan mudah dipahami. Cocok untuk semua pelajar SD, SMP, dan SMA.",
     icon: Sprout,
   },
   {
-    title: "Kompetisi yang Seru & Sehat",
+    title: "Kompetisi yang Adil & Sehat",
     description: "Adu kemampuan dengan teman-teman dari seluruh Indonesia secara adil. Menang atau kalah, semua tetap belajar bersama!",
     icon: Trophy,
   },
@@ -290,7 +290,7 @@ const tutorialVideos: TutorialVideo[] = [
   },
   {
     title: "Cara Main Tim 5 Orang",
-    description: "Belajar kerjasama tim, bagi peran dengan teman, dan cara membaca skor tim secara langsung. Main bareng lebih seru!",
+    description: "Belajar kerjasama tim, bagi peran dengan teman, dan cara membaca skor tim secara langsung. Main bareng lebih asyik!",
     href: "/tutorial/tim",
     accent: "bg-teal-600",
     ctaClass: "text-teal-200 hover:text-teal-100",
@@ -371,7 +371,7 @@ const topicList = [
     key: "hidroponik",
     title: "Tanam Tanpa Tanah (Hidroponik)",
     image: "/topics/crops.jpg",
-    desc: "Belajar cara menanam sayuran pakai air saja tanpa tanah. Seru, bersih, dan bisa dicoba di rumah!",
+    desc: "Belajar cara menanam sayuran pakai air saja tanpa tanah. Bersih dan bisa dicoba di rumah!",
   },
   {
     key: "iklim-mikro",
@@ -383,7 +383,7 @@ const topicList = [
     key: "rantai-pasok",
     title: "Perjalanan Sayur ke Meja Makan",
     image: "/topics/agro.jpg",
-    desc: "Ikuti perjalanan sayuran dari ladang petani hingga sampai ke piring makanmu. Seru dan penuh kejutan!",
+    desc: "Ikuti perjalanan sayuran dari ladang petani hingga sampai ke piring makanmu. Penuh hal baru!",
   },
   {
     key: "biosekuriti",
@@ -552,12 +552,12 @@ export default function HomePage() {
 
             {/* ── Header: Badge + Judul + Deskripsi ── */}
             <div className="text-center space-y-5">
-              <span className="section-badge">Platform Belajar Pertanian untuk SD, SMP &amp; SMA</span>
+              <span className="section-badge">Kompetisi Belajar Pertanian Nasional</span>
               <h1 className="mt-4 text-4xl font-display font-extrabold leading-[1.1] tracking-tight text-foreground md:text-5xl lg:text-6xl">
-                Adu pintar soal pertanian,<br className="hidden sm:inline" /> menangkan hadiah, jadi juara nasional!
+                Duel kuis pertanian 10 soal, 5 menit, hasil langsung.
               </h1>
               <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-                Bergabung dengan ribuan pelajar dari seluruh Indonesia. Jawab soal, duel 1v1, main bareng tim, dan lihat namamu di papan juara nasional!
+                Masuk sebagai siswa untuk mulai bermain sekarang, atau daftar akun sekolah untuk mengelola kelas, guru, dan progres murid.
               </p>
             </div>
 
@@ -582,17 +582,23 @@ export default function HomePage() {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-10 py-4 text-base font-extrabold text-primary-foreground shadow-lg transition hover:shadow-xl hover:scale-105 sm:w-auto"
                 style={{ boxShadow: "var(--shadow-glow-primary)" }}
               >
-                <Sparkles className="h-5 w-5" aria-hidden />
-                Main Duel Pertamamu - Gratis!
+                <School className="h-5 w-5" aria-hidden />
+                Daftar Sekolah
               </Link>
               <Link
-                href="/tutorial"
+                href="/login"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-primary/25 bg-card/80 backdrop-blur-sm px-9 py-4 text-base font-bold text-primary shadow-sm transition hover:border-primary/45 hover:bg-primary/5 sm:w-auto"
               >
-                <Play className="h-4 w-4" aria-hidden />
-                Lihat Cara Bermain
+                <Sparkles className="h-4 w-4" aria-hidden />
+                Masuk Siswa
               </Link>
             </div>
+            <p className="mt-3 text-center text-sm text-muted-foreground">
+              Ingin lihat simulasi dulu?{" "}
+              <Link href="/tutorial" className="font-semibold text-primary hover:text-primary/80">
+                Tonton panduan bermain
+              </Link>
+            </p>
 
             {/* ── Stats row ── */}
             <div className="mt-12 grid grid-cols-3 gap-4">
@@ -1109,7 +1115,7 @@ export default function HomePage() {
               className="mt-6 inline-flex items-center rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg transition hover:shadow-xl"
               style={{ boxShadow: "var(--shadow-glow-primary)" }}
             >
-              Solusi Terintegrasi untuk Masa Depan Adu Pintar
+              Lihat Rencana Pengembangan Adu Pintar
             </Link>
           </div>
         </section>

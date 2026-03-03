@@ -41,7 +41,7 @@ export function Footer() {
               />
               <div>
                 <span className="text-xl font-extrabold uppercase tracking-wide text-white block leading-tight">Adu Pintar</span>
-                <span className="text-xs text-white/60 font-medium">Belajar Pertanian Jadi Seru!</span>
+                <span className="text-xs text-white/60 font-medium">Belajar Pertanian Bareng-Bareng</span>
               </div>
             </div>
             <p className="text-sm leading-relaxed text-white/60">
