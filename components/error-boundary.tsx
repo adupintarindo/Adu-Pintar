@@ -53,34 +53,25 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return (
       <div className="flex min-h-[320px] items-center justify-center p-6">
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-lg">
-          {/* Icon */}
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-red-600 dark:text-red-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
+          {/* Friendly emoji */}
+          <span className="mb-2 inline-block text-5xl">🔧</span>
 
           {/* Heading */}
           <h2 className="mb-2 text-xl font-semibold text-foreground">
-            Terjadi Kesalahan
+            Oops! Ada yang perlu diperbaiki
           </h2>
 
           {/* Description */}
-          <p className="mb-6 text-sm text-muted-foreground">
-            Maaf, terjadi kesalahan yang tidak terduga. Silakan coba lagi atau muat ulang halaman.
+          <p className="mb-4 text-sm text-muted-foreground">
+            Bagian ini sedang bermasalah, tapi tenang ya! Coba langkah-langkah ini:
           </p>
+
+          {/* Recovery steps */}
+          <ol className="mb-6 list-inside list-decimal space-y-1 text-left text-sm text-muted-foreground">
+            <li>Tekan tombol <strong>"Coba Lagi"</strong> di bawah</li>
+            <li>Kalau masih error, coba muat ulang halaman</li>
+            <li>Periksa koneksi internet kamu</li>
+          </ol>
 
           {/* Error detail (dev only) */}
           {process.env.NODE_ENV === "development" && this.state.error && (
@@ -94,14 +85,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <button
               type="button"
               onClick={this.handleRetry}
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 active:scale-95"
             >
               Coba Lagi
             </button>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 active:scale-95"
             >
               Muat Ulang Halaman
             </button>

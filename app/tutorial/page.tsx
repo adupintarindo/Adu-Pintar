@@ -149,42 +149,42 @@ const tips: TipCard[] = [
     icon: Lightbulb,
     title: "Pahami Pertanyaan dengan Baik",
     text: "Baca soal dengan teliti sebelum memilih jawaban. Detail kecil sering jadi pembeda jawaban benar dan salah.",
-    accent: "bg-lime-50 text-lime-700 border-lime-200",
+    accent: "bg-lime-50 text-lime-700 border-lime-200 dark:bg-lime-950 dark:text-lime-300 dark:border-lime-800",
     category: "Akurasi",
   },
   {
     icon: Timer,
     title: "Manfaatkan Waktu Secara Efisien",
     text: "Anda hanya punya 30 detik per soal. Jangan terpaku terlalu lama pada satu soal yang meragukan.",
-    accent: "bg-blue-50 text-blue-700 border-blue-200",
+    accent: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
     category: "Kecepatan",
   },
   {
     icon: BookOpenCheck,
     title: "Pelajari Pembahasan Soal",
     text: "Gunakan penjelasan di hasil akhir sebagai bahan belajar agar kesalahan yang sama tidak terulang.",
-    accent: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    accent: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800",
     category: "Belajar",
   },
   {
     icon: CalendarClock,
     title: "Bermain Secara Konsisten",
     text: "Progress naik lebih cepat kalau bermain rutin. Buat jadwal singkat harian untuk latihan.",
-    accent: "bg-violet-50 text-violet-700 border-violet-200",
+    accent: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800",
     category: "Kebiasaan",
   },
   {
     icon: Users,
     title: "Ajak Teman untuk Mode Tim",
     text: "Mode Tim 5v5 bisa jadi latihan koordinasi yang bagus. Tim aktif biasanya progresnya lebih stabil.",
-    accent: "bg-teal-50 text-teal-700 border-teal-200",
+    accent: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800",
     category: "Kolaborasi",
   },
   {
     icon: Target,
     title: "Main dengan Target Leaderboard",
     text: "Pantau peringkat Anda dan jadikan target mingguan agar motivasi bermain tetap terarah.",
-    accent: "bg-green-50 text-green-700 border-green-200",
+    accent: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
     category: "Strategi",
   },
 ]
@@ -447,8 +447,8 @@ export default function TutorialPage() {
         </section>
 
         <section id="alur" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div className="space-y-6 lg:sticky lg:top-24">
+          <div className="space-y-8">
+            <div className="space-y-6">
               <div className="glass-card rounded-3xl overflow-hidden">
                 <div className="card-accent-top" />
                 <div className="p-6 sm:p-7">

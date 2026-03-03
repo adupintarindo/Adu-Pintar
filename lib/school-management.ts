@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs"
 import { createAdminSupabaseClient, isSupabaseAdminConfigured } from "./supabase-admin"
 import { hashPinToken, verifyPinToken } from "./pin-security"
+import { isSupabaseConfigured } from "./supabase"
 
 export type ManagedSchool = {
   id: string
@@ -158,6 +159,16 @@ const fallbackClasses = new Map<string, ManagedClass>()
 const fallbackStudents = new Map<string, ManagedStudent>()
 const fallbackSchoolAccounts = new Map<string, FallbackSchoolAccount>()
 const fallbackTeacherPasswords = new Map<string, string>()
+
+function isStrictSupabaseMode() {
+  return isSupabaseConfigured()
+}
+
+function assertSupabaseReadyForStrictMode() {
+  if (isStrictSupabaseMode() && !isSupabaseAdminConfigured()) {
+    throw new Error("Konfigurasi Supabase service role belum lengkap")
+  }
+}
 
 function randomId(prefix: string) {
   const token =
@@ -395,6 +406,7 @@ function mapStudentRow(row: SupabaseStudentRow): ManagedStudent {
 
 async function listSupabaseTeachers(schoolId: string): Promise<ManagedTeacher[] | null> {
   if (!isSupabaseAdminConfigured()) return null
+  const strictMode = isStrictSupabaseMode()
   try {
     const supabase = createAdminSupabaseClient()
     const { data, error } = await supabase
@@ -402,16 +414,21 @@ async function listSupabaseTeachers(schoolId: string): Promise<ManagedTeacher[] 
       .select("id, school_id, name, email, grade_levels, role, is_active, created_at")
       .eq("school_id", schoolId)
       .order("created_at", { ascending: false })
-    if (error) return null
+    if (error) {
+      if (strictMode) throw new Error(error.message)
+      return null
+    }
     return ((data as SupabaseTeacherRow[] | null) ?? []).map(mapTeacherRow)
   } catch (error) {
     console.error("[school-management] listSupabaseTeachers failed:", error)
+    if (strictMode) throw error instanceof Error ? error : new Error("Gagal memuat guru dari Supabase")
     return null
   }
 }
 
 async function listSupabaseClasses(schoolId: string): Promise<ManagedClass[] | null> {
   if (!isSupabaseAdminConfigured()) return null
+  const strictMode = isStrictSupabaseMode()
   try {
     const supabase = createAdminSupabaseClient()
     const { data: classes, error } = await supabase
@@ -420,7 +437,10 @@ async function listSupabaseClasses(schoolId: string): Promise<ManagedClass[] | n
       .eq("school_id", schoolId)
       .order("grade", { ascending: true })
       .order("name", { ascending: true })
-    if (error) return null
+    if (error) {
+      if (strictMode) throw new Error(error.message)
+      return null
+    }
 
     const classList = ((classes as SupabaseClassRow[] | null) ?? []).map(mapClassRow)
     if (classList.length === 0) return classList
@@ -440,12 +460,14 @@ async function listSupabaseClasses(schoolId: string): Promise<ManagedClass[] | n
     return classList
   } catch (error) {
     console.error("[school-management] listSupabaseClasses failed:", error)
+    if (strictMode) throw error instanceof Error ? error : new Error("Gagal memuat kelas dari Supabase")
     return null
   }
 }
 
 async function listSupabaseStudents(schoolId: string): Promise<ManagedStudent[] | null> {
   if (!isSupabaseAdminConfigured()) return null
+  const strictMode = isStrictSupabaseMode()
   try {
     const supabase = createAdminSupabaseClient()
     const { data: students, error } = await supabase
@@ -453,7 +475,10 @@ async function listSupabaseStudents(schoolId: string): Promise<ManagedStudent[] 
       .select("id, school_id, class_id, name, nisn, pin_token, grade, grade_category, total_score, total_exp, level, games_played, wins, losses, created_at")
       .eq("school_id", schoolId)
       .order("created_at", { ascending: false })
-    if (error) return null
+    if (error) {
+      if (strictMode) throw new Error(error.message)
+      return null
+    }
 
     const mapped = ((students as SupabaseStudentRow[] | null) ?? []).map(mapStudentRow)
     const { data: classes } = await supabase
@@ -472,12 +497,14 @@ async function listSupabaseStudents(schoolId: string): Promise<ManagedStudent[] 
     return mapped
   } catch (error) {
     console.error("[school-management] listSupabaseStudents failed:", error)
+    if (strictMode) throw error instanceof Error ? error : new Error("Gagal memuat siswa dari Supabase")
     return null
   }
 }
 
 async function getSupabaseSchool(schoolId: string): Promise<ManagedSchool | null> {
   if (!isSupabaseAdminConfigured()) return null
+  const strictMode = isStrictSupabaseMode()
   try {
     const supabase = createAdminSupabaseClient()
     const { data, error } = await supabase
@@ -485,10 +512,15 @@ async function getSupabaseSchool(schoolId: string): Promise<ManagedSchool | null
       .select("id, name, npsn, email, phone, address, province, city, school_type, is_verified")
       .eq("id", schoolId)
       .maybeSingle()
-    if (error || !data) return null
+    if (error) {
+      if (strictMode) throw new Error(error.message)
+      return null
+    }
+    if (!data) return null
     return mapSchoolRow(data as SupabaseSchoolRow)
   } catch (error) {
     console.error("[school-management] getSupabaseSchool failed:", error)
+    if (strictMode) throw error instanceof Error ? error : new Error("Gagal memuat data sekolah")
     return null
   }
 }
@@ -530,6 +562,8 @@ async function generateUniqueStudentPin(schoolId: string): Promise<string> {
 
 export async function listSchools(): Promise<ManagedSchool[]> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
   if (!isSupabaseAdminConfigured()) {
     return Array.from(fallbackSchools.values())
   }
@@ -541,19 +575,24 @@ export async function listSchools(): Promise<ManagedSchool[]> {
       .order("created_at", { ascending: false })
       .limit(100)
     if (error) {
+      if (strictMode) throw new Error(error.message)
       return Array.from(fallbackSchools.values())
     }
     return ((data as SupabaseSchoolRow[] | null) ?? []).map(mapSchoolRow)
   } catch (error) {
     console.error("[school-management] listAllSchools Supabase query failed:", error)
+    if (strictMode) throw error instanceof Error ? error : new Error("Gagal memuat daftar sekolah")
     return Array.from(fallbackSchools.values())
   }
 }
 
 export async function getSchoolById(schoolId: string): Promise<ManagedSchool | null> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
   const fromSupabase = await getSupabaseSchool(schoolId)
   if (fromSupabase) return fromSupabase
+  if (strictMode) return null
   return fallbackSchools.get(schoolId) ?? null
 }
 
@@ -562,6 +601,8 @@ export async function updateSchoolProfile(
   patch: Partial<Pick<ManagedSchool, "name" | "phone" | "address" | "province" | "city">>,
 ): Promise<ManagedSchool | null> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
   if (isSupabaseAdminConfigured()) {
     try {
       const supabase = createAdminSupabaseClient()
@@ -580,8 +621,15 @@ export async function updateSchoolProfile(
       if (!error && data) {
         return mapSchoolRow(data as SupabaseSchoolRow)
       }
+      if (error && strictMode) {
+        throw new Error(error.message)
+      }
+      if (strictMode) {
+        return null
+      }
     } catch (error) {
-      console.error("[school-management] Supabase operation failed, using fallback:", error)
+      console.error("[school-management] updateSchoolProfile Supabase operation failed:", error)
+      if (strictMode) throw error instanceof Error ? error : new Error("Gagal memperbarui profil sekolah")
     }
   }
 
@@ -597,8 +645,11 @@ export async function updateSchoolProfile(
 
 export async function listTeachersBySchool(schoolId: string): Promise<ManagedTeacher[]> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
   const fromSupabase = await listSupabaseTeachers(schoolId)
   if (fromSupabase) return fromSupabase
+  if (strictMode) return []
   return Array.from(fallbackTeachers.values())
     .filter((teacher) => teacher.schoolId === schoolId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -612,6 +663,8 @@ export async function addTeacherToSchool(params: {
   role: "guru" | "co_admin"
 }): Promise<ManagedTeacher> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
 
   if (isSupabaseAdminConfigured()) {
     try {
@@ -631,8 +684,15 @@ export async function addTeacherToSchool(params: {
       if (!error && data) {
         return mapTeacherRow(data as SupabaseTeacherRow)
       }
+      if (error && strictMode) {
+        throw new Error(error.message)
+      }
+      if (strictMode) {
+        throw new Error("Gagal menambahkan guru")
+      }
     } catch (error) {
-      console.error("[school-management] Supabase operation failed, using fallback:", error)
+      console.error("[school-management] addTeacherToSchool Supabase operation failed:", error)
+      if (strictMode) throw error instanceof Error ? error : new Error("Gagal menambahkan guru")
     }
   }
 
@@ -660,6 +720,8 @@ export async function addTeacherToSchool(params: {
 
 export async function listClassesBySchool(schoolId: string): Promise<ManagedClass[]> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
   const [fromSupabase, teachersFallback] = await Promise.all([
     listSupabaseClasses(schoolId),
     Promise.resolve(Array.from(fallbackTeachers.values())),
@@ -671,6 +733,7 @@ export async function listClassesBySchool(schoolId: string): Promise<ManagedClas
     }
     return fromSupabase
   }
+  if (strictMode) return []
 
   recomputeFallbackClassCounts(schoolId)
   const teacherMap = new Map(
@@ -696,6 +759,8 @@ export async function createClassForSchool(params: {
   academicYear?: string
 }): Promise<ManagedClass> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
   const gradeCategory = gradeToCategory(params.grade)
 
   if (isSupabaseAdminConfigured()) {
@@ -716,8 +781,15 @@ export async function createClassForSchool(params: {
       if (!error && data) {
         return mapClassRow(data as SupabaseClassRow)
       }
+      if (error && strictMode) {
+        throw new Error(error.message)
+      }
+      if (strictMode) {
+        throw new Error("Gagal membuat kelas")
+      }
     } catch (error) {
-      console.error("[school-management] Supabase operation failed, using fallback:", error)
+      console.error("[school-management] createClassForSchool Supabase operation failed:", error)
+      if (strictMode) throw error instanceof Error ? error : new Error("Gagal membuat kelas")
     }
   }
 
@@ -738,8 +810,11 @@ export async function createClassForSchool(params: {
 
 export async function listStudentsBySchool(schoolId: string): Promise<ManagedStudent[]> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
   const fromSupabase = await listSupabaseStudents(schoolId)
   if (fromSupabase) return fromSupabase
+  if (strictMode) return []
 
   const classNameMap = new Map(
     Array.from(fallbackClasses.values())
@@ -760,6 +835,8 @@ export async function addStudentToSchool(params: {
   nisn?: string
 }): Promise<ManagedStudent> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
 
   const classes = await listClassesBySchool(params.schoolId)
   const classInfo = classes.find((item) => item.id === params.classId)
@@ -793,8 +870,15 @@ export async function addStudentToSchool(params: {
         mapped.pinToken = pinToken
         return mapped
       }
+      if (error && strictMode) {
+        throw new Error(error.message)
+      }
+      if (strictMode) {
+        throw new Error("Gagal menambahkan siswa")
+      }
     } catch (error) {
-      console.error("[school-management] Supabase operation failed, using fallback:", error)
+      console.error("[school-management] addStudentToSchool Supabase operation failed:", error)
+      if (strictMode) throw error instanceof Error ? error : new Error("Gagal menambahkan siswa")
     }
   }
 
@@ -826,6 +910,8 @@ export async function resetStudentPin(params: {
   studentId: string
 }): Promise<ManagedStudent> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
   const nextPin = await generateUniqueStudentPin(params.schoolId)
 
   if (isSupabaseAdminConfigured()) {
@@ -843,8 +929,15 @@ export async function resetStudentPin(params: {
         mapped.pinToken = nextPin
         return mapped
       }
+      if (error && strictMode) {
+        throw new Error(error.message)
+      }
+      if (strictMode) {
+        throw new Error("Siswa tidak ditemukan")
+      }
     } catch (error) {
-      console.error("[school-management] Supabase operation failed, using fallback:", error)
+      console.error("[school-management] resetStudentPin Supabase operation failed:", error)
+      if (strictMode) throw error instanceof Error ? error : new Error("Gagal reset PIN siswa")
     }
   }
 
@@ -891,6 +984,12 @@ export async function getTeacherDashboardData(params: {
   schoolId?: string
 }): Promise<TeacherDashboardData | null> {
   ensureFallbackSeedData()
+  assertSupabaseReadyForStrictMode()
+  const strictMode = isStrictSupabaseMode()
+
+  if (strictMode && !params.schoolId) {
+    throw new Error("schoolId diperlukan untuk dashboard guru pada mode Supabase")
+  }
 
   const teachers = params.schoolId ? await listTeachersBySchool(params.schoolId) : Array.from(fallbackTeachers.values())
   const teacher = teachers.find((item) => item.id === params.teacherId) ?? Array.from(fallbackTeachers.values()).find((item) => item.id === params.teacherId)
@@ -932,6 +1031,11 @@ export async function registerSchoolAccount(input: RegisterSchoolInput): Promise
   mode: "supabase" | "fallback"
 }> {
   ensureFallbackSeedData()
+  const supabaseConfigured = isSupabaseConfigured()
+
+  if (supabaseConfigured && !isSupabaseAdminConfigured()) {
+    throw new Error("Konfigurasi Supabase service role belum lengkap")
+  }
 
   if (isSupabaseAdminConfigured()) {
     try {
@@ -944,6 +1048,11 @@ export async function registerSchoolAccount(input: RegisterSchoolInput): Promise
 
       if (authCreate.error) {
         throw new Error(authCreate.error.message)
+      }
+
+      const createdAuthUserId = authCreate.data.user?.id
+      if (!createdAuthUserId) {
+        throw new Error("Gagal membuat akun autentikasi sekolah")
       }
 
       const schoolType = "SD" as const
@@ -963,6 +1072,10 @@ export async function registerSchoolAccount(input: RegisterSchoolInput): Promise
         .single()
 
       if (schoolError || !schoolRow) {
+        const rollback = await supabase.auth.admin.deleteUser(createdAuthUserId)
+        if (rollback.error) {
+          console.error("[school-management] rollback auth user failed:", rollback.error)
+        }
         throw new Error(schoolError?.message ?? "Gagal membuat data sekolah")
       }
 
@@ -979,7 +1092,8 @@ export async function registerSchoolAccount(input: RegisterSchoolInput): Promise
         mode: "supabase",
       }
     } catch (error) {
-      console.error("[school-management] Supabase operation failed, using fallback:", error)
+      console.error("[school-management] Supabase registration failed:", error)
+      throw new Error(error instanceof Error ? error.message : "Gagal mendaftarkan sekolah ke Supabase")
     }
   }
 
@@ -1061,4 +1175,379 @@ export function findFallbackSchoolOrTeacherByEmailPassword(params: {
   }
 
   return null
+}
+
+/* ---------- Self-registration for students & teachers ---------- */
+
+const fallbackStudentPasswords = new Map<string, { hash: string; studentId: string; schoolId: string }>()
+
+async function findOrCreateSchoolByInfo(params: {
+  name: string
+  province: string
+  city: string
+  grade: string
+}): Promise<ManagedSchool> {
+  ensureFallbackSeedData()
+  const schoolType = (params.grade === "SMP" ? "SMP" : params.grade === "SMA" ? "SMA" : "SD") as "SD" | "SMP" | "SMA"
+
+  if (isSupabaseAdminConfigured()) {
+    const supabase = createAdminSupabaseClient()
+    const { data: existing } = await supabase
+      .from("schools")
+      .select("id, name, npsn, email, phone, address, province, city, school_type, is_verified")
+      .eq("name", params.name)
+      .eq("province", params.province)
+      .eq("city", params.city)
+      .maybeSingle()
+
+    if (existing) return mapSchoolRow(existing as SupabaseSchoolRow)
+
+    const placeholderEmail = `${randomId("school")}@adupintar.placeholder`
+    const placeholderNpsn = `${Math.floor(10000000 + Math.random() * 89999999)}`
+
+    const { data: created, error } = await supabase
+      .from("schools")
+      .insert({
+        name: params.name,
+        npsn: placeholderNpsn,
+        email: placeholderEmail,
+        province: params.province,
+        city: params.city,
+        school_type: schoolType,
+        is_verified: false,
+      })
+      .select("id, name, npsn, email, phone, address, province, city, school_type, is_verified")
+      .single()
+
+    if (!error && created) return mapSchoolRow(created as SupabaseSchoolRow)
+  }
+
+  const existing = Array.from(fallbackSchools.values()).find(
+    (s) => s.name === params.name && s.province === params.province && s.city === params.city,
+  )
+  if (existing) return existing
+
+  const school: ManagedSchool = {
+    id: randomId("school"),
+    name: params.name,
+    npsn: `${Math.floor(10000000 + Math.random() * 89999999)}`,
+    email: "",
+    phone: "",
+    address: "",
+    province: params.province,
+    city: params.city,
+    schoolType: schoolType,
+    isVerified: false,
+  }
+  fallbackSchools.set(school.id, school)
+  return school
+}
+
+type RegisterStudentInput = {
+  name: string
+  email: string
+  password: string
+  grade: string
+  className: string
+  schoolName: string
+  schoolProvince: string
+  schoolCity: string
+}
+
+export async function registerStudentAccount(input: RegisterStudentInput): Promise<{
+  student: ManagedStudent
+  school: ManagedSchool
+  pinToken: string
+  authUser: {
+    id: string
+    name: string
+    role: "student"
+    schoolId: string
+    schoolName: string
+    classId: string
+  }
+  mode: "supabase" | "fallback"
+}> {
+  ensureFallbackSeedData()
+
+  const school = await findOrCreateSchoolByInfo({
+    name: input.schoolName,
+    province: input.schoolProvince,
+    city: input.schoolCity,
+    grade: input.grade,
+  })
+
+  const gradeNum =
+    Number.parseInt(input.className, 10) || (input.grade === "SD" ? 4 : input.grade === "SMP" ? 7 : 10)
+  const gradeCategory = gradeToCategory(gradeNum)
+
+  const classes = await listClassesBySchool(school.id)
+  let targetClass = classes.find((c) => c.grade === gradeNum)
+  if (!targetClass) {
+    targetClass = await createClassForSchool({
+      schoolId: school.id,
+      name: `Kelas ${input.className}`,
+      grade: gradeNum,
+    })
+  }
+
+  const pinToken = await generateUniqueStudentPin(school.id)
+
+  if (isSupabaseAdminConfigured()) {
+    try {
+      const supabase = createAdminSupabaseClient()
+
+      const authCreate = await supabase.auth.admin.createUser({
+        email: input.email,
+        password: input.password,
+        email_confirm: true,
+        user_metadata: { role: "student" },
+      })
+      if (authCreate.error) throw new Error(authCreate.error.message)
+
+      const authUserId = authCreate.data.user?.id
+      if (!authUserId) throw new Error("Gagal membuat akun autentikasi siswa")
+
+      const { data: studentRow, error: studentError } = await supabase
+        .from("students")
+        .insert({
+          school_id: school.id,
+          class_id: targetClass.id,
+          name: input.name,
+          pin_token: hashPinToken(pinToken),
+          grade: gradeNum,
+          grade_category: gradeCategory,
+        })
+        .select(
+          "id, school_id, class_id, name, nisn, pin_token, grade, grade_category, total_score, total_exp, level, games_played, wins, losses, created_at",
+        )
+        .single()
+
+      if (studentError || !studentRow) {
+        await supabase.auth.admin.deleteUser(authUserId)
+        throw new Error(studentError?.message ?? "Gagal membuat data siswa")
+      }
+
+      const student = mapStudentRow(studentRow as SupabaseStudentRow)
+      student.pinToken = pinToken
+      student.className = targetClass.name
+
+      await supabase.auth.admin.updateUserById(authUserId, {
+        user_metadata: { role: "student", student_id: student.id },
+      })
+
+      return {
+        student,
+        school,
+        pinToken,
+        authUser: {
+          id: student.id,
+          name: student.name,
+          role: "student",
+          schoolId: school.id,
+          schoolName: school.name,
+          classId: targetClass.id,
+        },
+        mode: "supabase",
+      }
+    } catch (error) {
+      if (isStrictSupabaseMode()) {
+        throw new Error(error instanceof Error ? error.message : "Gagal mendaftarkan siswa")
+      }
+    }
+  }
+
+  const student: ManagedStudent = {
+    id: randomId("student"),
+    schoolId: school.id,
+    classId: targetClass.id,
+    className: targetClass.name,
+    name: input.name,
+    nisn: null,
+    pinToken,
+    grade: gradeNum,
+    gradeCategory,
+    totalScore: 0,
+    totalExp: 0,
+    level: 1,
+    gamesPlayed: 0,
+    wins: 0,
+    losses: 0,
+    createdAt: new Date().toISOString(),
+  }
+  fallbackStudents.set(student.id, student)
+  fallbackStudentPasswords.set(input.email, {
+    hash: bcrypt.hashSync(input.password, 10),
+    studentId: student.id,
+    schoolId: school.id,
+  })
+  recomputeFallbackClassCounts(school.id)
+
+  return {
+    student,
+    school,
+    pinToken,
+    authUser: {
+      id: student.id,
+      name: student.name,
+      role: "student",
+      schoolId: school.id,
+      schoolName: school.name,
+      classId: targetClass.id,
+    },
+    mode: "fallback",
+  }
+}
+
+type RegisterTeacherInput = {
+  name: string
+  email: string
+  password: string
+  phone?: string
+  grade: string
+  schoolName: string
+  schoolProvince: string
+  schoolCity: string
+}
+
+export async function registerTeacherAccount(input: RegisterTeacherInput): Promise<{
+  teacher: ManagedTeacher
+  school: ManagedSchool
+  authUser: {
+    id: string
+    name: string
+    role: "teacher"
+    schoolId: string
+    schoolName: string
+  }
+  mode: "supabase" | "fallback"
+}> {
+  ensureFallbackSeedData()
+
+  const school = await findOrCreateSchoolByInfo({
+    name: input.schoolName,
+    province: input.schoolProvince,
+    city: input.schoolCity,
+    grade: input.grade,
+  })
+
+  const gradeLevels =
+    input.grade === "SD"
+      ? ["1-2", "3-4", "5-6"]
+      : input.grade === "SMP"
+        ? ["7", "8", "9"]
+        : ["10", "11", "12"]
+
+  if (isSupabaseAdminConfigured()) {
+    try {
+      const supabase = createAdminSupabaseClient()
+
+      const authCreate = await supabase.auth.admin.createUser({
+        email: input.email,
+        password: input.password,
+        email_confirm: true,
+        user_metadata: { role: "teacher" },
+      })
+      if (authCreate.error) throw new Error(authCreate.error.message)
+
+      const authUserId = authCreate.data.user?.id
+      if (!authUserId) throw new Error("Gagal membuat akun autentikasi guru")
+
+      const { data: teacherRow, error: teacherError } = await supabase
+        .from("teachers")
+        .insert({
+          school_id: school.id,
+          name: input.name,
+          email: input.email,
+          grade_levels: gradeLevels,
+          role: "guru",
+          is_active: true,
+        })
+        .select("id, school_id, name, email, grade_levels, role, is_active, created_at")
+        .single()
+
+      if (teacherError || !teacherRow) {
+        await supabase.auth.admin.deleteUser(authUserId)
+        throw new Error(teacherError?.message ?? "Gagal membuat data guru")
+      }
+
+      return {
+        teacher: mapTeacherRow(teacherRow as SupabaseTeacherRow),
+        school,
+        authUser: {
+          id: (teacherRow as SupabaseTeacherRow).id,
+          name: input.name,
+          role: "teacher",
+          schoolId: school.id,
+          schoolName: school.name,
+        },
+        mode: "supabase",
+      }
+    } catch (error) {
+      if (isStrictSupabaseMode()) {
+        throw new Error(error instanceof Error ? error.message : "Gagal mendaftarkan guru")
+      }
+    }
+  }
+
+  const existingTeacher = Array.from(fallbackTeachers.values()).find(
+    (t) => t.email.toLowerCase() === input.email.toLowerCase(),
+  )
+  if (existingTeacher) throw new Error("Email guru sudah terdaftar")
+
+  const teacher: ManagedTeacher = {
+    id: randomId("teacher"),
+    schoolId: school.id,
+    name: input.name,
+    email: input.email,
+    gradeLevels: gradeLevels,
+    role: "guru",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  }
+  fallbackTeachers.set(teacher.id, teacher)
+  fallbackTeacherPasswords.set(teacher.email, bcrypt.hashSync(input.password, 10))
+
+  return {
+    teacher,
+    school,
+    authUser: {
+      id: teacher.id,
+      name: teacher.name,
+      role: "teacher",
+      schoolId: school.id,
+      schoolName: school.name,
+    },
+    mode: "fallback",
+  }
+}
+
+export function findFallbackStudentByEmailPassword(params: {
+  email: string
+  password: string
+}): {
+  id: string
+  name: string
+  role: "student"
+  schoolId: string
+  schoolName?: string
+  classId: string
+} | null {
+  ensureFallbackSeedData()
+
+  const entry = fallbackStudentPasswords.get(params.email)
+  if (!entry || !bcrypt.compareSync(params.password, entry.hash)) return null
+
+  const student = fallbackStudents.get(entry.studentId)
+  if (!student) return null
+
+  const school = fallbackSchools.get(student.schoolId)
+  return {
+    id: student.id,
+    name: student.name,
+    role: "student",
+    schoolId: student.schoolId,
+    schoolName: school?.name,
+    classId: student.classId,
+  }
 }

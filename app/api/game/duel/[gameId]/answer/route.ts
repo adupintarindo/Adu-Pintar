@@ -13,6 +13,20 @@ const answerSchema = z.object({
   responseTimeMs: z.number().int().min(0).max(GAME_CONFIG.TIME_PER_QUESTION_MS).optional(),
 })
 
+type SubmitDuelAnswerRow = {
+  accepted: boolean | null
+  duplicate: boolean | null
+  reason: string | null
+  status: "waiting" | "in_progress" | "completed" | null
+  question_id: string | null
+  is_correct: boolean | null
+  points_earned: number | null
+  base_points: number | null
+  speed_bonus: number | null
+  response_time_ms: number | null
+  difficulty: string | null
+}
+
 function isUUID(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
@@ -52,10 +66,39 @@ async function persistGameAnswer(params: {
       speed_bonus: params.speedBonus,
     }, {
       onConflict: "game_id,student_id,question_id",
-      ignoreDuplicates: false,
+      ignoreDuplicates: true,
     })
   } catch (error) {
     console.error("[api/game/duel/answer] Persistence failed (best effort):", error)
+  }
+}
+
+async function submitAnswerInSupabase(params: {
+  gameId: string
+  playerId: string
+  selectedAnswer: number
+  responseTimeMs: number
+}): Promise<SubmitDuelAnswerRow | null> {
+  if (!isSupabaseAdminConfigured()) return null
+  if (!isUUID(params.gameId) || !isUUID(params.playerId)) return null
+
+  try {
+    const supabase = createAdminSupabaseClient()
+    const { data, error } = await supabase.rpc("submit_duel_answer", {
+      p_game_id: params.gameId,
+      p_player_id: params.playerId,
+      p_selected_answer: params.selectedAnswer,
+      p_response_time_ms: params.responseTimeMs,
+    })
+    if (error) {
+      console.error("[api/game/duel/answer] submit_duel_answer RPC failed:", error)
+      return null
+    }
+    if (!Array.isArray(data) || data.length === 0) return null
+    return data[0] as SubmitDuelAnswerRow
+  } catch (error) {
+    console.error("[api/game/duel/answer] submit_duel_answer failed:", error)
+    return null
   }
 }
 
@@ -116,7 +159,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Player Number tidak valid" }, { status: 400 })
     }
 
-    const hydratedGame = getGame(gameId) ?? (await ensureGameLoadedById(gameId))
+    const hydratedGame = (await ensureGameLoadedById(gameId, { forceRefresh: true })) ?? getGame(gameId)
     if (!hydratedGame) {
       return NextResponse.json({ error: "Game tidak ditemukan" }, { status: 404 })
     }
@@ -126,6 +169,67 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const safeResponseTime = resolveResponseTime(responseTimeMs)
+    const targetPlayerId = hydratedGame.playerIds[playerIndex] ?? ""
+
+    const rpcResult = await submitAnswerInSupabase({
+      gameId,
+      playerId: targetPlayerId,
+      selectedAnswer: Number(answer),
+      responseTimeMs: safeResponseTime,
+    })
+
+    if (rpcResult) {
+      const reason = rpcResult.reason ?? ""
+      const accepted = Boolean(rpcResult.accepted)
+      const duplicate = Boolean(rpcResult.duplicate)
+
+      if (accepted || duplicate) {
+        await ensureGameLoadedById(gameId, { forceRefresh: true })
+
+        const pointsEarned = Number.isFinite(rpcResult.points_earned) ? Number(rpcResult.points_earned) : 0
+        const basePoints = Number.isFinite(rpcResult.base_points) ? Number(rpcResult.base_points) : 0
+        const speedBonus = Number.isFinite(rpcResult.speed_bonus) ? Number(rpcResult.speed_bonus) : 0
+        const rpcResponseTime = Number.isFinite(rpcResult.response_time_ms)
+          ? Number(rpcResult.response_time_ms)
+          : safeResponseTime
+        const isCorrect = Boolean(rpcResult.is_correct)
+
+        const response = NextResponse.json({
+          success: true,
+          isCorrect,
+          pointsEarned,
+          basePoints,
+          speedBonus,
+          difficulty: rpcResult.difficulty ?? null,
+          responseTimeMs: rpcResponseTime,
+        })
+        logApiRequest(request, 200, {
+          gameId,
+          isCorrect,
+          points: pointsEarned,
+          source: "supabase_rpc",
+          duplicate,
+        })
+        return response
+      }
+
+      if (reason === "game_not_found") {
+        return NextResponse.json({ error: "Game tidak ditemukan" }, { status: 404 })
+      }
+      if (reason === "player_not_in_game") {
+        return NextResponse.json({ error: "Aksi pemain tidak diizinkan" }, { status: 403 })
+      }
+      if (reason === "game_not_active") {
+        return NextResponse.json({ error: "Game sudah selesai atau belum dimulai" }, { status: 400 })
+      }
+      if (reason === "player_finished") {
+        return NextResponse.json({ error: "Semua soal untuk pemain ini sudah selesai" }, { status: 400 })
+      }
+      if (reason === "question_unavailable") {
+        return NextResponse.json({ error: "Soal tidak tersedia" }, { status: 400 })
+      }
+    }
+
     const result = recordAnswer(gameId, playerIndex, Number(answer), safeResponseTime)
     if (!result.game) {
       return NextResponse.json({ error: "Game tidak ditemukan" }, { status: 404 })
@@ -141,7 +245,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         selectedAnswer: typeof answer === "number" ? answer : -1,
         isCorrect: result.isCorrect,
         responseTimeMs: result.responseTimeMs,
-        pointsEarned: result.basePoints,
+        pointsEarned: result.pointsEarned,
         speedBonus: result.speedBonus,
       })
     }

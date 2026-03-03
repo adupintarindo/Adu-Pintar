@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+import { listPersistedGameEvents } from "@/lib/game-events-supabase"
 import { getEventQueue } from "@/lib/realtime"
 import { logApiRequest, rejectIfRateLimited } from "@/lib/api-security"
 
@@ -20,13 +21,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Game ID diperlukan" }, { status: 400 })
     }
 
-    const events = getEventQueue(gameId)
-    logApiRequest(request, 200, { action: "game_event_sync", gameId, eventCount: events.length })
+    const supabaseEvents = await listPersistedGameEvents(gameId, 300)
+    const events = supabaseEvents ?? getEventQueue(gameId)
+    logApiRequest(request, 200, {
+      action: "game_event_sync",
+      gameId,
+      eventCount: events.length,
+      source: supabaseEvents ? "supabase" : "memory",
+    })
     return NextResponse.json({
       gameId,
       events,
       timestamp: new Date(),
       hasPendingEvents: events.length > 0,
+      source: supabaseEvents ? "supabase" : "memory",
     })
   } catch (error) {
     console.error("[api/game/sync] Internal error:", error)
@@ -34,4 +42,3 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Gagal mensinkronkan game" }, { status: 500 })
   }
 }
-

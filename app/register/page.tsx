@@ -40,6 +40,7 @@ type SchoolOption = {
 }
 
 const GRADE_OPTIONS: GradeLevel[] = ["SD", "SMP", "SMA"]
+const TOTAL_STEPS = 5
 
 const SCHOOL_OPTIONS: SchoolOption[] = [
   { grade: "SD", name: "SD Negeri 01 Menteng", city: "Jakarta Pusat", province: "DKI Jakarta" },
@@ -75,8 +76,8 @@ type RegisterFormData = {
   role: "student" | "teacher" | "school"
 }
 
-const STUDENT_TEACHER_STEP_LABELS = ["Akun", "Personal", "Sekolah", "Kontak"] as const
-const SCHOOL_STEP_LABELS = ["Akun", "Verifikasi", "Sekolah", "Aktivasi"] as const
+const STUDENT_TEACHER_STEP_LABELS = ["Akun", "Personal", "Sekolah", "Kontak", "Tinjau"] as const
+const SCHOOL_STEP_LABELS = ["Akun", "Verifikasi", "Sekolah", "Kontak", "Tinjau"] as const
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -97,10 +98,21 @@ export default function RegisterPage() {
     schoolCity: "",
     phoneNumber: "",
     npsn: "",
-    role: "school",
+    role: "student",
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [pendingVerification, setPendingVerification] = useState<{
+    schoolName: string
+    email: string
+    mode: "supabase" | "fallback" | "unknown"
+  } | null>(null)
+  const [pendingStudentPin, setPendingStudentPin] = useState<{
+    pin: string
+    name: string
+    schoolName: string
+    className: string
+  } | null>(null)
 
   // #135 + #267: Persist form and step to sessionStorage
   useEffect(() => {
@@ -113,7 +125,7 @@ export default function RegisterPage() {
       const savedStep = sessionStorage.getItem("register_step")
       if (savedStep) {
         const parsedStep = Number.parseInt(savedStep, 10)
-        if (parsedStep >= 1 && parsedStep <= 4) setStep(parsedStep)
+        if (parsedStep >= 1 && parsedStep <= TOTAL_STEPS) setStep(parsedStep)
       }
     } catch (error) {
       console.error("[register] Failed to parse stored form data:", error)
@@ -147,13 +159,13 @@ export default function RegisterPage() {
       value: "student",
       title: "Siswa",
       icon: GraduationCap,
-      description: "Saya adalah siswa yang ingin belajar agrikultur dan mengikuti kompetisi kuis pertanian.",
+      description: "Saya siswa yang ingin belajar pertanian dan ikut kompetisi kuis.",
     },
     {
       value: "teacher",
       title: "Guru",
       icon: UserCheck,
-      description: "Saya adalah guru pembimbing yang mendampingi siswa mendalami materi agrikultur dan kompetisi kuis.",
+      description: "Saya guru pembimbing yang mendampingi siswa belajar pertanian.",
     },
     {
       value: "school",
@@ -170,10 +182,6 @@ export default function RegisterPage() {
   }
 
   const handleRoleSelect = (role: RegisterFormData["role"]) => {
-    if (role !== "school") {
-      setError("Registrasi mandiri siswa/guru dinonaktifkan. Minta akun dari admin sekolah.")
-      return
-    }
     setFormData((prev) => ({ ...prev, role }))
     setStep(1)
     setError("")
@@ -205,7 +213,7 @@ export default function RegisterPage() {
         return
       }
       if (formData.password.length < 8) {
-        setError("Kata sandi minimal 8 karakter")
+        setError("Kata sandi minimal 8 huruf")
         return
       }
       if (!/[a-zA-Z]/.test(formData.password) || !/\d/.test(formData.password)) {
@@ -221,13 +229,23 @@ export default function RegisterPage() {
         setError("NPSN harus 8 digit angka")
         return
       }
-      if (!isSchoolRegistration && (!formData.dateOfBirth || !formData.className)) {
+      if (formData.role === "student" && (!formData.dateOfBirth || !formData.className)) {
         setError("Tanggal lahir dan kelas harus diisi")
         return
       }
     } else if (step === 3) {
       if (!formData.schoolName || !formData.schoolProvince || !formData.schoolCity) {
         setError("Nama sekolah dan lokasi sekolah harus diisi")
+        return
+      }
+    } else if (step === 4) {
+      if (!formData.phoneNumber) {
+        setError("Nomor handphone harus diisi")
+        return
+      }
+
+      if (formData.role === "student" && !formData.city) {
+        setError("Kota/Kabupaten asal harus diisi")
         return
       }
     }
@@ -243,7 +261,7 @@ export default function RegisterPage() {
       return
     }
 
-    if (!isSchoolRegistration && !formData.city) {
+    if (formData.role === "student" && !formData.city) {
       setError("Kota/Kabupaten asal harus diisi")
       return
     }
@@ -273,14 +291,49 @@ export default function RegisterPage() {
         body: JSON.stringify(payload),
       })
 
+      const data = await res.json()
       if (!res.ok) {
-        const data = await res.json()
         throw new Error(data.error || "Pendaftaran gagal")
       }
 
-      trackEvent("register_complete", { role: isSchoolRegistration ? "school" : formData.role })
+      trackEvent("register_complete", { role: formData.role })
+      try {
+        sessionStorage.removeItem("register_form")
+        sessionStorage.removeItem("register_step")
+      } catch {}
+
+      // Student: show PIN screen
+      if (formData.role === "student" && data?.pinToken) {
+        toast.success("Pendaftaran siswa berhasil!")
+        setPendingStudentPin({
+          pin: data.pinToken,
+          name: formData.name,
+          schoolName: formData.schoolName,
+          className: `Kelas ${formData.className}`,
+        })
+        return
+      }
+
+      // Teacher: redirect to dashboard
+      if (formData.role === "teacher") {
+        toast.success("Pendaftaran guru berhasil!")
+        router.push("/dashboard")
+        return
+      }
+
+      // School: existing flow
+      if (isSchoolRegistration && data?.school && data.school.isVerified === false) {
+        toast.success("Registrasi berhasil. Akun sekolah masuk tahap verifikasi.")
+        setPendingVerification({
+          schoolName: typeof data.school.name === "string" ? data.school.name : formData.schoolName,
+          email: typeof data.school.email === "string" ? data.school.email : formData.email,
+          mode: data?.mode === "supabase" || data?.mode === "fallback" ? data.mode : "unknown",
+        })
+        return
+      }
+
       toast.success("Hore! Registrasi berhasil. Akun sekolah siap digunakan.")
-      router.push(isSchoolRegistration ? "/school/dashboard" : "/login")
+      router.push("/school/dashboard")
     } catch (err) {
       const message = err instanceof Error ? err.message : "Terjadi kesalahan"
       setError(message)
@@ -296,16 +349,123 @@ export default function RegisterPage() {
     "w-full rounded-xl border border-border/50 bg-card/50 py-3 px-4 text-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
   const labelClassName = "text-sm font-semibold text-foreground"
 
+  if (pendingStudentPin) {
+    return (
+      <main className="relative min-h-screen overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
+        <div className="relative z-10 flex min-h-screen items-center justify-center p-4 py-8">
+          <div className="w-full max-w-lg glass-card card-accent-top rounded-3xl p-8 shadow-lg">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+              Pendaftaran Siswa Berhasil!
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">Simpan PIN berikut untuk login nanti</p>
+
+            <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-6">
+              <p className="text-sm font-semibold text-foreground">PIN Login Kamu</p>
+              <p className="font-display text-4xl font-bold tracking-[0.3em] text-primary">
+                {pendingStudentPin.pin}
+              </p>
+              <p className="text-xs text-muted-foreground">Catat atau screenshot PIN ini</p>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-border/50 bg-card/50 p-4 text-sm">
+              <p className="text-muted-foreground">
+                Nama: <span className="font-semibold text-foreground">{pendingStudentPin.name}</span>
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Sekolah: <span className="font-semibold text-foreground">{pendingStudentPin.schoolName}</span>
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Kelas: <span className="font-semibold text-foreground">{pendingStudentPin.className}</span>
+              </p>
+            </div>
+
+            <p className="mt-4 text-sm text-muted-foreground">
+              Kamu bisa login menggunakan PIN di tab &quot;Siswa&quot;, atau dengan email dan password di tab
+              &quot;Guru/Sekolah&quot; pada halaman login.
+            </p>
+
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="w-full rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg active:scale-95"
+                style={{ boxShadow: "var(--shadow-glow-primary)" }}
+              >
+                Ke Halaman Login
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (pendingVerification) {
+    return (
+      <main className="relative min-h-screen overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
+        <div className="relative z-10 flex min-h-screen items-center justify-center p-4 py-8">
+          <div className="w-full max-w-lg glass-card card-accent-top rounded-3xl p-8 shadow-lg">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Akun Sekolah Berhasil Dibuat</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Status saat ini: <span className="font-semibold text-foreground">Menunggu verifikasi</span>
+            </p>
+
+            <div className="mt-6 rounded-2xl border border-border/50 bg-card/50 p-4 text-sm">
+              <p className="text-muted-foreground">
+                Sekolah: <span className="font-semibold text-foreground">{pendingVerification.schoolName}</span>
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Email: <span className="font-semibold text-foreground">{pendingVerification.email}</span>
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Mode registrasi:{" "}
+                <span className="font-semibold text-foreground">
+                  {pendingVerification.mode === "supabase"
+                    ? "Supabase"
+                    : pendingVerification.mode === "fallback"
+                      ? "Fallback Lokal"
+                      : "Belum terdeteksi"}
+                </span>
+              </p>
+            </div>
+
+            <p className="mt-4 text-sm text-muted-foreground">
+              Anda sudah bisa masuk ke dashboard sekolah untuk melengkapi data guru, kelas, dan siswa sambil menunggu verifikasi final.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => router.push("/school/dashboard")}
+                className="rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg active:scale-95"
+                style={{ boxShadow: "var(--shadow-glow-primary)" }}
+              >
+                Buka Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="rounded-xl border border-border/50 bg-card/50 px-4 py-3 font-semibold text-foreground transition hover:bg-muted/50 active:scale-95"
+              >
+                Ke Halaman Login
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
       {/* Decorative orbs */}
       <div
-        className="absolute top-20 -right-32 h-96 w-96 rounded-full opacity-20 pointer-events-none hidden md:block"
+        className="orb-float absolute top-20 -right-32 h-96 w-96 rounded-full opacity-20 pointer-events-none hidden md:block"
         style={{ background: "radial-gradient(circle, oklch(0.52 0.21 142), transparent 70%)", filter: "blur(80px)" }}
         aria-hidden="true"
       />
       <div
-        className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full opacity-15 pointer-events-none hidden md:block"
+        className="orb-float-delayed absolute -bottom-24 -left-24 h-80 w-80 rounded-full opacity-15 pointer-events-none hidden md:block"
         style={{ background: "radial-gradient(circle, oklch(0.55 0.15 250), transparent 70%)", filter: "blur(60px)" }}
         aria-hidden="true"
       />
@@ -328,14 +488,14 @@ export default function RegisterPage() {
           <div className="glass-card card-accent-top rounded-3xl p-6 sm:p-8 shadow-lg animate-fade-up" style={{ animationDelay: "100ms" }}>
             <div className="mb-6 text-center">
               <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Buat Akun Baru</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Langkah {step} dari 4</p>
+              <p className="mt-1 text-sm text-muted-foreground">Langkah {step} dari {TOTAL_STEPS}</p>
             </div>
 
             {/* #266: Step progress bar */}
             <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
               <div
                 className="h-full rounded-full bg-primary transition-all duration-500"
-                style={{ width: `${(step / 4) * 100}%` }}
+                style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
               />
             </div>
 
@@ -349,7 +509,7 @@ export default function RegisterPage() {
                   <div key={label} className="flex items-center gap-2">
                     <div className="flex flex-col items-center gap-1">
                       <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
                           isCompleted
                             ? "bg-primary text-primary-foreground"
                             : isCurrent
@@ -366,7 +526,7 @@ export default function RegisterPage() {
                     </div>
                     {i < stepLabels.length - 1 && (
                       <div
-                        className={`mb-4 h-0.5 w-6 sm:w-10 rounded-full transition-all ${
+                        className={`mb-4 h-0.5 w-6 sm:w-10 rounded-full transition-all duration-300 ${
                           step > stepNum ? "bg-primary" : "bg-border/50"
                         }`}
                       />
@@ -385,21 +545,17 @@ export default function RegisterPage() {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {roleOptions.map((option) => {
                     const isActive = formData.role === option.value
-                    const disabled = option.value !== "school"
                     const Icon = option.icon
                     return (
                       <button
                         key={option.value}
                         type="button"
-                        disabled={disabled}
                         onClick={() => handleRoleSelect(option.value)}
-                        className={`glass-card hover-lift relative flex h-full flex-col gap-3 rounded-2xl border-2 p-4 text-left transition-all ${
+                        className={`glass-card hover-lift relative flex h-full flex-col gap-3 rounded-2xl border-2 p-4 text-left transition-all active:scale-95 ${
                           isActive
                             ? "border-primary shadow-md"
                             : "border-transparent hover:border-primary/30"
                         }`}
-                        aria-disabled={disabled}
-                        title={disabled ? "Registrasi peran ini dikelola oleh admin sekolah" : undefined}
                         style={isActive ? { boxShadow: "var(--shadow-glow-primary)" } : undefined}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -417,7 +573,7 @@ export default function RegisterPage() {
                         <div>
                           <h3 className="font-display text-base font-semibold text-foreground">{option.title}</h3>
                           <p className="text-xs text-muted-foreground">
-                            {disabled ? "Registrasi dikelola oleh admin sekolah." : option.description}
+                            {option.description}
                           </p>
                         </div>
                       </button>
@@ -439,9 +595,20 @@ export default function RegisterPage() {
               </div>
 
               {error && (
-                <div className="error-banner" role="alert">
+                <div className="error-banner animate-wrong-shake" role="alert">
                   <AlertCircle className="error-icon" />
-                  <span>{error}</span>
+                  <div>
+                    <span>{error}</span>
+                    {error.toLowerCase().includes("email sudah") && (
+                      <p className="mt-1 text-xs opacity-80">Coba login atau gunakan email lain ya!</p>
+                    )}
+                    {error.toLowerCase().includes("username sudah") && (
+                      <p className="mt-1 text-xs opacity-80">Coba pilih username lain yang belum dipakai.</p>
+                    )}
+                    {(error.toLowerCase().includes("gagal") || error.toLowerCase().includes("kesalahan")) && (
+                      <p className="mt-1 text-xs opacity-80">Periksa koneksi internet kamu, lalu coba lagi.</p>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -457,7 +624,7 @@ export default function RegisterPage() {
                       <input
                         id="name"
                         name="name"
-                        placeholder={isSchoolRegistration ? "Nama penanggung jawab sekolah" : "John Doe"}
+                        placeholder={isSchoolRegistration ? "Nama penanggung jawab sekolah" : "Nama Penanggung Jawab"}
                         value={formData.name}
                         onChange={handleChange}
                         required
@@ -470,7 +637,7 @@ export default function RegisterPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <label htmlFor="username" className={labelClassName}>
-                          Username Agrikultur
+                          Nama Pengguna
                         </label>
                         <span className="text-[10px] text-muted-foreground">Muncul di profil & duel</span>
                       </div>
@@ -487,7 +654,7 @@ export default function RegisterPage() {
                         />
                       </div>
                       <p className="text-[10px] text-muted-foreground">
-                        Gunakan 3-20 karakter tanpa spasi. Username masih bisa diganti dari halaman profil.
+                        Gunakan 3-20 huruf tanpa spasi. Username masih bisa diganti dari halaman profil.
                       </p>
                     </div>
                   )}
@@ -537,7 +704,7 @@ export default function RegisterPage() {
                       Konfirmasi Kata Sandi
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Lock className={`absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 ${formData.confirmPassword && formData.password !== formData.confirmPassword ? "text-destructive" : "text-muted-foreground"}`} />
                       <input
                         id="confirmPassword"
                         name="confirmPassword"
@@ -546,9 +713,15 @@ export default function RegisterPage() {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         required
-                        className={inputClassName}
+                        className={`${inputClassName} ${formData.confirmPassword && formData.password !== formData.confirmPassword ? "border-destructive/50 focus:border-destructive focus:ring-destructive/20" : ""}`}
                       />
                     </div>
+                    {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                      <p className="flex items-center gap-1.5 text-xs text-destructive">
+                        <AlertCircle className="h-3 w-3" />
+                        Kata sandi belum cocok
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -561,7 +734,7 @@ export default function RegisterPage() {
                       <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
                         <p className="text-sm font-semibold text-foreground">Verifikasi Email Sekolah</p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Flow OTP email akan diaktifkan saat integrasi provider email selesai. Untuk Fase 4, akun sekolah
+                          Verifikasi lewat kode email akan diaktifkan nanti. Untuk Fase 4, akun sekolah
                           dapat langsung diaktivasi setelah data sekolah dilengkapi.
                         </p>
                       </div>
@@ -598,6 +771,41 @@ export default function RegisterPage() {
                             className={inputClassName}
                           />
                         </div>
+                      </div>
+                    </>
+                  ) : formData.role === "teacher" ? (
+                    <>
+                      <div className="space-y-2">
+                        <label htmlFor="gender" className={labelClassName}>
+                          Jenis Kelamin
+                        </label>
+                        <select
+                          id="gender"
+                          name="gender"
+                          value={formData.gender}
+                          onChange={handleChange}
+                          className={selectClassName}
+                        >
+                          <option value="M">Laki-laki</option>
+                          <option value="F">Perempuan</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label htmlFor="grade" className={labelClassName}>
+                          Jenjang yang Diajar
+                        </label>
+                        <select
+                          id="grade"
+                          name="grade"
+                          value={formData.grade}
+                          onChange={handleChange}
+                          className={selectClassName}
+                        >
+                          <option value="SD">SD (Sekolah Dasar)</option>
+                          <option value="SMP">SMP (Sekolah Menengah Pertama)</option>
+                          <option value="SMA">SMA/SMK (Sekolah Menengah Atas/Kejuruan)</option>
+                        </select>
                       </div>
                     </>
                   ) : (
@@ -775,8 +983,8 @@ export default function RegisterPage() {
 
                   {isSchoolRegistration && (
                     <div className="rounded-xl border border-border/50 bg-card/50 p-3 text-xs text-muted-foreground">
-                      Jika sekolah belum terverifikasi pada database Kemendikbud, Anda tetap bisa lanjut menggunakan nama
-                      sekolah + lokasi. Verifikasi NPSN dapat dilakukan setelah onboarding.
+                      Jika sekolah belum terverifikasi pada data Kemendikbud, Anda tetap bisa lanjut menggunakan nama
+                      sekolah + lokasi. Verifikasi NPSN dapat dilakukan setelah pendaftaran.
                     </div>
                   )}
                 </div>
@@ -785,7 +993,7 @@ export default function RegisterPage() {
               {/* Step 4: Contact Information */}
               {step === 4 && (
                 <div className="space-y-4">
-                  {!isSchoolRegistration && (
+                  {formData.role === "student" && (
                     <div className="space-y-2">
                       <label htmlFor="city" className={labelClassName}>
                         Kota/Kabupaten Asal
@@ -825,7 +1033,7 @@ export default function RegisterPage() {
 
                   <div className="glass-card rounded-xl p-4">
                     <p className="mb-2 text-sm font-semibold text-foreground">
-                      {isSchoolRegistration ? "Konfirmasi Aktivasi Sekolah:" : "Verifikasi Data:"}
+                      {isSchoolRegistration ? "Kontak Penanggung Jawab:" : "Kontak Akun:"}
                     </p>
                     <div className="space-y-1 text-sm text-muted-foreground">
                       <p>
@@ -835,12 +1043,60 @@ export default function RegisterPage() {
                         Email: <span className="text-foreground">{formData.email}</span>
                       </p>
                       <p>
-                        Sekolah:{" "}
+                        Nomor kontak: <span className="text-foreground">{formData.phoneNumber}</span>
+                      </p>
+                      {formData.role === "student" ? (
+                        <p>
+                          Kota asal: <span className="text-foreground">{formData.city || "-"}</span>
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 5: Final Review */}
+              {step === 5 && (
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                    <p className="text-sm font-semibold text-foreground">Tinjau sebelum kirim</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {isSchoolRegistration
+                        ? "Pastikan semua data sudah benar. Setelah dikirim, akun sekolah akan dibuat dan status verifikasi dimulai."
+                        : formData.role === "teacher"
+                          ? "Pastikan semua data sudah benar. Setelah dikirim, akun guru akan dibuat."
+                          : "Pastikan semua data sudah benar. Setelah dikirim, kamu akan mendapat PIN untuk login."}
+                    </p>
+                  </div>
+
+                  <div className="glass-card rounded-xl p-4">
+                    <p className="mb-2 text-sm font-semibold text-foreground">Ringkasan Data</p>
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <p>
+                        Peran:{" "}
                         <span className="text-foreground">
-                          {formData.schoolName}, {formData.schoolCity}
+                          {isSchoolRegistration ? "Admin Sekolah" : formData.role === "teacher" ? "Guru" : "Siswa"}
                         </span>
                       </p>
-                      {isSchoolRegistration && (
+                      <p>
+                        {isSchoolRegistration ? "PIC" : "Nama"}: <span className="text-foreground">{formData.name}</span>
+                      </p>
+                      <p>
+                        Email: <span className="text-foreground">{formData.email}</span>
+                      </p>
+                      <p>
+                        Sekolah: <span className="text-foreground">{formData.schoolName}</span>
+                      </p>
+                      <p>
+                        Lokasi:{" "}
+                        <span className="text-foreground">
+                          {formData.schoolCity || "-"}, {formData.schoolProvince || "-"}
+                        </span>
+                      </p>
+                      <p>
+                        Nomor kontak: <span className="text-foreground">{formData.phoneNumber || "-"}</span>
+                      </p>
+                      {isSchoolRegistration ? (
                         <>
                           <p>
                             Jenjang: <span className="text-foreground">{formData.grade}</span>
@@ -850,6 +1106,19 @@ export default function RegisterPage() {
                               NPSN: <span className="text-foreground">{formData.npsn}</span>
                             </p>
                           )}
+                        </>
+                      ) : formData.role === "teacher" ? (
+                        <p>
+                          Jenjang yang diajar: <span className="text-foreground">{formData.grade}</span>
+                        </p>
+                      ) : (
+                        <>
+                          <p>
+                            Kelas: <span className="text-foreground">{formData.className || "-"}</span>
+                          </p>
+                          <p>
+                            Kota asal: <span className="text-foreground">{formData.city || "-"}</span>
+                          </p>
                         </>
                       )}
                     </div>
@@ -866,31 +1135,37 @@ export default function RegisterPage() {
                       setStep(step - 1)
                       setError("")
                     }}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border/50 bg-card/50 px-4 py-3 font-semibold text-foreground transition hover:bg-muted/50"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border/50 bg-card/50 px-4 py-3 font-semibold text-foreground transition hover:bg-muted/50 active:scale-95"
                   >
                     <ChevronLeft className="h-4 w-4" />
                     Kembali
                   </button>
                 )}
-                {step < 4 ? (
+                {step < TOTAL_STEPS ? (
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg active:scale-95"
                     style={{ boxShadow: "var(--shadow-glow-primary)" }}
                   >
-                    Lanjut
+                    {step === TOTAL_STEPS - 1 ? "Tinjau Data" : "Lanjut"}
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 ) : (
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                     style={{ boxShadow: loading ? undefined : "var(--shadow-glow-primary)" }}
                   >
                     <Check className="h-4 w-4" />
-                    {loading ? "Memproses..." : isSchoolRegistration ? "Aktivasi Akun Sekolah" : "Daftar"}
+                    {loading
+                      ? "Memproses..."
+                      : isSchoolRegistration
+                        ? "Aktivasi Akun Sekolah"
+                        : formData.role === "teacher"
+                          ? "Daftar sebagai Guru"
+                          : "Daftar sebagai Siswa"}
                   </button>
                 )}
               </div>

@@ -6,7 +6,7 @@ import {
   buildExpiredAuthCookieOptions,
   encodeSessionCookie,
 } from "@/lib/session-cookie"
-import { findFallbackSchoolOrTeacherByEmailPassword } from "@/lib/school-management"
+import { findFallbackSchoolOrTeacherByEmailPassword, findFallbackStudentByEmailPassword } from "@/lib/school-management"
 import { isSupabaseAdminConfigured } from "@/lib/supabase-admin"
 import { isSupabaseConfigured } from "@/lib/supabase"
 import { clearLoginFailures, getLockRemainingSeconds, isLoginLocked, recordLoginFailure } from "@/lib/auth-security"
@@ -73,19 +73,36 @@ export async function POST(request: NextRequest) {
       return response
     }
 
-    const fallbackSchoolOrTeacherUser = findFallbackSchoolOrTeacherByEmailPassword({ email, password })
-    if (fallbackSchoolOrTeacherUser) {
-      clearLoginFailures(email)
-      const response = NextResponse.json({ user: fallbackSchoolOrTeacherUser })
-      response.cookies.set(
-        "user_session",
-        encodeSessionCookie(attachSessionId(fallbackSchoolOrTeacherUser)),
-        buildAuthCookieOptions(60 * 60 * 24),
-      )
-      response.cookies.set("userId", fallbackSchoolOrTeacherUser.id, buildAuthCookieOptions())
-      response.cookies.set("student_session", "", buildExpiredAuthCookieOptions())
-      logApiRequest(request, 200, { role: fallbackSchoolOrTeacherUser.role, source: "fallback" })
-      return response
+    if (!isSupabaseConfigured()) {
+      const fallbackSchoolOrTeacherUser = findFallbackSchoolOrTeacherByEmailPassword({ email, password })
+      if (fallbackSchoolOrTeacherUser) {
+        clearLoginFailures(email)
+        const response = NextResponse.json({ user: fallbackSchoolOrTeacherUser })
+        response.cookies.set(
+          "user_session",
+          encodeSessionCookie(attachSessionId(fallbackSchoolOrTeacherUser)),
+          buildAuthCookieOptions(60 * 60 * 24),
+        )
+        response.cookies.set("userId", fallbackSchoolOrTeacherUser.id, buildAuthCookieOptions())
+        response.cookies.set("student_session", "", buildExpiredAuthCookieOptions())
+        logApiRequest(request, 200, { role: fallbackSchoolOrTeacherUser.role, source: "fallback" })
+        return response
+      }
+
+      const fallbackStudentUser = findFallbackStudentByEmailPassword({ email, password })
+      if (fallbackStudentUser) {
+        clearLoginFailures(email)
+        const response = NextResponse.json({ user: fallbackStudentUser })
+        response.cookies.set(
+          "user_session",
+          encodeSessionCookie(attachSessionId(fallbackStudentUser)),
+          buildAuthCookieOptions(60 * 60 * 24),
+        )
+        response.cookies.set("userId", fallbackStudentUser.id, buildAuthCookieOptions())
+        response.cookies.set("student_session", "", buildExpiredAuthCookieOptions())
+        logApiRequest(request, 200, { role: "student", source: "fallback" })
+        return response
+      }
     }
 
     recordLoginFailure(email)

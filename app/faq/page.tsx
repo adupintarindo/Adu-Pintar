@@ -171,8 +171,8 @@ const faqSectionThemes: Record<
   }
 > = {
   tentang: {
-    surface: "bg-gradient-to-br from-primary/10 via-card/95 to-background/90",
-    topBar: "bg-gradient-to-r from-primary/70 via-primary/40 to-transparent",
+    surface: "bg-linear-to-br from-primary/10 via-card/95 to-background/90",
+    topBar: "bg-linear-to-r from-primary/70 via-primary/40 to-transparent",
     glow: "bg-primary/12",
     iconWrap: "bg-primary/12 text-primary ring-primary/20",
     labelPill: "border-primary/25 bg-primary/10 text-primary",
@@ -180,8 +180,8 @@ const faqSectionThemes: Record<
     numberBadge: "bg-primary/10 text-primary ring-primary/15",
   },
   "cara-bermain": {
-    surface: "bg-gradient-to-br from-accent/10 via-card/95 to-background/90",
-    topBar: "bg-gradient-to-r from-accent/70 via-accent/35 to-transparent",
+    surface: "bg-linear-to-br from-accent/10 via-card/95 to-background/90",
+    topBar: "bg-linear-to-r from-accent/70 via-accent/35 to-transparent",
     glow: "bg-accent/12",
     iconWrap: "bg-accent/12 text-accent ring-accent/20",
     labelPill: "border-accent/25 bg-accent/10 text-accent",
@@ -189,8 +189,8 @@ const faqSectionThemes: Record<
     numberBadge: "bg-accent/10 text-accent ring-accent/15",
   },
   kompetisi: {
-    surface: "bg-gradient-to-br from-secondary/8 via-card/95 to-background/90",
-    topBar: "bg-gradient-to-r from-secondary/80 via-primary/35 to-transparent",
+    surface: "bg-linear-to-br from-secondary/8 via-card/95 to-background/90",
+    topBar: "bg-linear-to-r from-secondary/80 via-primary/35 to-transparent",
     glow: "bg-secondary/12",
     iconWrap: "bg-secondary/10 text-secondary ring-secondary/20",
     labelPill: "border-secondary/20 bg-secondary/10 text-secondary",
@@ -198,8 +198,8 @@ const faqSectionThemes: Record<
     numberBadge: "bg-secondary/10 text-secondary ring-secondary/15",
   },
   teknis: {
-    surface: "bg-gradient-to-br from-sky-500/8 via-card/95 to-background/90",
-    topBar: "bg-gradient-to-r from-sky-600/65 via-accent/35 to-transparent",
+    surface: "bg-linear-to-br from-sky-500/8 via-card/95 to-background/90",
+    topBar: "bg-linear-to-r from-sky-600/65 via-accent/35 to-transparent",
     glow: "bg-sky-500/10",
     iconWrap: "bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:text-sky-300",
     labelPill: "border-sky-500/20 bg-sky-500/8 text-sky-700 dark:text-sky-300",
@@ -207,13 +207,13 @@ const faqSectionThemes: Record<
     numberBadge: "bg-sky-500/10 text-sky-700 ring-sky-500/15 dark:text-sky-300",
   },
   "untuk-sekolah": {
-    surface: "bg-gradient-to-br from-amber-500/8 via-card/95 to-background/90",
-    topBar: "bg-gradient-to-r from-amber-500/70 via-primary/35 to-transparent",
-    glow: "bg-amber-500/10",
-    iconWrap: "bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-300",
-    labelPill: "border-amber-500/20 bg-amber-500/8 text-amber-700 dark:text-amber-300",
-    countBox: "border-amber-500/20 bg-amber-500/5",
-    numberBadge: "bg-amber-500/10 text-amber-700 ring-amber-500/15 dark:text-amber-300",
+    surface: "bg-linear-to-br from-lime-500/8 via-card/95 to-background/90",
+    topBar: "bg-linear-to-r from-lime-500/70 via-primary/35 to-transparent",
+    glow: "bg-lime-500/10",
+    iconWrap: "bg-lime-500/10 text-lime-700 ring-lime-500/20 dark:text-lime-300",
+    labelPill: "border-lime-500/20 bg-lime-500/8 text-lime-700 dark:text-lime-300",
+    countBox: "border-lime-500/20 bg-lime-500/5",
+    numberBadge: "bg-lime-500/10 text-lime-700 ring-lime-500/15 dark:text-lime-300",
   },
 }
 
@@ -229,7 +229,7 @@ export default function FAQPage() {
         <section className="relative overflow-hidden border-b border-border/50" style={{ background: "var(--gradient-hero)" }}>
           <div className="pointer-events-none absolute -left-32 -top-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
           <div className="pointer-events-none absolute -right-24 top-8 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
-          <div className="pointer-events-none absolute left-1/2 top-10 h-40 w-40 -translate-x-1/2 rounded-full bg-white/40 blur-3xl" />
+          <div className="pointer-events-none absolute left-1/2 top-10 h-40 w-40 -translate-x-1/2 rounded-full bg-white/40 dark:bg-white/5 blur-3xl" />
 
           <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
             <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
@@ -250,16 +250,16 @@ export default function FAQPage() {
                 <div className="mt-6 flex flex-wrap gap-3">
                   <a
                     href="#faq-categories"
-                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 active:scale-95"
                   >
                     Lihat semua kategori
                     <ArrowRight className="h-4 w-4" />
                   </a>
                   <Link
                     href="/contact"
-                    className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/80 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:bg-card"
+                    className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/80 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:bg-card active:scale-95"
                   >
-                    Hubungi tim support
+                    Hubungi tim bantuan
                   </Link>
                 </div>
 
@@ -278,7 +278,7 @@ export default function FAQPage() {
               </div>
 
               <div className="glass-card relative overflow-hidden rounded-3xl border border-border/50 p-6 sm:p-7">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-white/40 to-accent/10" />
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-white/40 dark:via-white/5 to-accent/10" />
                 <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/15 blur-2xl" />
                 <div className="relative">
                   <p className="section-badge">Ringkasan Cepat</p>
@@ -328,7 +328,7 @@ export default function FAQPage() {
                             {section.title}
                           </span>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary">
-                            {section.items.length} Q
+                            {section.items.length} pertanyaan
                             <ArrowRight className="h-3.5 w-3.5" />
                           </span>
                         </a>

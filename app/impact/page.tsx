@@ -16,18 +16,18 @@ import { Navbar } from "@/components/navbar"
 const heroStats = [
   { label: "Sekolah Terdaftar", value: "500+", icon: Building2, tone: "from-blue-500/20 to-cyan-500/10" },
   { label: "Siswa Aktif", value: "25.000+", icon: Users, tone: "from-emerald-500/20 to-lime-500/10" },
-  { label: "Pertandingan", value: "120.000+", icon: Trophy, tone: "from-amber-500/20 to-orange-500/10" },
-  { label: "Sebaran Wilayah", value: "34 Provinsi", icon: Globe2, tone: "from-fuchsia-500/20 to-pink-500/10" },
+  { label: "Pertandingan", value: "120.000+", icon: Trophy, tone: "from-lime-500/20 to-yellow-500/10" },
+  { label: "Sebaran Wilayah", value: "34 Provinsi", icon: Globe2, tone: "from-fuchsia-500/20 to-violet-500/10" },
 ]
 
 const strategicChanges = [
   "Akselerasi Regenerasi SDM Pertanian",
-  "Rebranding Citra Pertanian di Mata Gen Alpha & Z",
+  "Memperbarui Citra Pertanian di Mata Generasi Muda",
   "Peningkatan Skor Literasi Sains & Numerasi",
-  "Solusi Kecanduan Gadget (Positive Distraction)",
+  "Solusi Kecanduan Gadget (Pengalihan Positif)",
   "Optimalisasi Aset Teknologi Negara (IFP)",
-  "Local Economic Empowerment",
-  "Pemetaan Big Data Kompetensi Nasional (Heatmap)",
+  "Pemberdayaan Ekonomi Lokal",
+  "Pemetaan Data Besar Kompetensi Nasional (Peta Sebaran)",
   "Pemerataan Akses Kompetisi Berkualitas (Inklusivitas)",
 ]
 
@@ -96,7 +96,7 @@ export default function ImpactPage() {
                 const Icon = stat.icon
                 return (
                   <div key={stat.label} className="glass-card rounded-2xl border border-border/50 p-5">
-                    <div className={`rounded-xl bg-gradient-to-br ${stat.tone} p-3 w-fit`}>
+                    <div className={`rounded-xl bg-linear-to-br ${stat.tone} p-3 w-fit`}>
                       <Icon className="h-5 w-5 text-primary" />
                     </div>
                     <div className="mt-4 text-2xl font-display font-bold text-foreground">{stat.value}</div>
@@ -187,7 +187,7 @@ export default function ImpactPage() {
               ))}
 
               <div className="glass-card rounded-2xl border border-border/50 p-4 text-sm text-muted-foreground">
-                Visual peta di atas adalah ilustrasi heatmap/sebaran untuk preview UI. Pada fase lanjutan dapat diganti SVG Indonesia
+                Visual peta di atas adalah ilustrasi peta sebaran untuk pratinjau tampilan. Pada fase lanjutan dapat diganti SVG Indonesia
                 detail dengan data real-time per provinsi/kabupaten.
               </div>
             </div>
@@ -215,7 +215,7 @@ export default function ImpactPage() {
               <Handshake className="h-5 w-5 text-primary" />
               <div>
                 <p className="section-badge">Kolaborasi</p>
-                <h2 className="text-2xl font-display font-bold tracking-tight text-foreground">Partner & Komunitas Pendukung</h2>
+                <h2 className="text-2xl font-display font-bold tracking-tight text-foreground">Mitra & Komunitas Pendukung</h2>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

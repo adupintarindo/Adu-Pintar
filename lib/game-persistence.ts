@@ -74,11 +74,21 @@ function toStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string")
 }
 
+function toStringArrayPreserveSlots(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.map((item) => (typeof item === "string" ? item : ""))
+}
+
 function toNumberArray(value: unknown): number[] {
   if (!Array.isArray(value)) return []
   return value
     .map((item) => (typeof item === "number" && Number.isFinite(item) ? Math.floor(item) : null))
     .filter((item): item is number => item !== null)
+}
+
+function toNumberArrayPreserveSlots(value: unknown): number[] {
+  if (!Array.isArray(value)) return []
+  return value.map((item) => (typeof item === "number" && Number.isFinite(item) ? Math.floor(item) : 0))
 }
 
 function toQuestionDifficulty(value: unknown, points: number): "mudah" | "menengah" | "sulit" {
@@ -317,14 +327,18 @@ async function hydrateQuestions(
   }
 }
 
-async function hydrateAndCacheGame(row: GameSessionRow): Promise<GameState | null> {
+async function hydrateAndCacheGame(
+  row: GameSessionRow,
+  options?: { forceRefresh?: boolean },
+): Promise<GameState | null> {
   const gameId = typeof row.id === "string" ? row.id : ""
   const code = typeof row.code === "string" ? row.code : ""
   const gradeCategory = typeof row.grade_category === "number" && Number.isFinite(row.grade_category) ? row.grade_category : 1
   if (!gameId || !code) return null
 
+  const forceRefresh = options?.forceRefresh === true
   const cached = getGame(gameId)
-  if (cached) {
+  if (cached && !forceRefresh) {
     return cached
   }
 
@@ -334,9 +348,9 @@ async function hydrateAndCacheGame(row: GameSessionRow): Promise<GameState | nul
     return null
   }
 
-  const rawPlayerIds = toStringArray(row.player_ids)
-  const rawPlayerNames = toStringArray(row.player_names)
-  const rawPlayerScores = toNumberArray(row.player_scores)
+  const rawPlayerIds = toStringArrayPreserveSlots(row.player_ids)
+  const rawPlayerNames = toStringArrayPreserveSlots(row.player_names)
+  const rawPlayerScores = toNumberArrayPreserveSlots(row.player_scores)
   const numPlayers = Math.max(rawPlayerIds.length, rawPlayerNames.length, rawPlayerScores.length, 2)
   const totalQuestionsRaw = typeof row.total_questions === "number" && Number.isFinite(row.total_questions) ? Math.floor(row.total_questions) : questions.length
   const totalQuestions = Math.max(1, Math.min(totalQuestionsRaw, questions.length))
@@ -378,9 +392,13 @@ async function hydrateAndCacheGame(row: GameSessionRow): Promise<GameState | nul
   return cacheGameState(game, playerState)
 }
 
-export async function loadPersistedGameById(gameId: string): Promise<GameState | null> {
+export async function loadPersistedGameById(
+  gameId: string,
+  options?: { forceRefresh?: boolean },
+): Promise<GameState | null> {
+  const forceRefresh = options?.forceRefresh === true
   const cached = getGame(gameId)
-  if (cached) return cached
+  if (cached && !forceRefresh) return cached
   if (!isSupabaseAdminConfigured() || !isUUID(gameId)) return null
 
   try {
@@ -394,17 +412,21 @@ export async function loadPersistedGameById(gameId: string): Promise<GameState |
       .maybeSingle()
 
     if (error || !data) return null
-    return hydrateAndCacheGame(data as GameSessionRow)
+    return hydrateAndCacheGame(data as GameSessionRow, { forceRefresh })
   } catch (error) {
     console.error("[game-persistence] loadPersistedGameById failed:", error)
     return null
   }
 }
 
-export async function loadPersistedGameByCode(code: string): Promise<GameState | null> {
+export async function loadPersistedGameByCode(
+  code: string,
+  options?: { forceRefresh?: boolean },
+): Promise<GameState | null> {
   const normalizedCode = code.trim().toUpperCase()
   if (!normalizedCode) return null
   if (!isSupabaseAdminConfigured()) return null
+  const forceRefresh = options?.forceRefresh === true
 
   try {
     const supabase = createAdminSupabaseClient()
@@ -417,7 +439,7 @@ export async function loadPersistedGameByCode(code: string): Promise<GameState |
       .maybeSingle()
 
     if (error || !data) return null
-    return hydrateAndCacheGame(data as GameSessionRow)
+    return hydrateAndCacheGame(data as GameSessionRow, { forceRefresh })
   } catch (error) {
     console.error("[game-persistence] loadPersistedGameByCode failed:", error)
     return null
@@ -445,7 +467,21 @@ export async function persistGameSessionSnapshot(game: GameState): Promise<void>
 
   const playerCurrentQuestions = toNumberArray(snapshot.playerCurrentQuestions)
   const minCurrentQuestion = playerCurrentQuestions.length > 0 ? Math.min(...playerCurrentQuestions) : 0
-  const validPlayerIds = game.playerIds.filter((playerId) => isUUID(playerId))
+  const totalSlots = Math.max(game.numPlayers, game.playerIds.length, game.playerNames.length, game.playerScores.length, 2)
+  const persistedPlayerIds = Array.from({ length: totalSlots }, (_, index) => {
+    const candidate = game.playerIds[index] ?? ""
+    return isUUID(candidate) ? candidate : null
+  })
+  const persistedPlayerNames = Array.from({ length: totalSlots }, (_, index) => {
+    const candidate = game.playerNames[index]
+    if (typeof candidate === "string" && candidate.trim()) return candidate.trim()
+    return `Pemain ${index + 1}`
+  })
+  const persistedPlayerScores = Array.from({ length: totalSlots }, (_, index) => {
+    const candidate = game.playerScores[index]
+    if (typeof candidate === "number" && Number.isFinite(candidate)) return Math.floor(candidate)
+    return 0
+  })
 
   try {
     const supabase = createAdminSupabaseClient()
@@ -456,9 +492,9 @@ export async function persistGameSessionSnapshot(game: GameState): Promise<void>
       game_type: game.numPlayers > 2 ? "team" : "1v1",
       grade_category: game.gradeCategory,
       status: toDbStatus(game.status),
-      player_ids: validPlayerIds,
-      player_names: game.playerNames,
-      player_scores: game.playerScores,
+      player_ids: persistedPlayerIds,
+      player_names: persistedPlayerNames,
+      player_scores: persistedPlayerScores,
       questions: snapshot,
       current_question_index: Math.max(0, Math.min(minCurrentQuestion, game.totalQuestions)),
       total_questions: game.totalQuestions,
@@ -473,15 +509,24 @@ export async function persistGameSessionSnapshot(game: GameState): Promise<void>
   }
 }
 
-export async function ensureGameLoadedById(gameId: string): Promise<GameState | null> {
+export async function ensureGameLoadedById(
+  gameId: string,
+  options?: { forceRefresh?: boolean },
+): Promise<GameState | null> {
+  const forceRefresh = options?.forceRefresh === true
   const cached = getGame(gameId)
-  if (cached) return cached
-  return loadPersistedGameById(gameId)
+  if (cached && !forceRefresh) return cached
+  if (!isSupabaseAdminConfigured() || !isUUID(gameId)) return cached ?? null
+  return loadPersistedGameById(gameId, { forceRefresh })
 }
 
-export async function ensureGameLoadedByCode(code: string): Promise<GameState | null> {
+export async function ensureGameLoadedByCode(
+  code: string,
+  options?: { forceRefresh?: boolean },
+): Promise<GameState | null> {
   const normalizedCode = code.trim().toUpperCase()
+  const forceRefresh = options?.forceRefresh === true
   const cached = getGameByCode(normalizedCode)
-  if (cached) return cached
-  return loadPersistedGameByCode(normalizedCode)
+  if (cached && !forceRefresh) return cached
+  return loadPersistedGameByCode(normalizedCode, { forceRefresh })
 }

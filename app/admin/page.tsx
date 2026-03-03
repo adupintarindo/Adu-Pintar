@@ -19,12 +19,13 @@ import {
   XCircle,
 } from "lucide-react"
 
+import { MonitoringDashboard } from "@/components/admin/monitoring-dashboard"
 import { QuestionImport } from "@/components/admin/question-import"
 import { Navbar } from "@/components/navbar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-type AdminTab = "users" | "questions" | "competitions" | "analytics"
+type AdminTab = "users" | "questions" | "competitions" | "analytics" | "monitoring"
 type SchoolStatus = "pending" | "verified" | "suspended"
 type Difficulty = "mudah" | "menengah" | "sulit"
 type CompetitionStatus = "upcoming" | "active" | "completed"
@@ -162,7 +163,7 @@ function formatDate(value: string) {
 function statusBadgeClass(status: SchoolStatus | CompetitionStatus) {
   if (status === "verified" || status === "active") return "bg-primary/10 text-primary border-primary/20"
   if (status === "suspended") return "bg-destructive/10 text-destructive border-destructive/20"
-  if (status === "completed") return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+  if (status === "completed") return "bg-primary/10 text-primary border-primary/20"
   return "bg-muted text-muted-foreground border-border/50"
 }
 
@@ -626,6 +627,9 @@ export default function AdminPage() {
               </TabsTrigger>
               <TabsTrigger value="competitions" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
                 Competitions
+              </TabsTrigger>
+              <TabsTrigger value="monitoring" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
+                Monitoring
               </TabsTrigger>
               <TabsTrigger value="analytics" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
                 Analytics
@@ -1194,6 +1198,10 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="monitoring" className="space-y-6">
+              <MonitoringDashboard />
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-6">

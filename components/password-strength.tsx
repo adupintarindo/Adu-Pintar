@@ -20,18 +20,18 @@ function evaluateStrength(password: string): { level: StrengthLevel; label: stri
 
 const COLORS: Record<StrengthLevel, string> = {
   0: "bg-muted/30",
-  1: "bg-red-500",
-  2: "bg-orange-400",
-  3: "bg-yellow-400",
-  4: "bg-green-500",
+  1: "bg-violet-500",
+  2: "bg-lime-500",
+  3: "bg-yellow-400 dark:bg-yellow-500",
+  4: "bg-primary",
 }
 
 const LABEL_COLORS: Record<StrengthLevel, string> = {
   0: "text-muted-foreground",
-  1: "text-red-500",
-  2: "text-orange-400",
-  3: "text-yellow-500",
-  4: "text-green-500",
+  1: "text-violet-500",
+  2: "text-lime-600 dark:text-lime-400",
+  3: "text-yellow-500 dark:text-yellow-400",
+  4: "text-primary",
 }
 
 export function PasswordStrength({ password }: { password: string }) {

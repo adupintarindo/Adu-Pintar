@@ -2,22 +2,24 @@ import { Award, BadgeCheck, Clock, Crown, Flame, Sparkles, Star, Users } from "l
 import { cookies } from "next/headers"
 import { Navbar } from "@/components/navbar"
 import { MatchEntryModal } from "@/components/match-entry-modal"
+import { AnimatedNumber } from "@/components/animated-number"
+import { ScrollReveal } from "@/components/scroll-reveal"
 import { getStudentStatsSnapshot } from "@/lib/auth"
 import { getExpProgress, getLevel } from "@/lib/exp-config"
 import { decodeSessionCookie } from "@/lib/session-cookie"
 
 const fallbackLevelInfo = {
   currentLevel: 3,
-  tier: "Bronze",
+  tier: "Perunggu",
   exp: 250,
   nextLevel: 1000,
 }
 
 const fallbackHighlightStats = [
-  { label: "Level Saat Ini", value: "3", desc: "Bronze Tier", icon: Crown, accent: "bg-primary/10 text-primary" },
+  { label: "Level Saat Ini", value: "3", desc: "Tingkat Perunggu", icon: Crown, accent: "bg-primary/10 text-primary" },
   { label: "Total EXP", value: "1.250", desc: "+250 dalam 7 hari", icon: Flame, accent: "bg-accent/10 text-accent-foreground" },
-  { label: "Win Rate", value: "72%", desc: "37 W / 14 L", icon: Sparkles, accent: "bg-secondary/10 text-secondary-foreground" },
-  { label: "Badge Aktif", value: "8", desc: "Target 12 badge", icon: BadgeCheck, accent: "bg-primary/15 text-primary" },
+  { label: "Rasio Menang", value: "72%", desc: "37 Menang / 14 Kalah", icon: Sparkles, accent: "bg-secondary/10 text-secondary-foreground" },
+  { label: "Lencana Aktif", value: "8", desc: "Target 12 lencana", icon: BadgeCheck, accent: "bg-primary/15 text-primary" },
 ]
 
 const weeklyExp = [
@@ -32,35 +34,35 @@ const weeklyExp = [
 
 const missions = [
   { title: "Ikuti 2 duel harian", exp: "+100 EXP", completed: true },
-  { title: "Tamatkan 1 sesi tim 5v5", exp: "+150 EXP", completed: false },
+  { title: "Tamatkan 1 pertandingan tim 5 lawan 5", exp: "+150 EXP", completed: false },
   { title: "Selesaikan 3 latihan materi", exp: "+60 EXP", completed: false },
 ]
 
 const badges = [
   {
-    title: "Agronomist",
-    desc: "Jawab 50 soal Environment",
+    title: "Ahli Tani",
+    desc: "Jawab 50 soal Lingkungan",
     accent: "text-primary",
     border: "border-primary/20",
     pill: "bg-primary/10 text-primary",
   },
   {
-    title: "Master Soil",
-    desc: "Selesaikan modul Root Media",
+    title: "Jagoan Tanah",
+    desc: "Selesaikan modul Media Tanam",
     accent: "text-accent-foreground",
     border: "border-accent/20",
     pill: "bg-accent/10 text-accent-foreground",
   },
   {
-    title: "Livestock Guru",
+    title: "Jagoan Peternakan",
     desc: "Kalahkan 10 lawan di topik Peternakan",
     accent: "text-destructive",
     border: "border-destructive/20",
     pill: "bg-destructive/10 text-destructive",
   },
   {
-    title: "Weather Ranger",
-    desc: "Login 7 hari berturut-turut",
+    title: "Penjaga Cuaca",
+    desc: "Masuk 7 hari berturut-turut",
     accent: "text-secondary-foreground",
     border: "border-secondary/20",
     pill: "bg-secondary/10 text-secondary-foreground",
@@ -84,7 +86,7 @@ export default async function DashboardPage() {
   const hasTeam = false
   const activeTeamName = "Belum bergabung dengan tim"
   const teamHelperMessage = hasTeam
-    ? "Terus koordinasi dengan skuadmu sebelum scrimmage berikutnya."
+    ? "Terus berlatih bersama timmu sebelum pertandingan berikutnya."
     : "Belum punya tim? Buka Mode Tim 5v5 untuk membuat atau bergabung dengan skuad lain."
   const activeRole = studentSession?.role ?? staffSession?.role ?? null
   const hasStudentStats = activeRole === "student" && Boolean(supabaseStudentStats)
@@ -98,10 +100,10 @@ export default async function DashboardPage() {
     !hasStudentStats
       ? "Belum tersedia"
       : derivedLevel >= 10
-        ? "Gold"
+        ? "Emas"
         : derivedLevel >= 5
-          ? "Silver"
-          : "Bronze"
+          ? "Perak"
+          : "Perunggu"
   const levelInfo = hasStudentStats
     ? {
         currentLevel: derivedLevel,
@@ -127,28 +129,36 @@ export default async function DashboardPage() {
         {
           label: "Level Saat Ini",
           value: String(levelInfo.currentLevel),
-          desc: `${levelInfo.tier} Tier`,
+          numericValue: levelInfo.currentLevel,
+          suffix: undefined as string | undefined,
+          desc: `Tingkat ${levelInfo.tier}`,
           icon: Crown,
           accent: "bg-primary/10 text-primary",
         },
         {
           label: "Total EXP",
           value: totalExp.toLocaleString("id-ID"),
+          numericValue: totalExp,
+          suffix: undefined as string | undefined,
           desc: `${gamesPlayed} pertandingan tercatat${supabaseStudentStats ? " (Supabase)" : ""}`,
           icon: Flame,
           accent: "bg-accent/10 text-accent-foreground",
         },
         {
-          label: "Win Rate",
+          label: "Rasio Menang",
           value: `${winRate}%`,
-          desc: `${wins} W / ${losses} L`,
+          numericValue: winRate,
+          suffix: "%" as string | undefined,
+          desc: `${wins} Menang / ${losses} Kalah`,
           icon: Sparkles,
           accent: "bg-secondary/10 text-secondary-foreground",
         },
         {
-          label: "Badge Aktif",
+          label: "Lencana Aktif",
           value: String(Math.max(0, Math.min(12, Math.floor(wins / 3)))),
-          desc: "Sinkronisasi badge penuh menyusul",
+          numericValue: Math.max(0, Math.min(12, Math.floor(wins / 3))),
+          suffix: undefined as string | undefined,
+          desc: "Data lencana lengkap segera hadir",
           icon: BadgeCheck,
           accent: "bg-primary/15 text-primary",
         },
@@ -156,6 +166,8 @@ export default async function DashboardPage() {
     : fallbackHighlightStats.map((stat, index) => ({
         ...stat,
         value: "—",
+        numericValue: null as number | null,
+        suffix: undefined as string | undefined,
         desc: index === 0 ? userStatsNotice : "Menunggu sinkronisasi aktivitas",
       }))
   const progress = hasStudentStats ? expProgress.progress : 0
@@ -180,7 +192,7 @@ export default async function DashboardPage() {
       />
       <div
         className="absolute top-1/2 left-1/3 h-[500px] w-[500px] rounded-full opacity-10 pointer-events-none hidden md:block"
-        style={{ background: "radial-gradient(circle, oklch(0.68 0.24 41), transparent 60%)", filter: "blur(100px)" }}
+        style={{ background: "radial-gradient(circle, oklch(0.55 0.10 185), transparent 60%)", filter: "blur(100px)" }}
         aria-hidden="true"
       />
 
@@ -205,7 +217,7 @@ export default async function DashboardPage() {
                   Hai, {greetingTarget}!
                 </h1>
                 <p className="mt-2 text-muted-foreground">
-                  Pantau level, EXP, dan perjalanan badge kamu di Adu Pintar.
+                  Pantau level, EXP, dan perjalanan lencana kamu di Adu Pintar.
                 </p>
               </div>
             </div>
@@ -247,49 +259,60 @@ export default async function DashboardPage() {
         </section>
 
         <div className="glass-card rounded-2xl border border-border/50 bg-card/70 px-4 py-3 text-sm text-muted-foreground">
-          Statistik utama (level, EXP, win rate) kini mengikuti akun aktif. Panel Weekly EXP, misi, dan badge masih
-          menggunakan data preview sampai sinkronisasi aktivitas backend selesai.
+          Statistik utama (level, EXP, rasio menang) kini mengikuti akun aktif. Panel EXP Mingguan, misi, dan lencana masih
+          menggunakan data contoh sampai pembaruan aktivitas sistem selesai.
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {highlightStats.map((stat, idx) => {
-            const Icon = stat.icon
+        <ScrollReveal direction="up" delay={0}>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {highlightStats.map((stat, idx) => {
+              const Icon = stat.icon
 
-            return (
-              <article
-                key={stat.label}
-                className="glass-card hover-lift rounded-2xl p-5 animate-fade-up"
-                style={{ animationDelay: `${(idx + 1) * 80}ms` }}
-              >
-                <div className={`icon-badge h-12 w-12 rounded-xl ${stat.accent}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <p className="mt-4 text-sm text-muted-foreground">{stat.label}</p>
-                <p className="font-display text-2xl font-bold tracking-tight text-foreground">{stat.value}</p>
-                <p className="text-sm text-muted-foreground/70">{stat.desc}</p>
-              </article>
-            )
-          })}
-        </div>
+              return (
+                <article
+                  key={stat.label}
+                  className="glass-card hover-lift rounded-2xl p-5 animate-fade-up"
+                  style={{ animationDelay: `${(idx + 1) * 80}ms` }}
+                >
+                  <div className={`icon-badge h-12 w-12 rounded-xl ${stat.accent}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <p className="mt-4 text-sm text-muted-foreground">{stat.label}</p>
+                  <p className="font-display text-2xl font-bold tracking-tight text-foreground">
+                    {stat.numericValue != null ? (
+                      <AnimatedNumber value={stat.numericValue} suffix={stat.suffix} />
+                    ) : (
+                      stat.value
+                    )}
+                  </p>
+                  <p className="text-sm text-muted-foreground/70">{stat.desc}</p>
+                </article>
+              )
+            })}
+          </div>
+        </ScrollReveal>
 
         {/* Level progress + Weekly EXP */}
+        <ScrollReveal direction="up" delay={80}>
         <div className="grid gap-6 lg:grid-cols-[1.6fr,1fr]">
           {/* Level progress */}
           <article className="glass-card rounded-3xl p-6 animate-fade-up" style={{ animationDelay: "100ms" }}>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <span className="section-badge">Level Progress</span>
+                <span className="section-badge">Kemajuan Level</span>
                 <div className="mt-3 flex items-baseline gap-3">
                   <span className="font-display text-4xl font-bold tracking-tight text-foreground">
-                    {hasStudentStats ? levelInfo.currentLevel : "—"}
+                    {hasStudentStats ? <AnimatedNumber value={levelInfo.currentLevel} /> : "—"}
                   </span>
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    {hasStudentStats ? `${levelInfo.tier} Tier` : "Belum tersedia"}
+                    {hasStudentStats ? `Tingkat ${levelInfo.tier}` : "Belum tersedia"}
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {hasStudentStats ? `${levelInfo.exp} / ${levelInfo.nextLevel} EXP` : "Login sebagai siswa untuk melihat progres EXP."}
+                  {hasStudentStats ? (
+                    <><AnimatedNumber value={levelInfo.exp} /> / <AnimatedNumber value={levelInfo.nextLevel} /> EXP</>
+                  ) : "Login sebagai siswa untuk melihat progres EXP."}
                 </p>
               </div>
               <div
@@ -313,14 +336,14 @@ export default async function DashboardPage() {
                 />
                 {hasStudentStats && (
                   <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-foreground mix-blend-difference">
-                    {levelInfo.exp} / {levelInfo.nextLevel} EXP
+                    <AnimatedNumber value={levelInfo.exp} /> / <AnimatedNumber value={levelInfo.nextLevel} /> EXP
                   </span>
                 )}
               </div>
               <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
                 <span>Menuju level berikutnya</span>
                 <span className="font-semibold text-foreground">
-                  {hasStudentStats ? `${remainingExp} EXP lagi` : "Menunggu data"}
+                  {hasStudentStats ? <><AnimatedNumber value={remainingExp} /> EXP lagi</> : "Menunggu data"}
                 </span>
               </div>
             </div>
@@ -328,10 +351,10 @@ export default async function DashboardPage() {
             <div className="mt-6 rounded-2xl bg-primary/5 border border-primary/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">Rata-rata</p>
               <p className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground">
-                {hasStudentStats ? `${averageWeeklyExp} EXP` : "—"}
+                {hasStudentStats ? <><AnimatedNumber value={averageWeeklyExp} /> EXP</> : "—"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {hasStudentStats ? "Perolehan per hari (preview panel)" : "Akan tampil setelah data aktivitas tersedia"}
+                {hasStudentStats ? "Perolehan per hari (contoh panel)" : "Akan tampil setelah data aktivitas tersedia"}
               </p>
             </div>
           </article>
@@ -340,7 +363,7 @@ export default async function DashboardPage() {
           <article className="glass-card rounded-3xl p-6 animate-fade-up" style={{ animationDelay: "150ms" }}>
             <div className="flex items-center justify-between">
               <div>
-                <span className="section-badge">Weekly EXP (Preview)</span>
+                <span className="section-badge">EXP Mingguan (Contoh)</span>
                 <p className="mt-2 text-sm text-muted-foreground">Pantau konsistensi latihan kamu.</p>
               </div>
               <div className="icon-badge bg-accent/10 text-accent-foreground rounded-xl h-10 w-10">
@@ -364,14 +387,16 @@ export default async function DashboardPage() {
             </div>
           </article>
         </div>
+        </ScrollReveal>
 
         {/* Missions + Badges */}
+        <ScrollReveal direction="up" delay={160}>
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Missions */}
           <article className="glass-card rounded-3xl p-6 animate-fade-up" style={{ animationDelay: "200ms" }}>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <span className="section-badge">Misi Aktif (Preview)</span>
+                <span className="section-badge">Misi Aktif (Contoh)</span>
                 <h2 className="mt-3 font-display text-2xl font-bold tracking-tight text-foreground">
                   Tingkatkan EXP kamu
                 </h2>
@@ -383,7 +408,7 @@ export default async function DashboardPage() {
                 <div className="rounded-2xl bg-foreground px-4 py-3 text-background">
                   <p className="text-xs font-semibold uppercase tracking-[0.15em] text-background/60">Misi Harian</p>
                   <p className="mt-1 flex items-baseline gap-2 font-display text-2xl font-bold">
-                    {completedMissions}
+                    <AnimatedNumber value={completedMissions} />
                     <span className="text-sm text-background/70">/ {missions.length}</span>
                   </p>
                   <p className="text-sm text-background/70">Klaim EXP tambahan dari tugas aktif.</p>
@@ -417,9 +442,9 @@ export default async function DashboardPage() {
           <article className="glass-card rounded-3xl p-6 animate-fade-up" style={{ animationDelay: "250ms" }}>
             <div className="flex items-center justify-between">
               <div>
-                <span className="section-badge">Badge Koleksi (Preview)</span>
+                <span className="section-badge">Koleksi Lencana (Contoh)</span>
                 <h2 className="mt-3 font-display text-2xl font-bold tracking-tight text-foreground">
-                  Pertahankan streak belajar
+                  Pertahankan semangat belajar
                 </h2>
               </div>
               <div className="icon-badge bg-accent/10 text-accent-foreground rounded-xl h-10 w-10">
@@ -446,14 +471,16 @@ export default async function DashboardPage() {
             </div>
           </article>
         </div>
+        </ScrollReveal>
 
         {/* #289: Recent Activity Feed */}
+        <ScrollReveal direction="up" delay={240}>
         <article className="glass-card rounded-3xl p-6 animate-fade-up" style={{ animationDelay: "300ms" }}>
           <div className="flex items-center justify-between mb-6">
             <div>
               <span className="section-badge">Aktivitas Terbaru</span>
               <h2 className="mt-3 font-display text-2xl font-bold tracking-tight text-foreground">
-                Timeline Aktivitas
+                Riwayat Aktivitas
               </h2>
             </div>
             <div className="icon-badge bg-primary/10 text-primary rounded-xl h-10 w-10">
@@ -470,7 +497,9 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">Kemenangan tercatat</p>
-                    <p className="text-xs text-muted-foreground">{wins} kemenangan dari {gamesPlayed} pertandingan</p>
+                    <p className="text-xs text-muted-foreground">
+                      <AnimatedNumber value={wins} /> kemenangan dari <AnimatedNumber value={gamesPlayed} /> pertandingan
+                    </p>
                   </div>
                 </div>
               )}
@@ -481,7 +510,9 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">EXP dikumpulkan</p>
-                    <p className="text-xs text-muted-foreground">{totalExp.toLocaleString("id-ID")} EXP — Level {derivedLevel} ({derivedTier})</p>
+                    <p className="text-xs text-muted-foreground">
+                      <AnimatedNumber value={totalExp} /> EXP — Level <AnimatedNumber value={derivedLevel} /> ({derivedTier})
+                    </p>
                   </div>
                 </div>
               )}
@@ -491,7 +522,7 @@ export default async function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">Pertandingan dimainkan</p>
-                  <p className="text-xs text-muted-foreground">{gamesPlayed} pertandingan tercatat</p>
+                  <p className="text-xs text-muted-foreground"><AnimatedNumber value={gamesPlayed} /> pertandingan tercatat</p>
                 </div>
               </div>
             </div>
@@ -505,6 +536,7 @@ export default async function DashboardPage() {
             </div>
           )}
         </article>
+        </ScrollReveal>
       </section>
     </main>
   )

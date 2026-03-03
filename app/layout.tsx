@@ -90,7 +90,9 @@ export default function RootLayout({
             Langsung ke konten utama
           </a>
           <SessionProvider>
-            {children}
+            <main id="main-content" className="animate-fade-in">
+              {children}
+            </main>
             <ConditionalFooter />
             <ChatWidget />
             <Toaster position="top-right" richColors />

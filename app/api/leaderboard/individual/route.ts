@@ -36,6 +36,8 @@ type LeaderboardEntryRow = {
   schools: { name: string } | { name: string }[] | null
 }
 
+const PERIOD_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
+
 function relName(value: { name: string } | { name: string }[] | null | undefined): string | undefined {
   if (!value) return undefined
   if (Array.isArray(value)) return value[0]?.name
@@ -80,6 +82,12 @@ function toGradeCategory(value: string | null, legacyGrade: string | null): Grad
   return 1
 }
 
+function normalizePeriod(value: string | null): string | null {
+  if (!value) return null
+  const trimmed = value.trim()
+  return PERIOD_PATTERN.test(trimmed) ? trimmed : null
+}
+
 function categoryToGrade(category: GradeCategory): "SD" | "SMP" | "SMA" {
   if (category === 1) return "SD"
   if (category === 2) return "SMP"
@@ -96,6 +104,7 @@ async function querySupabaseLeaderboard(params: {
   phase: PhaseScope
   gradeCategory: GradeCategory
   limit: number
+  period: string
   schoolId?: string
   province?: string
   city?: string
@@ -109,6 +118,7 @@ async function querySupabaseLeaderboard(params: {
       .select("student_id, school_id, grade_category, total_score, rank, province, city, students(name,wins,losses), schools(name)")
       .eq("competition_phase", params.phase)
       .eq("grade_category", params.gradeCategory)
+      .eq("period", params.period)
       .order("total_score", { ascending: false })
       .limit(params.limit)
 
@@ -220,11 +230,13 @@ export async function GET(request: NextRequest) {
     const { province, city } = normalizeLocationFilters(searchParams)
     const schoolId = searchParams.get("schoolId")?.trim() || undefined
     const limit = Math.max(1, Math.min(200, Number.parseInt(searchParams.get("limit") || "100", 10) || 100))
+    const period = normalizePeriod(searchParams.get("period")) ?? new Date().toISOString().slice(0, 7)
 
     const supabaseRows = await querySupabaseLeaderboard({
       phase,
       gradeCategory,
       limit,
+      period,
       schoolId,
       province,
       city,
@@ -244,6 +256,7 @@ export async function GET(request: NextRequest) {
         province: province || null,
         city: city || null,
         schoolId: schoolId || null,
+        period,
         source: supabaseRows ? "supabase" : "fallback",
       },
     })

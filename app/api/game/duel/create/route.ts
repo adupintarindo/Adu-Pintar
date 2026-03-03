@@ -41,6 +41,13 @@ async function getCompetitionGameCountFromSupabase(playerId: string): Promise<nu
 
   try {
     const supabase = createAdminSupabaseClient()
+    const { data: rpcCount, error: rpcError } = await supabase.rpc("get_completed_competition_games_count", {
+      p_student_id: playerId,
+    })
+    if (!rpcError && typeof rpcCount === "number" && Number.isFinite(rpcCount)) {
+      return Math.max(0, Math.floor(rpcCount))
+    }
+
     const { count, error } = await supabase
       .from("game_sessions")
       .select("id", { count: "exact", head: true })

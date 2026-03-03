@@ -54,7 +54,7 @@ const whatWeDo = [
     title: "Dukungan Sekolah",
     description: "Mendukung kebijakan sekolah agar program belajar lebih efektif, tepat sasaran, dan bebas bias.",
     icon: Building2,
-    tone: "from-amber-500/18 to-orange-400/10",
+    tone: "from-lime-500/18 to-yellow-400/10",
   },
   {
     title: "Kolaborasi Multi-Pihak",
@@ -75,7 +75,7 @@ const heroStats = [
     label: "Fokus Utama",
     value: "Literasi Pertanian",
     icon: Leaf,
-    tone: "from-amber-500/18 to-emerald-500/10",
+    tone: "from-lime-500/18 to-emerald-500/10",
   },
   {
     label: "Nilai Kerja",
@@ -134,14 +134,14 @@ const visionObjectives = [
 ]
 
 const initiators = [
-  { name: "Media Wahyudi Askar", role: "Public Policy Analyst" },
-  { name: "Isnawati Hidayah", role: "Health Policy Specialist" },
-  { name: "Alvi Syahrina", role: "Data Scientist" },
-  { name: "Bhima Yudhisthira", role: "Economist" },
-  { name: "Agus Sarwono", role: "Community Engineer" },
+  { name: "Media Wahyudi Askar", role: "Analis Kebijakan Publik" },
+  { name: "Isnawati Hidayah", role: "Ahli Kebijakan Kesehatan" },
+  { name: "Alvi Syahrina", role: "Ilmuwan Data" },
+  { name: "Bhima Yudhisthira", role: "Ekonom" },
+  { name: "Agus Sarwono", role: "Penggerak Komunitas" },
   { name: "Irma Hidayana", role: "Konsultan Independen Kesehatan Masyarakat" },
-  { name: "Fadhil Alfathan", role: "Public Interest Lawyer" },
-  { name: "Mochamad Satria Riza Permana", role: "Data Engineer" },
+  { name: "Fadhil Alfathan", role: "Pengacara Kepentingan Publik" },
+  { name: "Mochamad Satria Riza Permana", role: "Teknisi Data" },
   { name: "Tan Shot Yen", role: "Dokter Gizi Masyarakat" },
 ]
 
@@ -186,7 +186,7 @@ function getInitiatorTheme(role: string): InitiatorTheme {
 
   if (normalizedRole.includes("data") || normalizedRole.includes("engineer")) {
     return {
-      label: "Data & Tech",
+      label: "Data & Teknologi",
       icon: Database,
       accentBarClass: "from-indigo-500/90 via-blue-500/80 to-cyan-300/80",
       glowClass: "bg-indigo-400/20",
@@ -198,11 +198,11 @@ function getInitiatorTheme(role: string): InitiatorTheme {
     }
   }
 
-  if (normalizedRole.includes("policy") || normalizedRole.includes("lawyer")) {
+  if (normalizedRole.includes("policy") || normalizedRole.includes("kebijakan") || normalizedRole.includes("lawyer") || normalizedRole.includes("pengacara")) {
     return {
       label: "Kebijakan",
       icon: Scale,
-      accentBarClass: "from-emerald-500/90 via-lime-400/80 to-amber-300/80",
+      accentBarClass: "from-emerald-500/90 via-lime-400/80 to-lime-300/80",
       glowClass: "bg-emerald-400/20",
       avatarClass: "from-emerald-500/15 via-lime-500/10 to-background",
       avatarBorderClass: "border-emerald-500/20",
@@ -212,17 +212,17 @@ function getInitiatorTheme(role: string): InitiatorTheme {
     }
   }
 
-  if (normalizedRole.includes("economist")) {
+  if (normalizedRole.includes("economist") || normalizedRole.includes("ekonom")) {
     return {
       label: "Ekonomi",
       icon: BarChart3,
-      accentBarClass: "from-amber-500/90 via-orange-400/80 to-rose-300/80",
-      glowClass: "bg-amber-400/20",
-      avatarClass: "from-amber-500/15 via-orange-500/10 to-background",
-      avatarBorderClass: "border-amber-500/20",
-      badgeClass: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-      dotClass: "bg-amber-500",
-      iconClass: "text-amber-600 dark:text-amber-300",
+      accentBarClass: "from-lime-500/90 via-yellow-400/80 to-emerald-300/80",
+      glowClass: "bg-lime-400/20",
+      avatarClass: "from-lime-500/15 via-yellow-500/10 to-background",
+      avatarBorderClass: "border-lime-500/20",
+      badgeClass: "border-lime-500/20 bg-lime-500/10 text-lime-700 dark:text-lime-300",
+      dotClass: "bg-lime-500",
+      iconClass: "text-lime-600 dark:text-lime-300",
     }
   }
 
@@ -302,7 +302,7 @@ export default function AboutPage() {
                         style={{ animationDelay: `${120 + index * 80}ms` }}
                       >
                         <div className="flex items-start gap-3">
-                          <span className={`icon-badge rounded-xl bg-gradient-to-br ${stat.tone} text-primary`}>
+                          <span className={`icon-badge rounded-xl bg-linear-to-br ${stat.tone} text-primary`}>
                             <Icon className="h-4 w-4" />
                           </span>
                           <div className="min-w-0">
@@ -552,7 +552,7 @@ export default function AboutPage() {
                           style={{ animationDelay: `${100 + index * 60}ms` }}
                         >
                           <div className="mb-3 flex items-center justify-between gap-3">
-                            <span className={`icon-badge rounded-xl bg-gradient-to-br ${item.tone} text-primary`}>
+                            <span className={`icon-badge rounded-xl bg-linear-to-br ${item.tone} text-primary`}>
                               <Icon className="h-4 w-4" />
                             </span>
                             <span className="text-xs font-semibold text-muted-foreground">0{index + 1}</span>
@@ -578,7 +578,7 @@ export default function AboutPage() {
                 <Users className="h-3.5 w-3.5" />
                 Kolaborator
               </p>
-              <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold tracking-tight text-foreground">The Initiators</h2>
+              <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold tracking-tight text-foreground">Para Inisiator</h2>
               <p className="mt-3 text-muted-foreground">
                 Para profesional lintas bidang yang mengawal keberlanjutan Adu Pintar.
               </p>

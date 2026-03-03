@@ -584,6 +584,138 @@ export async function getAdminAnalytics(): Promise<AdminAnalyticsSnapshot> {
   }
 }
 
+type SupabaseSchoolAnalyticsRow = {
+  is_verified: boolean | null
+  school_type: "SD" | "SMP" | "SMA" | null
+  province: string | null
+}
+
+type SupabaseQuestionAnalyticsRow = {
+  difficulty: QuestionDifficulty | null
+  topic: string | null
+  is_active: boolean | null
+}
+
+type SupabaseCompetitionAnalyticsRow = {
+  status: "upcoming" | "active" | "completed" | null
+}
+
+type SupabaseStudentAnalyticsRow = {
+  wins: number | null
+  losses: number | null
+}
+
+export async function getSupabaseAdminAnalytics(): Promise<AdminAnalyticsSnapshot | null> {
+  if (!isSupabaseAdminConfigured()) return null
+
+  try {
+    const supabase = createAdminSupabaseClient()
+    const [schoolsRes, questionsRes, competitionsRes, studentsRes] = await Promise.all([
+      supabase.from("schools").select("is_verified, school_type, province"),
+      supabase.from("questions").select("difficulty, topic, is_active"),
+      supabase.from("competitions").select("status"),
+      supabase.from("students").select("wins, losses"),
+    ])
+
+    if (schoolsRes.error || questionsRes.error || competitionsRes.error || studentsRes.error) {
+      console.error("[admin-console] Supabase analytics query failed:", {
+        schools: schoolsRes.error,
+        questions: questionsRes.error,
+        competitions: competitionsRes.error,
+        students: studentsRes.error,
+      })
+      return null
+    }
+
+    const schools = (schoolsRes.data as SupabaseSchoolAnalyticsRow[] | null) ?? []
+    const questions = (questionsRes.data as SupabaseQuestionAnalyticsRow[] | null) ?? []
+    const competitions = (competitionsRes.data as SupabaseCompetitionAnalyticsRow[] | null) ?? []
+    const students = (studentsRes.data as SupabaseStudentAnalyticsRow[] | null) ?? []
+
+    const questionsByDifficulty: AdminAnalyticsSnapshot["questionsByDifficulty"] = {
+      mudah: 0,
+      menengah: 0,
+      sulit: 0,
+    }
+    const topicCounter = new Map<string, number>()
+    let activeQuestions = 0
+    for (const question of questions) {
+      if (question.is_active) activeQuestions += 1
+      if (question.difficulty === "mudah" || question.difficulty === "menengah" || question.difficulty === "sulit") {
+        questionsByDifficulty[question.difficulty] += 1
+      }
+      const topic = typeof question.topic === "string" ? question.topic.trim() : ""
+      if (topic) {
+        topicCounter.set(topic, (topicCounter.get(topic) ?? 0) + 1)
+      }
+    }
+
+    const topTopics = [...topicCounter.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "id"))
+      .slice(0, 8)
+      .map(([topic, count]) => ({ topic, count }))
+
+    const competitionsByStatus: AdminAnalyticsSnapshot["competitionsByStatus"] = {
+      upcoming: 0,
+      active: 0,
+      completed: 0,
+    }
+    for (const competition of competitions) {
+      if (competition.status === "upcoming" || competition.status === "active" || competition.status === "completed") {
+        competitionsByStatus[competition.status] += 1
+      }
+    }
+
+    const schoolTypeCounter = new Map<"SD" | "SMP" | "SMA", number>([
+      ["SD", 0],
+      ["SMP", 0],
+      ["SMA", 0],
+    ])
+    const provinces = new Set<string>()
+    let verifiedSchools = 0
+    for (const school of schools) {
+      if (school.is_verified) verifiedSchools += 1
+      if (school.school_type === "SD" || school.school_type === "SMP" || school.school_type === "SMA") {
+        schoolTypeCounter.set(school.school_type, (schoolTypeCounter.get(school.school_type) ?? 0) + 1)
+      }
+      const province = typeof school.province === "string" ? school.province.trim() : ""
+      if (province) provinces.add(province)
+    }
+
+    let totalMatches = 0
+    for (const student of students) {
+      totalMatches += (student.wins ?? 0) + (student.losses ?? 0)
+    }
+    const estimatedGamesPlayed = Math.round(totalMatches / 2)
+
+    return {
+      totals: {
+        schools: schools.length,
+        verifiedSchools,
+        // "suspended" is still runtime-only in current domain model.
+        suspendedSchools: 0,
+        questions: questions.length,
+        activeQuestions,
+        competitions: competitions.length,
+        activeCompetitions: competitionsByStatus.active,
+        players: students.length,
+        estimatedGamesPlayed,
+        provincesCovered: provinces.size,
+      },
+      questionsByDifficulty,
+      topTopics,
+      competitionsByStatus,
+      schoolDistribution: (["SD", "SMP", "SMA"] as const).map((schoolType) => ({
+        schoolType,
+        count: schoolTypeCounter.get(schoolType) ?? 0,
+      })),
+    }
+  } catch (error) {
+    console.error("[admin-console] Failed to build Supabase analytics:", error)
+    return null
+  }
+}
+
 export async function maybeGetSupabaseCounts() {
   if (!isSupabaseAdminConfigured()) return null
   try {

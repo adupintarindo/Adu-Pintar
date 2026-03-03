@@ -10,6 +10,7 @@ import {
 } from "@/lib/api-security"
 import { getRequestSessionUser } from "@/lib/server-session"
 import { createTeam } from "@/lib/teams"
+import { createPersistedTeam } from "@/lib/teams-supabase"
 
 const createTeamSchema = z.object({
   name: z.string().min(2).max(80),
@@ -51,8 +52,13 @@ export async function POST(request: NextRequest) {
       return parsed.errorResponse!
     }
 
-    const team = createTeam(sessionUser.id, sessionUser.name || "Player", parsed.data.name)
-    logApiRequest(request, 201, { action: "team_create", teamId: team.id })
+    const persistedTeam = await createPersistedTeam({
+      creatorId: sessionUser.id,
+      creatorName: sessionUser.name || "Player",
+      name: parsed.data.name,
+    })
+    const team = persistedTeam ?? createTeam(sessionUser.id, sessionUser.name || "Player", parsed.data.name)
+    logApiRequest(request, 201, { action: "team_create", teamId: team.id, source: persistedTeam ? "supabase" : "fallback" })
     return NextResponse.json({ teamId: team.id, team }, { status: 201 })
   } catch (error) {
     console.error("[api/team/create] Internal error:", error)
@@ -60,4 +66,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Gagal membuat tim" }, { status: 500 })
   }
 }
-

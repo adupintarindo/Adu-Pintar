@@ -57,6 +57,13 @@ type StudentLoginRow = {
   schools: { name: string } | { name: string }[] | null
 }
 
+type DailyLoginClaimRow = {
+  awarded: boolean | null
+  total_exp: number | null
+  level: number | null
+  last_login_date: string | null
+}
+
 type TeacherLoginRow = {
   id: string
   name: string
@@ -194,17 +201,57 @@ export async function loginStudent(params: {
     }
   }
   const today = new Date().toISOString().split("T")[0]
-  if (student.last_login_date !== today) {
-    const nextTotalExp = (student.total_exp ?? 0) + EXP_CONFIG.DAILY_LOGIN
-    const nextLevel = Math.max(student.level ?? 1, getLevel(nextTotalExp))
-    await supabase
+  let effectiveTotalExp = student.total_exp ?? 0
+  let effectiveLevel = student.level ?? 1
+
+  const { data: dailyLoginRows, error: dailyLoginError } = await supabase.rpc("claim_daily_login_reward", {
+    p_student_id: student.id,
+    p_reward: EXP_CONFIG.DAILY_LOGIN,
+    p_today: today,
+  })
+
+  if (!dailyLoginError) {
+    const claimRow = Array.isArray(dailyLoginRows)
+      ? (dailyLoginRows[0] as DailyLoginClaimRow | undefined)
+      : undefined
+    if (claimRow) {
+      effectiveTotalExp = Math.max(claimRow.total_exp ?? 0, 0)
+      effectiveLevel = Math.max(claimRow.level ?? 1, 1)
+    }
+  } else {
+    const dailyLoginErrorMessage = (dailyLoginError.message ?? "").toLowerCase()
+    if (dailyLoginErrorMessage.includes("student_not_found")) {
+      return null
+    }
+
+    console.error("[auth] claim_daily_login_reward failed, using fallback update:", dailyLoginError)
+    if (student.last_login_date !== today) {
+      effectiveTotalExp = (student.total_exp ?? 0) + EXP_CONFIG.DAILY_LOGIN
+      effectiveLevel = Math.max(student.level ?? 1, getLevel(effectiveTotalExp))
+      await supabase
+        .from("students")
+        .update({
+          last_login_date: today,
+          total_exp: effectiveTotalExp,
+          level: effectiveLevel,
+        })
+        .eq("id", student.id)
+    }
+  }
+
+  const syncedLevel = Math.max(effectiveLevel, getLevel(effectiveTotalExp))
+  if (syncedLevel > effectiveLevel) {
+    const { error: levelUpdateError } = await supabase
       .from("students")
-      .update({
-        last_login_date: today,
-        total_exp: nextTotalExp,
-        level: nextLevel,
-      })
+      .update({ level: syncedLevel })
       .eq("id", student.id)
+      .lt("level", syncedLevel)
+
+    if (!levelUpdateError) {
+      effectiveLevel = syncedLevel
+    } else {
+      console.error("[auth] daily login level sync failed:", levelUpdateError)
+    }
   }
 
   const user: AuthUser = {
@@ -277,21 +324,53 @@ export async function loginSchoolOrTeacher(params: {
     .eq("is_active", true)
     .maybeSingle()
 
-  if (teacherError || !teacherData) {
-    await supabase.auth.signOut()
-    return null
+  if (!teacherError && teacherData) {
+    const teacher = teacherData as TeacherLoginRow
+    const user: AuthUser = {
+      id: teacher.id,
+      name: teacher.name,
+      role: "teacher",
+      schoolId: teacher.school_id,
+      schoolName: getSchoolNameFromRelation(teacher.schools),
+    }
+    upsertLegacyShadowUser(user)
+    return user
   }
 
-  const teacher = teacherData as TeacherLoginRow
-  const user: AuthUser = {
-    id: teacher.id,
-    name: teacher.name,
-    role: "teacher",
-    schoolId: teacher.school_id,
-    schoolName: getSchoolNameFromRelation(teacher.schools),
+  // Check for self-registered student (email/password login via auth user metadata)
+  const metadata = signInResult.user.user_metadata
+  if (metadata?.role === "student" && metadata?.student_id) {
+    const { data: studentData } = await roleLookupClient
+      .from("students")
+      .select("id, name, school_id, class_id, grade_category, schools(name)")
+      .eq("id", metadata.student_id)
+      .maybeSingle()
+
+    if (studentData) {
+      const row = studentData as {
+        id: string
+        name: string
+        school_id: string
+        class_id: string
+        grade_category: number | null
+        schools: { name: string } | { name: string }[] | null
+      }
+      const user: AuthUser = {
+        id: row.id,
+        name: row.name,
+        role: "student",
+        schoolId: row.school_id,
+        schoolName: getSchoolNameFromRelation(row.schools),
+        classId: row.class_id,
+        gradeCategory: row.grade_category ?? undefined,
+      }
+      upsertLegacyShadowUser(user)
+      return user
+    }
   }
-  upsertLegacyShadowUser(user)
-  return user
+
+  await supabase.auth.signOut()
+  return null
 }
 
 export async function getStudentStatsSnapshot(studentId: string): Promise<StudentStatsSnapshot | null> {

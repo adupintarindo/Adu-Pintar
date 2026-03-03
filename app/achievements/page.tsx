@@ -25,29 +25,29 @@ import { LEVEL_THRESHOLDS, getExpProgress, getLevel } from "@/lib/exp-config"
 
 const badgeCollections = [
   {
-    title: "Green Innovator",
-    description: "Lengkapi modul konservasi air dan unggah jurnal eksperimen hidroponik.",
+    title: "Inovator Hijau",
+    description: "Lengkapi modul konservasi air dan kirim catatan percobaan hidroponik.",
     criteria: "5 materi + 2 tantangan lapangan",
     icon: BadgeCheck,
     accent: "from-emerald-500 via-emerald-600 to-teal-500",
   },
   {
-    title: "Soil Scientist",
-    description: "Menangkan duel Root Media dan unggah laporan analisis tanah.",
+    title: "Peneliti Tanah",
+    description: "Menangkan duel Root Media dan kirim laporan tentang tanah.",
     criteria: "3 duel + 1 essay",
     icon: Flame,
     accent: "from-lime-500 via-green-500 to-emerald-500",
   },
   {
-    title: "Livestock Guardian",
-    description: "Bantu forum diskusi peternakan dan selesaikan quiz veteriner.",
+    title: "Penjaga Ternak",
+    description: "Bantu forum diskusi peternakan dan selesaikan kuis kesehatan hewan.",
     criteria: "10 jawaban forum",
     icon: Trophy,
     accent: "from-violet-500 via-indigo-500 to-violet-600",
   },
   {
-    title: "Climate Ranger",
-    description: "Pertahankan streak login 14 hari dan submit laporan iklim mikro.",
+    title: "Penjaga Iklim",
+    description: "Pertahankan streak login 14 hari dan kirim laporan iklim mikro.",
     criteria: "Streak 14 hari",
     icon: Star,
     accent: "from-sky-500 via-cyan-500 to-blue-500",
@@ -56,25 +56,25 @@ const badgeCollections = [
 
 const badgeAwards = [
   {
-    title: "Environment Explorer",
+    title: "Penjelajah Lingkungan",
     description: "Jawab benar 30 soal lingkungan",
     gradient: "from-emerald-400 via-emerald-500 to-teal-500",
     glow: "shadow-emerald-500/40",
   },
   {
-    title: "Root Media Master",
+    title: "Ahli Media Tanam",
     description: "Rampungkan modul tanah",
     gradient: "from-lime-400 via-green-500 to-emerald-500",
     glow: "shadow-green-500/40",
   },
   {
-    title: "Livestock Hero",
+    title: "Pahlawan Ternak",
     description: "Menang 5 duel peternakan",
     gradient: "from-violet-400 via-indigo-500 to-violet-600",
     glow: "shadow-violet-500/40",
   },
   {
-    title: "Weather Watcher",
+    title: "Pengamat Cuaca",
     description: "Login 7 hari",
     gradient: "from-sky-400 via-cyan-500 to-blue-500",
     glow: "shadow-sky-500/40",
@@ -83,17 +83,17 @@ const badgeAwards = [
 
 const awardMoments = [
   {
-    name: "Champion Series",
+    name: "Seri Juara",
     detail: "Juara 1 Duel Nasional 2025",
     location: "Jakarta, Indonesia",
   },
   {
-    name: "Impact Mentor",
+    name: "Mentor Inspirasi",
     detail: "Coach komunitas hidroponik muda",
     location: "Bandung, Indonesia",
   },
   {
-    name: "Community Builder",
+    name: "Pembangun Komunitas",
     detail: "Inisiator 5 kelas agrikultur digital",
     location: "Semarang, Indonesia",
   },
@@ -101,57 +101,57 @@ const awardMoments = [
 
 const journeyExperience = [
   {
-    label: "Explorer",
+    label: "Penjelajah",
     duration: "Minggu 1-2",
     detail: "Eksplorasi materi dasar dan kumpulkan badge awal (min. 400 EXP).",
     icon: Zap,
   },
   {
-    label: "Contributor",
+    label: "Kontributor",
     duration: "Minggu 3-6",
-    detail: "Mulai sharing insight di forum, menang duel tematik, dan lengkapi 4 badge.",
+    detail: "Mulai berbagi pengetahuan di forum, menang duel tematik, dan lengkapi 4 badge.",
     icon: Calendar,
   },
   {
-    label: "Champion",
+    label: "Juara",
     duration: "Minggu 7-10",
-    detail: "Masuk leaderboard provinsi, raih award komunitas, dan jadi mentor mini bootcamp.",
+    detail: "Masuk papan juara provinsi, raih award komunitas, dan jadi mentor pelatihan kecil.",
     icon: Award,
   },
   {
-    label: "Legacy",
+    label: "Legenda",
     duration: "Minggu 11+",
-    detail: "Kembangkan project sosial agrikultur serta kurasi tantangan untuk pemain baru.",
+    detail: "Kembangkan proyek sosial pertanian serta kurasi tantangan untuk pemain baru.",
     icon: Crown,
   },
 ]
 
 const tierLevels = [
   {
-    tier: "Bronze Roots",
+    tier: "Akar Perunggu",
     requirement: "0 - 1.499 EXP",
-    perks: ["Akses modul dasar", "Badge Green Innovator"],
+    perks: ["Akses modul dasar", "Badge Inovator Hijau"],
   },
   {
-    tier: "Silver Harvest",
+    tier: "Panen Perak",
     requirement: "1.500 - 3.499 EXP",
-    perks: ["Slot event prioritas", "Badge Soil Scientist & Livestock Guardian"],
+    perks: ["Slot event prioritas", "Badge Peneliti Tanah & Penjaga Ternak"],
   },
   {
-    tier: "Gold Canopy",
+    tier: "Kanopi Emas",
     requirement: "3.500 - 5.999 EXP",
-    perks: ["Mentoring mingguan", "Undangan Impact Mentor Award"],
+    perks: ["Mentoring mingguan", "Undangan Penghargaan Mentor Inspirasi"],
   },
   {
-    tier: "Platinum Origins",
+    tier: "Mutiara Platinum",
     requirement: "6.000+ EXP",
-    perks: ["Co-creator tantangan nasional", "Hak voting kurasi badge baru"],
+    perks: ["Pembuat tantangan nasional", "Hak memilih lencana baru"],
   },
 ]
 
 const achievementSpotlights = [
   {
-    title: "Hydro Crop Hackday",
+    title: "Hari Panen Hidroponik",
     description: "Merancang instalasi hidroponik modular dan memverifikasi nutrisi bersama 120 siswa agritech.",
     badge: "Kolaborasi Nasional",
     location: "Bandung, Indonesia",
@@ -159,17 +159,17 @@ const achievementSpotlights = [
     icon: Leaf,
   },
   {
-    title: "Livestock Guardian Sprint",
+    title: "Aksi Cepat Penjaga Ternak",
     description: "Menyelamatkan ternak kecil melalui respon cepat & workshop kesehatan mikrobioma.",
-    badge: "Livestock Guardian",
+    badge: "Penjaga Ternak",
     location: "Makassar, Indonesia",
     image: "/topics/livestock.jpg",
     icon: Flame,
   },
   {
-    title: "Weather & Soil Studio",
+    title: "Studio Cuaca & Tanah",
     description: "Memadukan data cuaca mikro dengan analisis tanah selama kelas lapangan akhir pekan.",
-    badge: "Climate Ranger",
+    badge: "Penjaga Iklim",
     location: "Semarang, Indonesia",
     image: "/topics/weather.jpg",
     icon: Map,
@@ -179,13 +179,13 @@ const achievementSpotlights = [
 const levelBadgeCharacters = [
   { name: "Tunas Nara", title: "Penjaga Benih", icon: Leaf, accent: "from-emerald-500 to-teal-500" },
   { name: "Ari Sawah", title: "Perawat Lahan", icon: Sparkles, accent: "from-lime-500 to-emerald-500" },
-  { name: "Raka Akar", title: "Pembaca Tanah", icon: Flame, accent: "from-amber-500 to-orange-500" },
+  { name: "Raka Akar", title: "Pembaca Tanah", icon: Flame, accent: "from-lime-500 to-yellow-500" },
   { name: "Mira Air", title: "Penata Irigasi", icon: Zap, accent: "from-cyan-500 to-blue-500" },
   { name: "Sora Cuaca", title: "Pengamat Iklim", icon: Star, accent: "from-sky-500 to-indigo-500" },
-  { name: "Diva Ternak", title: "Penjaga Kandang", icon: ShieldCheck, accent: "from-fuchsia-500 to-pink-500" },
+  { name: "Diva Ternak", title: "Penjaga Kandang", icon: ShieldCheck, accent: "from-fuchsia-500 to-violet-500" },
   { name: "Bima Peta", title: "Navigator Pangan", icon: Map, accent: "from-violet-500 to-indigo-600" },
-  { name: "Kirana Tim", title: "Kapten Kolaborasi", icon: Users, accent: "from-rose-500 to-red-500" },
-  { name: "Genta Prestasi", title: "Juara Wilayah", icon: Trophy, accent: "from-yellow-500 to-orange-500" },
+  { name: "Kirana Tim", title: "Kapten Kolaborasi", icon: Users, accent: "from-teal-500 to-emerald-500" },
+  { name: "Genta Prestasi", title: "Juara Wilayah", icon: Trophy, accent: "from-yellow-500 to-lime-500" },
   { name: "Maheswara", title: "Legenda Nasional", icon: Crown, accent: "from-primary to-accent" },
 ] as const
 
@@ -207,10 +207,10 @@ type ViewerSession = {
 }
 
 function resolveTierLabel(totalExp: number) {
-  if (totalExp >= 6000) return "Platinum Origins"
-  if (totalExp >= 3500) return "Gold Canopy"
-  if (totalExp >= 1500) return "Silver Harvest"
-  return "Bronze Roots"
+  if (totalExp >= 6000) return "Mutiara Platinum"
+  if (totalExp >= 3500) return "Kanopi Emas"
+  if (totalExp >= 1500) return "Panen Perak"
+  return "Akar Perunggu"
 }
 
 function formatExpRange(minExp: number, maxExp: number) {
@@ -283,13 +283,13 @@ export default function AchievementsPage() {
       {
         label: "Badge aktif",
         value: viewerSource === "real" ? String(derived.badgeCount) : "12",
-        caption: viewerSource === "real" ? "Estimasi dari progres menang" : "Sedang kamu kelola (preview)",
+        caption: viewerSource === "real" ? "Estimasi dari progres menang" : "Sedang kamu kelola (pratinjau)",
         icon: Sparkles,
       },
       {
         label: "Streak terbaik",
         value: viewerSource === "real" ? `${derived.estimatedStreak} hari` : "21 hari",
-        caption: viewerSource === "real" ? "Perkiraan dari aktivitas login/game" : "Login tanpa putus (preview)",
+        caption: viewerSource === "real" ? "Perkiraan dari aktivitas login/game" : "Login tanpa putus (pratinjau)",
         icon: Target,
       },
       {
@@ -321,11 +321,11 @@ export default function AchievementsPage() {
         <header className="glass-card rounded-3xl p-8">
           <div className="grid items-center gap-8 lg:grid-cols-[1.2fr,0.8fr]">
             <div>
-              <span className="section-badge">Badge & Awards Hub</span>
+              <span className="section-badge">Pusat Badge & Penghargaan</span>
               <h1 className="mt-4 text-4xl font-display font-bold tracking-tight text-foreground">Rayakan perjalanan agrimu</h1>
               <p className="mt-2 max-w-2xl text-muted-foreground">
-                Semua pencapaianmu kami kumpulkan di satu tempat: badge eksplorasi, penghargaan kompetisi, hingga roadmap
-                perjalanan untuk naik kelas. Gunakan hub ini sebagai panduan leveling pengalaman agrikulturmu.
+                Semua pencapaianmu kami kumpulkan di satu tempat: badge eksplorasi, penghargaan kompetisi, hingga peta
+                perjalanan untuk naik kelas. Gunakan hub ini sebagai panduan naik level pengalaman pertanianmu.
               </p>
               <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border/50 bg-card/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground">
                 <UserRound className="h-3.5 w-3.5 text-primary" />
@@ -333,7 +333,7 @@ export default function AchievementsPage() {
                   ? "Memuat data akun aktif..."
                   : viewer
                     ? `${viewer.name}${viewer.schoolName ? ` · ${viewer.schoolName}` : ""} · source ${viewerSource}`
-                    : "Belum login · menampilkan preview"}
+                    : "Belum login · menampilkan pratinjau"}
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 {dynamicHighlightStats.map((stat) => {
@@ -375,7 +375,7 @@ export default function AchievementsPage() {
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Badge Terbaru</p>
                       <p className="text-sm font-display font-semibold text-foreground">
-                        {viewerSource === "real" && derived.badgeCount > 0 ? "Progres Badge Aktif" : "Climate Ranger"}
+                        {viewerSource === "real" && derived.badgeCount > 0 ? "Progres Badge Aktif" : "Penjaga Iklim"}
                       </p>
                     </div>
                   </div>
@@ -396,12 +396,12 @@ export default function AchievementsPage() {
                 </div>
                 <p className="mt-3 text-sm font-semibold text-muted-foreground">Tier Saat Ini</p>
                 <p className="text-4xl font-display font-bold text-primary">
-                  {viewerSource === "real" ? derived.tierLabel : "Gold Canopy"}
+                  {viewerSource === "real" ? derived.tierLabel : "Kanopi Emas"}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {viewerSource === "real"
                     ? `${derived.totalExp.toLocaleString("id-ID")} EXP · Level ${derived.level}`
-                    : "4.320 EXP → 3 Awards"}
+                    : "4.320 EXP → 3 Penghargaan"}
                 </p>
                 <div className="mt-4 rounded-full bg-border/40 p-1">
                   <div
@@ -414,7 +414,7 @@ export default function AchievementsPage() {
                     ? derived.expProgress.progress >= 100
                       ? "Level maksimum saat ini tercapai"
                       : `${Math.max(0, derived.expProgress.next - derived.totalExp).toLocaleString("id-ID")} EXP menuju level berikutnya`
-                    : "Progress contoh (preview)"}
+                    : "Progres contoh (pratinjau)"}
                 </p>
               </div>
             </div>
@@ -428,7 +428,7 @@ export default function AchievementsPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary-foreground/80">Badge Koleksi</p>
               <p className="text-2xl font-display font-bold leading-tight">Eksplorasi Pencapaianmu</p>
               <p className="mt-1 text-sm text-primary-foreground/80">
-                Tambah motivasi lewat kumpulan badge dan awards terbaru yang siap kamu kunci.
+                Tambah motivasi lewat kumpulan badge dan penghargaan terbaru yang siap kamu kunci.
               </p>
             </div>
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-primary-foreground shadow-inner">
@@ -453,11 +453,11 @@ export default function AchievementsPage() {
           <article className="glass-card rounded-3xl p-8">
             <div className="flex flex-col gap-4 pb-6 border-b border-border/50 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <span className="section-badge">Badge & Awards</span>
+                <span className="section-badge">Lencana & Penghargaan</span>
                 <h2 className="mt-3 text-2xl font-display font-bold tracking-tight text-foreground">Satu panel untuk semua koleksi</h2>
               </div>
               <span className="bg-primary/10 text-primary rounded-full px-4 py-1 text-sm font-semibold">
-                {badgeCollections.length + awardMoments.length} Items
+                {badgeCollections.length + awardMoments.length} Item
               </span>
             </div>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -479,7 +479,7 @@ export default function AchievementsPage() {
               })}
             </div>
             <div className="mt-6 glass-card rounded-2xl p-5">
-              <span className="section-badge">Award Spotlight</span>
+              <span className="section-badge">Sorotan Penghargaan</span>
               <div className="mt-4 grid gap-4 md:grid-cols-3">
                 {awardMoments.map((award) => (
                   <div key={award.name} className="glass-card rounded-2xl p-4">
@@ -493,7 +493,7 @@ export default function AchievementsPage() {
           </article>
 
           <article className="glass-card rounded-3xl p-8">
-            <span className="section-badge">Journey Experience</span>
+            <span className="section-badge">Perjalanan Pengalaman</span>
             <h2 className="mt-3 text-2xl font-display font-bold tracking-tight text-foreground">Peta perjalanan lengkap</h2>
             <div className="mt-6 space-y-4">
               {journeyExperience.map((stage, index) => {
@@ -526,7 +526,7 @@ export default function AchievementsPage() {
           <div className="flex flex-col gap-4 border-b border-border/50 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <span className="section-badge">Cerita Lapangan</span>
-              <h2 className="mt-3 text-3xl font-display font-bold tracking-tight text-foreground">Spotlight pencapaian terbaru</h2>
+              <h2 className="mt-3 text-3xl font-display font-bold tracking-tight text-foreground">Sorotan pencapaian terbaru</h2>
             </div>
             <p className="text-sm text-muted-foreground">Dokumentasi visual yang bikin badge makin hidup</p>
           </div>
@@ -546,7 +546,7 @@ export default function AchievementsPage() {
                       height={320}
                       className="h-48 w-full rounded-2xl object-cover"
                     />
-                    <span className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-foreground">
+                    <span className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 dark:bg-card/90 px-3 py-1 text-xs font-semibold text-foreground">
                       <Icon className="h-4 w-4 text-primary" />
                       {spotlight.badge}
                     </span>
@@ -598,7 +598,7 @@ export default function AchievementsPage() {
                 </p>
               </div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                Progress level {displayedLevel}
+                Progres level {displayedLevel}
               </p>
             </div>
             <div className="mt-4 h-3 rounded-full bg-border/40 p-1">
@@ -641,11 +641,11 @@ export default function AchievementsPage() {
                         isCurrent
                           ? "bg-primary text-primary-foreground"
                           : isUnlocked
-                            ? "bg-emerald-100 text-emerald-700"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
                             : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {isCurrent ? "Aktif" : isUnlocked ? "Unlocked" : "Locked"}
+                      {isCurrent ? "Aktif" : isUnlocked ? "Terbuka" : "Terkunci"}
                     </span>
                   </div>
 
@@ -678,7 +678,7 @@ export default function AchievementsPage() {
         <article className="glass-card rounded-3xl p-8">
           <div className="flex flex-col gap-4 border-b border-border/50 pb-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <span className="section-badge">Tier & Experience</span>
+              <span className="section-badge">Tingkatan & Pengalaman</span>
               <h2 className="mt-3 text-3xl font-display font-bold tracking-tight text-foreground">Tingkatan lengkap dan benefitnya</h2>
             </div>
             <span className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background">Progress Otomatis</span>
@@ -707,7 +707,7 @@ export default function AchievementsPage() {
 
 function CheckIcon() {
   return (
-    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary">
       <Checkmark />
     </span>
   )

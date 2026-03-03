@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react"
 import { Activity, Clock, MapPin, Medal, PhoneCall, Search, ShieldCheck, Sparkles, Swords, Trophy, UserRound, Users, Zap } from "lucide-react"
 import { useMemo, useState } from "react"
+import Link from "next/link"
 
 type MatchMode = "1v1" | "5v5" | "latihan"
 type MatchResult = "win" | "lose"
@@ -28,6 +29,7 @@ type HomeLeaderboardProps = {
   history?: MatchRecord[]
   playerName?: string
   playerSchool?: string
+  loading?: boolean
 }
 
 const modeStyles: Record<
@@ -42,27 +44,27 @@ const modeStyles: Record<
   "1v1": {
     label: "Duel 1 Lawan 1",
     icon: Swords,
-    iconBg: "bg-emerald-50 text-emerald-600",
-    chip: "bg-emerald-100 text-emerald-700",
+    iconBg: "bg-primary/10 text-primary dark:bg-primary/15 dark:text-primary",
+    chip: "bg-primary/15 text-primary dark:bg-primary/20 dark:text-primary",
   },
   "5v5": {
     label: "Main Bareng Tim 5v5",
     icon: Users,
-    iconBg: "bg-teal-50 text-teal-600",
-    chip: "bg-teal-100 text-teal-700",
+    iconBg: "bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400",
+    chip: "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300",
   },
   latihan: {
     label: "Latihan dengan Mentor",
     icon: Sparkles,
-    iconBg: "bg-sky-50 text-sky-600",
-    chip: "bg-sky-100 text-sky-700",
+    iconBg: "bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-400",
+    chip: "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
   },
 }
 
 
 const resultBadgeClass: Record<MatchResult, string> = {
-  win: "bg-emerald-100 text-emerald-700",
-  lose: "bg-violet-100 text-violet-600",
+  win: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+  lose: "bg-violet-100 text-violet-600 dark:bg-violet-900/50 dark:text-violet-300",
 }
 
 const navigationTabs: Array<{ key: string; label: string; icon: LucideIcon }> = [
@@ -92,12 +94,32 @@ const dateFormatter = new Intl.DateTimeFormat("id-ID", {
   minute: "2-digit",
 })
 
+function relativeTime(dateStr: string): string {
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const diffMs = now - then
+  if (diffMs < 0) return "baru saja"
+  const diffMin = Math.floor(diffMs / 60_000)
+  if (diffMin < 1) return "baru saja"
+  if (diffMin < 60) return `${diffMin} menit lalu`
+  const diffHour = Math.floor(diffMin / 60)
+  if (diffHour < 24) return `${diffHour} jam lalu`
+  const diffDay = Math.floor(diffHour / 24)
+  if (diffDay < 7) return `${diffDay} hari lalu`
+  const diffWeek = Math.floor(diffDay / 7)
+  if (diffWeek < 5) return `${diffWeek} minggu lalu`
+  const diffMonth = Math.floor(diffDay / 30)
+  if (diffMonth < 12) return `${diffMonth} bulan lalu`
+  return `${Math.floor(diffMonth / 12)} tahun lalu`
+}
+
 const classNames = (...classes: Array<string | boolean | undefined>) => classes.filter(Boolean).join(" ")
 
 export function HomeLeaderboard({
   history,
   playerName = "Pemain",
   playerSchool = "Belum tersambung ke akun",
+  loading = false,
 }: HomeLeaderboardProps) {
   const [activeNav, setActiveNav] = useState<string>("activity")
   const [resultFilter, setResultFilter] = useState<MatchResult | "all">("all")
@@ -152,10 +174,10 @@ export function HomeLeaderboard({
   return (
     <section
       id="activity"
-      className="rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl shadow-emerald-50 lg:p-8 2xl:p-10"
+      className="rounded-3xl border border-border bg-card/95 p-6 shadow-xl lg:p-8 2xl:p-10"
     >
       <nav aria-label="Menu utama" className="mb-6">
-        <div className="flex flex-wrap items-center gap-2 rounded-full border border-slate-200 bg-slate-50/80 p-1.5 shadow-inner">
+        <div className="flex flex-wrap items-center gap-2 rounded-full border border-border bg-muted/40 p-1.5 shadow-inner">
           {navigationTabs.map((tab) => {
             const Icon = tab.icon
             const isActive = tab.key === activeNav
@@ -166,8 +188,8 @@ export function HomeLeaderboard({
                 aria-pressed={isActive}
                 onClick={() => setActiveNav(tab.key)}
                 className={classNames(
-                  "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
-                  isActive ? "bg-slate-900 text-white shadow shadow-slate-400/40" : "text-slate-600 hover:bg-white hover:text-slate-900",
+                  "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-95",
+                  isActive ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-card hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -177,38 +199,56 @@ export function HomeLeaderboard({
           })}
         </div>
       </nav>
+      <div key={activeNav} className="animate-tab-fade">
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-500">
-            History Pertandingan - {activeNavLabel}
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+            Riwayat Pertandingan - {activeNavLabel}
           </p>
-          <h2 className="mt-2 text-3xl font-semibold text-slate-900 2xl:text-4xl">{playerName}</h2>
-          <p className="text-sm text-slate-500">{playerSchool} â€¢ Kompetisi yang dijalankan & rekam jejak duel terbaru</p>
+          <h2 className="mt-2 text-3xl font-semibold text-foreground 2xl:text-4xl">{playerName}</h2>
+          <p className="text-sm text-muted-foreground">{playerSchool} â€¢ Kompetisi yang dijalankan & rekam jejak duel terbaru</p>
           {latestMatch ? (
-            <p className="mt-2 text-xs font-semibold text-slate-400">
-              Pembaruan terakhir {dateFormatter.format(new Date(latestMatch.playedAt))}
+            <p className="mt-2 text-xs font-semibold text-muted-foreground">
+              Pembaruan terakhir {dateFormatter.format(new Date(latestMatch.playedAt))}{" "}
+              <span className="text-muted-foreground/60">({relativeTime(latestMatch.playedAt)})</span>
             </p>
           ) : null}
         </div>
         <label className="relative block w-full md:w-80">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
             placeholder="Cari lawan, lokasi, atau topik"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-300 focus:ring-4 focus:ring-emerald-100"
+            className="h-12 w-full rounded-2xl border border-border bg-card pl-11 pr-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4 focus:ring-primary/10"
           />
         </label>
       </header>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        {[
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <article
+              key={i}
+              className="rounded-2xl border border-border bg-muted/40 p-4 shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-muted skeleton-shimmer" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-3 w-24 rounded-full bg-muted skeleton-shimmer" />
+                  <div className="h-5 w-16 rounded-full bg-muted skeleton-shimmer" />
+                  <div className="h-3 w-20 rounded-full bg-muted skeleton-shimmer" />
+                </div>
+              </div>
+            </article>
+          ))
+        ) : [
           { label: "Total Pertandingan", value: totalMatches, helper: "12 minggu terakhir", icon: Trophy, accent: "text-lime-600" },
-          { label: "Win Rate", value: `${winRate}%`, helper: `${totalWins} menang`, icon: ShieldCheck, accent: "text-emerald-500" },
+          { label: "Rasio Menang", value: `${winRate}%`, helper: `${totalWins} menang`, icon: ShieldCheck, accent: "text-primary" },
           {
             label: "Streak & EXP",
-            value: currentStreak ? `${currentStreak}W streak` : "Belum ada streak",
+            value: currentStreak ? `${currentStreak}x menang berturut` : "Belum ada kemenangan berturut",
             helper: averageExp ? `Rata-rata ${averageExp} EXP` : "Belum ada EXP",
             icon: Zap,
             accent: "text-sky-500",
@@ -218,16 +258,16 @@ export function HomeLeaderboard({
           return (
             <article
               key={card.label}
-              className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white"
+              className="rounded-2xl border border-border bg-muted/40 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/25 hover:bg-card"
             >
               <div className="flex items-center gap-3">
-                <span className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow ${card.accent}`}>
+                <span className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-card shadow ${card.accent}`}>
                   <Icon className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{card.label}</p>
-                  <p className="text-xl font-semibold text-slate-900">{card.value}</p>
-                  <p className="text-xs text-slate-500">{card.helper}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{card.label}</p>
+                  <p className="text-xl font-semibold text-foreground">{card.value}</p>
+                  <p className="text-xs text-muted-foreground">{card.helper}</p>
                 </div>
               </div>
             </article>
@@ -243,8 +283,8 @@ export function HomeLeaderboard({
               type="button"
               onClick={() => setResultFilter(filter.key)}
               className={classNames(
-                "rounded-full px-4 py-2 text-sm font-semibold transition",
-                resultFilter === filter.key ? "bg-slate-900 text-white shadow" : "bg-slate-100 text-slate-600 hover:bg-white",
+                "rounded-full px-4 py-2 text-sm font-semibold transition active:scale-95",
+                resultFilter === filter.key ? "bg-primary text-primary-foreground shadow" : "bg-muted text-muted-foreground hover:bg-card",
               )}
             >
               {filter.label}
@@ -259,7 +299,7 @@ export function HomeLeaderboard({
               onClick={() => setModeFilter(filter.key)}
               className={classNames(
                 "rounded-full px-4 py-2 text-sm font-semibold transition",
-                modeFilter === filter.key ? "bg-emerald-600 text-white shadow" : "bg-white text-slate-600 border border-slate-200",
+                modeFilter === filter.key ? "bg-primary text-primary-foreground shadow" : "bg-card text-muted-foreground border border-border",
               )}
             >
               {filter.label}
@@ -269,9 +309,65 @@ export function HomeLeaderboard({
       </div>
 
       <div className="mt-6 space-y-4">
-        {filteredMatches.length === 0 ? (
-          <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6 text-center text-sm text-slate-500">
-            Belum ada history yang cocok dengan filter ini.
+        {loading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-3xl border border-border bg-card p-5 shadow-sm"
+              >
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-muted skeleton-shimmer" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-28 rounded-full bg-muted skeleton-shimmer" />
+                      <div className="h-5 w-44 rounded-full bg-muted skeleton-shimmer" />
+                      <div className="h-3 w-32 rounded-full bg-muted skeleton-shimmer" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="h-5 w-16 rounded-full bg-muted skeleton-shimmer" />
+                    <div className="h-8 w-20 rounded-full bg-muted skeleton-shimmer" />
+                    <div className="h-3 w-28 rounded-full bg-muted skeleton-shimmer" />
+                  </div>
+                </div>
+                <div className="mt-4 flex gap-6">
+                  <div className="h-4 w-32 rounded-full bg-muted skeleton-shimmer" />
+                  <div className="h-4 w-20 rounded-full bg-muted skeleton-shimmer" />
+                  <div className="h-4 w-24 rounded-full bg-muted skeleton-shimmer" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredMatches.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-muted/40 py-8 text-center">
+            <span className="text-4xl animate-emoji-bounce">{orderedHistory.length === 0 ? "🎮" : "🔍"}</span>
+            <p className="text-sm text-muted-foreground">
+              {orderedHistory.length === 0
+                ? "Belum ada pertandingan? Mulai duel pertamamu sekarang!"
+                : "Tidak ada pertandingan yang cocok dengan filter ini. Coba ubah filter atau cari kata lain ya!"}
+            </p>
+            {orderedHistory.length === 0 ? (
+              <Link
+                href="/game/duel"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition hover:shadow-lg active:scale-95"
+              >
+                <Swords className="h-4 w-4" />
+                Mulai Duel
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setResultFilter("all")
+                  setModeFilter("all")
+                  setSearchTerm("")
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/35 active:scale-95"
+              >
+                Atur Ulang
+              </button>
+            )}
           </div>
         ) : (
           filteredMatches.map((match) => {
@@ -280,7 +376,7 @@ export function HomeLeaderboard({
             return (
               <article
                 key={match.id}
-                className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm shadow-emerald-50 transition hover:-translate-y-0.5 hover:border-emerald-200"
+                className="rounded-3xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/25"
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-center gap-4">
@@ -291,8 +387,8 @@ export function HomeLeaderboard({
                       <span className={classNames("inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold", mode.chip)}>
                         {mode.label}
                       </span>
-                      <h3 className="mt-2 text-xl font-semibold text-slate-900">{match.topic}</h3>
-                      <p className="text-sm text-slate-500">
+                      <h3 className="mt-2 text-xl font-semibold text-foreground">{match.topic}</h3>
+                      <p className="text-sm text-muted-foreground">
                         vs {match.opponent}
                         {match.opponentSchool ? (
                           <>
@@ -307,46 +403,57 @@ export function HomeLeaderboard({
                     <span className={classNames("inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold", resultBadgeClass[match.result])}>
                       {match.result === "win" ? "Menang" : "Kalah"}
                     </span>
-                    <p className="mt-2 text-3xl font-semibold text-slate-900">
+                    <p className="mt-2 text-3xl font-semibold text-foreground">
                       {match.scoreFor} - {match.scoreAgainst}
                     </p>
                     {typeof match.ratingChange === "number" ? (
                       <p
                         className={classNames(
                           "text-sm font-semibold",
-                          match.ratingChange >= 0 ? "text-emerald-600" : "text-violet-600",
+                          match.ratingChange > 0
+                            ? "text-primary"
+                            : match.ratingChange < 0
+                              ? "text-violet-600"
+                              : "text-muted-foreground",
                         )}
                       >
-                        {match.ratingChange >= 0 ? "+" : ""}
-                        {match.ratingChange} poin peringkat
+                        {match.ratingChange > 0
+                          ? `↑ +${match.ratingChange}`
+                          : match.ratingChange < 0
+                            ? `↓ ${match.ratingChange}`
+                            : "— 0"}{" "}
+                        poin peringkat
                       </p>
                     ) : null}
                   </div>
                 </div>
 
-                <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
+                <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-slate-400" />
+                    <Clock className="h-4 w-4 text-muted-foreground" />
                     <dt className="sr-only">Waktu main</dt>
-                    <dd>{dateFormatter.format(new Date(match.playedAt))}</dd>
+                    <dd>
+                      {dateFormatter.format(new Date(match.playedAt))}{" "}
+                      <span className="text-muted-foreground/60">({relativeTime(match.playedAt)})</span>
+                    </dd>
                   </div>
                   {match.durationMinutes ? (
                     <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-slate-400" />
+                      <Zap className="h-4 w-4 text-muted-foreground" />
                       <dt className="sr-only">Durasi</dt>
                       <dd>{match.durationMinutes} menit</dd>
                     </div>
                   ) : null}
                   {typeof match.expGained === "number" ? (
                     <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-slate-400" />
+                      <Sparkles className="h-4 w-4 text-muted-foreground" />
                       <dt className="sr-only">EXP</dt>
                       <dd>+{match.expGained} EXP</dd>
                     </div>
                   ) : null}
                   {match.location ? (
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-slate-400" />
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
                       <dt className="sr-only">Lokasi</dt>
                       <dd>{match.location}</dd>
                     </div>
@@ -354,12 +461,13 @@ export function HomeLeaderboard({
                 </dl>
 
                 {match.notes ? (
-                  <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">{match.notes}</p>
+                  <p className="mt-4 rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">{match.notes}</p>
                 ) : null}
               </article>
             )
           })
         )}
+      </div>
       </div>
     </section>
   )

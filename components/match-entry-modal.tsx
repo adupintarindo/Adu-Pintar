@@ -40,8 +40,8 @@ const gameModes = [
     href: "/game/team",
     accent: {
       card: "border-secondary/20 bg-secondary/5 hover:border-secondary/30",
-      text: "text-secondary-foreground",
-      pill: "bg-secondary/10 text-secondary-foreground",
+      text: "text-secondary",
+      pill: "bg-secondary/10 text-secondary",
       button: "bg-secondary hover:bg-secondary/90 text-secondary-foreground",
     },
     stats: [
@@ -78,7 +78,7 @@ function ModeDetail({ mode, onClose, enableDirectEntry }: ModeDetailProps) {
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-4 top-4 rounded-full border border-border/50 p-2 text-muted-foreground transition hover:bg-muted/40 hover:text-foreground"
+        className="absolute right-4 top-4 rounded-full border border-border/50 p-2 text-muted-foreground transition hover:bg-muted/40 hover:text-foreground active:scale-95"
         aria-label="Tutup dialog mode"
       >
         <X className="h-4 w-4" />
@@ -120,7 +120,7 @@ function ModeDetail({ mode, onClose, enableDirectEntry }: ModeDetailProps) {
             <p className="text-sm text-muted-foreground">Siap lanjut? Kamu bisa masuk ke lobby kapan saja.</p>
             <Link
               href={mode.href}
-              className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${mode.accent.button}`}
+              className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition active:scale-95 ${mode.accent.button}`}
             >
               {mode.cta}
               <ArrowRight className="h-4 w-4" />
@@ -163,16 +163,16 @@ export function MatchEntryModal({ enableDirectEntry = false }: MatchEntryModalPr
               type="button"
               key={mode.id}
               onClick={() => setActiveMode(mode)}
-              className={`group rounded-2xl border p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg ${mode.accent.card}`}
+              className={`group rounded-2xl border p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg active:scale-95 ${mode.accent.card}`}
             >
-              <div className={`flex items-center gap-3 ${mode.accent.text}`}>
-                <Icon className="h-6 w-6" />
-                <span className="text-lg font-semibold">{mode.title}</span>
+              <div className="flex items-center gap-3">
+                <Icon className={`h-6 w-6 ${mode.accent.text}`} />
+                <span className="text-lg font-semibold text-foreground">{mode.title}</span>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">{mode.summary}</p>
-              <div className={`mt-4 inline-flex items-center gap-2 text-sm font-semibold ${mode.accent.text}`}>
+              <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
                 Pelajari mode
-                <span aria-hidden="true" className="transition group-hover:translate-x-1">
+                <span aria-hidden="true" className={`transition group-hover:translate-x-1 ${mode.accent.text}`}>
                   &rarr;
                 </span>
               </div>

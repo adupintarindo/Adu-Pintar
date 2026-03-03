@@ -34,6 +34,8 @@ type StudentAggRow = {
   losses: number | null
 }
 
+const PERIOD_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
+
 function isUUID(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
@@ -58,6 +60,12 @@ function toGradeCategory(value: string | null): GradeCategory {
   return 1
 }
 
+function normalizePeriod(value: string | null): string | null {
+  if (!value) return null
+  const trimmed = value.trim()
+  return PERIOD_PATTERN.test(trimmed) ? trimmed : null
+}
+
 function normalizeLocationFilters(searchParams: URLSearchParams) {
   const province = (searchParams.get("province") ?? searchParams.get("region") ?? "").trim()
   const city = (searchParams.get("city") ?? "").trim()
@@ -68,6 +76,7 @@ async function querySupabaseTeamLeaderboard(params: {
   phase: PhaseScope
   gradeCategory: GradeCategory
   limit: number
+  period: string
   schoolId?: string
   province?: string
   city?: string
@@ -81,6 +90,7 @@ async function querySupabaseTeamLeaderboard(params: {
       .select("school_id, total_score, province, city, schools(name)")
       .eq("competition_phase", params.phase)
       .eq("grade_category", params.gradeCategory)
+      .eq("period", params.period)
       .order("total_score", { ascending: false })
       .limit(Math.max(params.limit * 20, 200))
 
@@ -208,11 +218,13 @@ export async function GET(request: NextRequest) {
     const { province, city } = normalizeLocationFilters(searchParams)
     const schoolId = searchParams.get("schoolId")?.trim() || undefined
     const limit = Math.max(1, Math.min(200, Number.parseInt(searchParams.get("limit") || "50", 10) || 50))
+    const period = normalizePeriod(searchParams.get("period")) ?? new Date().toISOString().slice(0, 7)
 
     const supabaseRows = await querySupabaseTeamLeaderboard({
       phase,
       gradeCategory,
       limit,
+      period,
       schoolId,
       province,
       city,
@@ -226,6 +238,7 @@ export async function GET(request: NextRequest) {
         province: province || null,
         city: city || null,
         schoolId: schoolId || null,
+        period,
         source: supabaseRows ? "supabase" : "fallback",
       },
     })

@@ -127,17 +127,17 @@ export function TestimonialsCarousel() {
     })
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-emerald-100 bg-linear-to-br from-white via-emerald-50/50 to-emerald-100/40 p-5 shadow-[0_24px_60px_-36px_rgba(16,185,129,0.45)] sm:p-7 lg:p-9">
-      <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-200/30 blur-3xl" />
+    <section className="relative overflow-hidden rounded-[2rem] border border-primary/15 bg-linear-to-br from-card via-primary/5 to-primary/10 p-5 shadow-[0_24px_60px_-36px_rgba(108,166,68,0.35)] sm:p-7 lg:p-9">
+      <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-8 h-48 w-48 rounded-full bg-lime-200/20 blur-3xl" />
 
       <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-600">Testimoni Pengguna</p>
-          <h3 className="mt-3 text-balance text-2xl font-semibold text-slate-900 sm:text-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-primary">Testimoni Pengguna</p>
+          <h3 className="mt-3 text-balance text-2xl font-semibold text-foreground sm:text-3xl">
             Apa kata mereka tentang Adu Pintar
           </h3>
-          <p className="mt-2 text-sm leading-relaxed text-slate-500">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Cerita dari pelajar yang merasakan manfaat leaderboard dan latihan real-time.
           </p>
         </div>
@@ -146,7 +146,7 @@ export function TestimonialsCarousel() {
             type="button"
             onClick={handlePrev}
             disabled={totalSlides <= 1}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-200/90 bg-white/95 text-emerald-600 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:border-emerald-200/90"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/20 bg-card/95 text-primary shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:border-primary/20"
             aria-label="Sebelumnya"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -155,7 +155,7 @@ export function TestimonialsCarousel() {
             type="button"
             onClick={handleNext}
             disabled={totalSlides <= 1}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-emerald-200/90 bg-white/95 text-emerald-600 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:border-emerald-200/90"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/20 bg-card/95 text-primary shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0 disabled:hover:border-primary/20"
             aria-label="Berikutnya"
           >
             <ChevronRight className="h-5 w-5" />
@@ -174,11 +174,11 @@ export function TestimonialsCarousel() {
                 {slide.map((testimonial, cardIndex) => (
                   <article
                     key={`testimonial-${slideIndex}-${testimonial.id}-${cardIndex}`}
-                    className="flex h-full flex-col rounded-3xl border border-emerald-100/80 bg-white p-5 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.35)] transition hover:-translate-y-1 hover:shadow-[0_24px_40px_-22px_rgba(16,185,129,0.45)]"
+                    className="flex h-full flex-col rounded-3xl border border-primary/10 bg-card p-5 shadow-[0_16px_32px_-24px_rgba(15,23,42,0.35)] transition hover:-translate-y-1 hover:shadow-[0_24px_40px_-22px_rgba(108,166,68,0.35)]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                           {testimonial.name
                             .split(" ")
                             .filter(Boolean)
@@ -188,31 +188,31 @@ export function TestimonialsCarousel() {
                             .toUpperCase()}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-base font-semibold text-slate-900">{testimonial.name}</p>
-                          <p className="text-sm text-slate-500">{testimonial.grade}</p>
+                          <p className="truncate text-base font-semibold text-foreground">{testimonial.name}</p>
+                          <p className="text-sm text-muted-foreground">{testimonial.grade}</p>
                         </div>
                       </div>
-                      <span className="inline-flex max-w-[9.5rem] items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                      <span className="inline-flex max-w-[9.5rem] items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
                         <BookOpen className="h-3.5 w-3.5 shrink-0" />
                         <span className="truncate">{testimonial.module}</span>
                       </span>
                     </div>
-                    <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                       {testimonial.school}
                     </p>
-                    <p className="mt-4 flex-1 text-sm leading-relaxed text-slate-600">&ldquo;{testimonial.review}&rdquo;</p>
+                    <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">&ldquo;{testimonial.review}&rdquo;</p>
                     <div className="mt-6 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-1">
                         {Array.from({ length: 5 }).map((_, index) => (
                           <Star
                             key={`${testimonial.id}-star-${index}`}
-                            className={`h-4 w-4 ${index < testimonial.rating ? "text-yellow-400" : "text-slate-200"}`}
+                            className={`h-4 w-4 ${index < testimonial.rating ? "text-yellow-400" : "text-muted-foreground/40"}`}
                             fill={index < testimonial.rating ? "currentColor" : "none"}
                             stroke="currentColor"
                           />
                         ))}
                       </div>
-                      <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                         <Clock3 className="h-4 w-4" />
                         {testimonial.timeAgo}
                       </div>
@@ -235,8 +235,8 @@ export function TestimonialsCarousel() {
             aria-current={currentSlide === index ? "true" : undefined}
             className={`h-2.5 rounded-full transition-all duration-300 ${
               currentSlide === index
-                ? "w-8 bg-emerald-500"
-                : "w-2.5 bg-emerald-200 hover:bg-emerald-300"
+                ? "w-8 bg-primary"
+                : "w-2.5 bg-primary/25 hover:bg-primary/40"
             } disabled:cursor-not-allowed`}
             aria-label={`Slide ${index + 1}`}
           />

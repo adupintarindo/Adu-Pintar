@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { Flag } from "lucide-react"
 import { fetchWithCsrf } from "@/lib/client-security"
 import { playCorrectSound, playIncorrectSound, playTickSound, playClickSound, isSoundEnabled, setSoundEnabled } from "@/lib/sound-effects"
 
@@ -103,7 +104,10 @@ export default function DuelPlayingPage() {
   const [answerFeedback, setAnswerFeedback] = useState<{ isCorrect: boolean; pointsEarned: number } | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "syncing" | "disconnected">("syncing")
   const [soundOn, setSoundOn] = useState(() => isSoundEnabled())
+  const [syncRetryNonce, setSyncRetryNonce] = useState(0)
+  const [pregameCountdown, setPregameCountdown] = useState<number | null>(null)
   const hasNavigated = useRef(false)
+  const hasPregameCountdownStarted = useRef(false)
   const questionStartRef = useRef<number>(Date.now())
 
   useEffect(() => {
@@ -182,7 +186,7 @@ export default function DuelPlayingPage() {
       active = false
       clearTimeout(pollTimer)
     }
-  }, [gameId, router, selectedAnswer])
+  }, [gameId, router, selectedAnswer, syncRetryNonce])
 
   const players = useMemo(() => (game ? normalizePlayers(game) : []), [game])
   const currentPlayerIndex = useMemo(() => {
@@ -208,7 +212,31 @@ export default function DuelPlayingPage() {
     const total = currentPlayer.questionOrder?.length || game.totalQuestions
     return currentPlayer.currentQuestion >= total
   }, [game, currentPlayer])
+  const isPregameCountdownActive = pregameCountdown !== null
   const currentQuestionId = currentQuestion?.id ?? null
+
+  useEffect(() => {
+    if (!game || !currentPlayer || game.status !== "in-progress") return
+    if (hasPregameCountdownStarted.current) return
+    const hasAnswered = (currentPlayer.answers?.length ?? 0) > 0
+    if (currentPlayer.currentQuestion > 0 || hasAnswered) return
+
+    hasPregameCountdownStarted.current = true
+    setPregameCountdown(3)
+  }, [currentPlayer, game])
+
+  useEffect(() => {
+    if (pregameCountdown === null) return
+    if (pregameCountdown <= 0) {
+      setPregameCountdown(null)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setPregameCountdown((prev) => (prev === null ? null : prev - 1))
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [pregameCountdown])
 
   useEffect(() => {
     if (!currentQuestionId) return
@@ -222,6 +250,7 @@ export default function DuelPlayingPage() {
   const submitAnswer = useCallback(
     async (answerIndex: number) => {
       if (!game || !currentPlayer) return
+      if (isPregameCountdownActive) return
 
       setSelectedAnswer(answerIndex)
       setIsSubmitting(true)
@@ -278,16 +307,49 @@ export default function DuelPlayingPage() {
         }, 600)
       }
     },
-    [currentPlayer, currentPlayerIndex, game],
+    [currentPlayer, currentPlayerIndex, game, isPregameCountdownActive],
   )
 
   const handleAutoSubmit = useCallback(() => {
-    if (isSubmitting || selectedAnswer !== null) return
+    if (isSubmitting || selectedAnswer !== null || isPregameCountdownActive) return
     void submitAnswer(-1)
-  }, [isSubmitting, selectedAnswer, submitAnswer])
+  }, [isPregameCountdownActive, isSubmitting, selectedAnswer, submitAnswer])
+
+  const handleReconnect = useCallback(() => {
+    setError(null)
+    setConnectionStatus("syncing")
+    setSyncRetryNonce((prev) => prev + 1)
+  }, [])
+
+  const handleReportQuestion = useCallback(() => {
+    if (!game || !currentQuestion) return
+
+    const questionNumber = currentPlayer.currentQuestion + 1
+    const compactQuestion = currentQuestion.question.replace(/\s+/g, " ").trim()
+    const message = [
+      "Halo tim Adu Pintar, saya ingin melaporkan soal duel berikut:",
+      `- Game ID: ${game.id}`,
+      `- Soal ke: ${questionNumber}/${game.totalQuestions}`,
+      `- Question ID: ${currentQuestion.id}`,
+      `- Mode: ${game.mode ?? "practice"}`,
+      `- Grade: ${game.grade}`,
+      `- Isi soal: "${compactQuestion}"`,
+      "",
+      "Alasan laporan:",
+      "(tulis alasan, misalnya opsi ambigu, typo, atau kunci jawaban tidak sesuai)",
+    ].join("\n")
+
+    const params = new URLSearchParams({
+      source: "duel-question-report",
+      category: "umum",
+      message: message.slice(0, 2000),
+    })
+
+    router.push(`/contact?${params.toString()}`)
+  }, [currentPlayer.currentQuestion, currentQuestion, game, router])
 
   useEffect(() => {
-    if (!currentQuestion || isSubmitting || selectedAnswer !== null || isPlayerFinished) {
+    if (!currentQuestion || isSubmitting || selectedAnswer !== null || isPlayerFinished || isPregameCountdownActive) {
       return
     }
 
@@ -304,11 +366,11 @@ export default function DuelPlayingPage() {
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [currentQuestion, handleAutoSubmit, isSubmitting, isPlayerFinished, selectedAnswer])
+  }, [currentQuestion, handleAutoSubmit, isPregameCountdownActive, isSubmitting, isPlayerFinished, selectedAnswer])
 
   // #284: Keyboard shortcuts for answer options
   useEffect(() => {
-    if (!currentQuestion || selectedAnswer !== null || isSubmitting || isPlayerFinished) return
+    if (!currentQuestion || selectedAnswer !== null || isSubmitting || isPlayerFinished || isPregameCountdownActive) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const keyMap: Record<string, number> = { "1": 0, "2": 1, "3": 2, "4": 3, a: 0, b: 1, c: 2, d: 3 }
@@ -320,7 +382,7 @@ export default function DuelPlayingPage() {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [currentQuestion, selectedAnswer, isSubmitting, isPlayerFinished, submitAnswer])
+  }, [currentQuestion, isPregameCountdownActive, selectedAnswer, isSubmitting, isPlayerFinished, submitAnswer])
 
   if (loading && !game) {
     return (
@@ -346,7 +408,7 @@ export default function DuelPlayingPage() {
           <button
             type="button"
             onClick={() => router.push("/game/duel")}
-            className="rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-3 font-display font-bold text-primary-foreground transition"
+            className="rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-3 font-display font-bold text-primary-foreground transition active:scale-95"
             style={{ boxShadow: "var(--shadow-glow-primary)" }}
           >
             Kembali ke Lobby Duel
@@ -371,7 +433,7 @@ export default function DuelPlayingPage() {
           <button
             type="button"
             onClick={() => router.push(`/game/duel/lobby/${game.id}`)}
-            className="rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-3 font-display font-bold text-primary-foreground transition"
+            className="rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-3 font-display font-bold text-primary-foreground transition active:scale-95"
             style={{ boxShadow: "var(--shadow-glow-primary)" }}
           >
             Kembali ke Lobby
@@ -419,10 +481,12 @@ export default function DuelPlayingPage() {
                 setSoundOn(next)
                 setSoundEnabled(next)
               }}
-              className="flex items-center gap-1 rounded-md px-1.5 py-0.5 transition hover:bg-muted/50"
+              className="flex min-h-11 items-center gap-2 rounded-md px-2 py-1 text-xs font-semibold transition hover:bg-muted/50 active:scale-95"
               aria-label={soundOn ? "Matikan suara" : "Nyalakan suara"}
+              aria-pressed={soundOn}
             >
               {soundOn ? "🔊" : "🔇"}
+              <span>{soundOn ? "Suara Nyala" : "Suara Mati"}</span>
             </button>
             <span className="flex items-center gap-1.5">
               <span
@@ -434,7 +498,7 @@ export default function DuelPlayingPage() {
                       : "connection-dot--disconnected"
                 }`}
               />
-              {connectionStatus === "connected" ? "Terhubung" : connectionStatus === "syncing" ? "Sinkronisasi..." : "Terputus"}
+              {connectionStatus === "connected" ? "Terhubung" : connectionStatus === "syncing" ? "Menghubungkan..." : "Terputus"}
             </span>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2">
@@ -515,6 +579,25 @@ export default function DuelPlayingPage() {
 
       {/* Main content */}
       <div className="relative z-10 mx-auto max-w-4xl px-4 py-8">
+        {connectionStatus === "disconnected" ? (
+          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-destructive">
+                Koneksi terputus. Jawaban terakhir tetap tersimpan.
+              </p>
+              <p className="mt-1 text-xs text-destructive/80">
+                Cek koneksi internet kamu ya! Sambungkan ulang untuk lanjut dari soal saat ini.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleReconnect}
+              className="inline-flex items-center justify-center rounded-xl border border-destructive/40 bg-background px-4 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive/10 active:scale-95"
+            >
+              Sambung Ulang
+            </button>
+          </div>
+        ) : null}
         {isPlayerFinished ? (
           <div className="glass-card rounded-3xl border border-primary/30 p-8 text-center shadow-lg">
             <div className="mb-4 text-4xl">Selesai</div>
@@ -523,127 +606,171 @@ export default function DuelPlayingPage() {
           </div>
         ) : currentQuestion ? (
           <div key={currentQuestionId} className="glass-card rounded-3xl p-8 shadow-lg animate-slide-in-right">
-            <div className="mb-6 flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="font-display text-sm font-bold text-muted-foreground block">
-                  Soal {currentPlayer.currentQuestion + 1}/{game.totalQuestions}
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    {game.mode === "competition" ? "Mode Kompetisi" : "Mode Latihan"}
-                  </span>
-                  {currentQuestion.difficulty && (
-                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                      currentQuestion.difficulty === "sulit"
-                        ? "bg-destructive/10 text-destructive"
-                        : currentQuestion.difficulty === "menengah"
-                          ? "bg-accent/10 text-accent"
-                          : "bg-primary/10 text-primary"
-                    }`}>
-                      {currentQuestion.difficulty === "sulit" ? "Sulit" : currentQuestion.difficulty === "menengah" ? "Menengah" : "Mudah"}
-                    </span>
-                  )}
-                  {currentQuestion.points > 0 && (
-                    <span className="inline-flex rounded-full bg-secondary/10 px-3 py-1 text-xs font-semibold text-secondary-foreground">
-                      {currentQuestion.points} poin
-                    </span>
-                  )}
-                </div>
+            {isPregameCountdownActive ? (
+              <div className="py-12 text-center">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Pertandingan Dimulai</p>
+                <p key={pregameCountdown} className="mt-3 font-display text-6xl font-black text-primary animate-countdown-scale">{pregameCountdown}</p>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Siapkan jawabanmu. Soal pertama akan terbuka setelah hitungan selesai.
+                </p>
               </div>
-              <div role="timer" aria-live="polite" aria-label={`Sisa waktu ${timeRemaining} detik`} className="relative h-16 w-16">
-                <svg className="-rotate-90" width="64" height="64" viewBox="0 0 64 64">
-                  <circle cx="32" cy="32" r={timerRadius} fill="none" stroke="currentColor" strokeWidth="6" className="text-muted/40" />
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r={timerRadius}
-                    fill="none"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray={timerCircumference}
-                    strokeDashoffset={timerOffset}
-                    className={`${timerRingClass} transition-all duration-700`}
-                  />
-                </svg>
-                <div
-                  className={`absolute inset-1 flex items-center justify-center rounded-full bg-background/70 font-display text-lg font-bold ${timerToneClass} ${
-                    timeRemaining <= 3 ? "animate-pulse" : ""
-                  }`}
-                >
-                  {timeRemaining}s
-                </div>
-              </div>
-            </div>
-
-            <h2 className="font-display text-2xl font-bold tracking-tight text-foreground mb-6">{currentQuestion.question}</h2>
-
-            <div className="space-y-3">
-              {currentQuestion.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => submitAnswer(index)}
-                  disabled={selectedAnswer !== null || isSubmitting}
-                  aria-label={`Jawaban ${String.fromCharCode(65 + index)}: ${option}`}
-                  className={`glass-card hover-lift w-full rounded-xl border-2 p-4 text-left font-semibold transition-all min-h-12 ${
-                    answerFeedback && selectedAnswer === index
-                      ? answerFeedback.isCorrect
-                        ? "border-primary bg-primary/10 animate-correct-flash"
-                        : "border-destructive bg-destructive/10 animate-wrong-shake"
-                      : selectedAnswer === index
-                        ? "border-primary bg-primary/5 text-foreground"
-                        : "border-border/50 bg-card text-foreground hover:border-primary/30"
-                  } ${selectedAnswer !== null || isSubmitting ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
-                  style={selectedAnswer === index ? { boxShadow: "var(--shadow-glow-primary)" } : undefined}
-                >
-                  <div className="flex items-center gap-3">
+            ) : (
+              <>
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="font-display text-base font-semibold text-muted-foreground block">
+                      Soal {currentPlayer.currentQuestion + 1}/{game.totalQuestions}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: game.totalQuestions }, (_, i) => (
+                        <div
+                          key={i}
+                          className={`h-2 w-2 rounded-full transition-colors ${
+                            i < currentPlayer.currentQuestion
+                              ? "bg-primary"
+                              : i === currentPlayer.currentQuestion
+                                ? "bg-primary animate-pulse"
+                                : "bg-muted"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                        {game.mode === "competition" ? "Mode Kompetisi" : "Mode Latihan"}
+                      </span>
+                      {currentQuestion.difficulty && (
+                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                          currentQuestion.difficulty === "sulit"
+                            ? "bg-destructive/10 text-destructive"
+                            : currentQuestion.difficulty === "menengah"
+                              ? "bg-accent/10 text-accent"
+                              : "bg-primary/10 text-primary"
+                        }`}>
+                          {currentQuestion.difficulty === "sulit" ? "\uD83D\uDFE3 Sulit" : currentQuestion.difficulty === "menengah" ? "\uD83D\uDFE1 Menengah" : "\uD83D\uDFE2 Mudah"}
+                        </span>
+                      )}
+                      {currentQuestion.points > 0 && (
+                        <span className="inline-flex rounded-full bg-secondary/10 px-3 py-1 text-xs font-semibold text-secondary-foreground">
+                          {currentQuestion.points} poin
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleReportQuestion}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:border-destructive/40 hover:text-destructive active:scale-95 min-h-11"
+                    >
+                      <Flag className="h-3.5 w-3.5" />
+                      Laporkan Soal
+                    </button>
+                  </div>
+                  <div role="timer" aria-live="polite" aria-label={`Sisa waktu ${timeRemaining} detik`} className="relative h-16 w-16">
+                    <svg className="-rotate-90" width="64" height="64" viewBox="0 0 64 64">
+                      <circle cx="32" cy="32" r={timerRadius} fill="none" stroke="currentColor" strokeWidth="6" className="text-muted/40" />
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r={timerRadius}
+                        fill="none"
+                        strokeWidth="6"
+                        strokeLinecap="round"
+                        strokeDasharray={timerCircumference}
+                        strokeDashoffset={timerOffset}
+                        className={`${timerRingClass} transition-all duration-700`}
+                      />
+                    </svg>
                     <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold ${
-                        answerFeedback && selectedAnswer === index
-                          ? answerFeedback.isCorrect
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-destructive text-destructive-foreground"
-                          : selectedAnswer === index
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
+                      className={`absolute inset-1 flex items-center justify-center rounded-full bg-background/70 font-display text-lg font-bold ${timerToneClass} ${
+                        timeRemaining <= 3 ? "animate-pulse" : timeRemaining <= 5 ? "animate-pulse-scale" : ""
                       }`}
                     >
-                      {answerFeedback && selectedAnswer === index
-                        ? (answerFeedback.isCorrect ? "✓" : "✗")
-                        : String.fromCharCode(65 + index)}
+                      {timeRemaining}s
                     </div>
-                    <span className="flex-1">{option}</span>
-                    <kbd className="hidden sm:inline-flex h-6 w-6 items-center justify-center rounded border border-border/50 bg-muted/50 text-[10px] font-mono text-muted-foreground">
-                      {index + 1}
-                    </kbd>
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
 
-            {answerFeedback ? (
-              <div
-                role="alert"
-                aria-live="assertive"
-                className={`mt-6 rounded-xl border-2 p-5 text-center animate-bounce-in ${
-                  answerFeedback.isCorrect
-                    ? "border-primary/50 bg-primary/10"
-                    : "border-destructive/50 bg-destructive/10"
-                }`}
-              >
-                <div className={`font-display text-3xl font-bold ${answerFeedback.isCorrect ? "text-primary" : "text-destructive"}`}>
-                  {answerFeedback.isCorrect ? "Benar! ✓" : "Salah! ✗"}
+                <h2 className="font-display text-2xl font-bold tracking-tight text-foreground mb-6">{currentQuestion.question}</h2>
+
+                <div className="space-y-3">
+                  {currentQuestion.options.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => submitAnswer(index)}
+                      disabled={selectedAnswer !== null || isSubmitting}
+                      aria-label={`Jawaban ${String.fromCharCode(65 + index)}: ${option}`}
+                      className={`glass-card hover-lift w-full rounded-xl border-2 p-4 text-left font-semibold transition-all min-h-14 sm:min-h-12 active:scale-95 ${
+                        answerFeedback && selectedAnswer === index
+                          ? answerFeedback.isCorrect
+                            ? "border-primary bg-primary/10 animate-correct-flash"
+                            : "border-destructive bg-destructive/10 animate-wrong-shake"
+                          : selectedAnswer === index
+                            ? "border-primary bg-primary/5 text-foreground"
+                            : "border-border/50 bg-card text-foreground hover:border-primary/30"
+                      } ${selectedAnswer !== null || isSubmitting ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+                      style={selectedAnswer === index ? { boxShadow: "var(--shadow-glow-primary)" } : undefined}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold ${
+                            answerFeedback && selectedAnswer === index
+                              ? answerFeedback.isCorrect
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-destructive text-destructive-foreground"
+                              : selectedAnswer === index
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {answerFeedback && selectedAnswer === index
+                            ? (answerFeedback.isCorrect ? "✓" : "✗")
+                            : String.fromCharCode(65 + index)}
+                        </div>
+                        <span className="flex-1">{option}</span>
+                        <kbd className="hidden sm:inline-flex h-6 w-6 items-center justify-center rounded border border-border/50 bg-muted/50 text-[10px] font-mono text-muted-foreground">
+                          {index + 1}
+                        </kbd>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <div className="mt-1 text-sm text-muted-foreground">
-                  {answerFeedback.isCorrect
-                    ? `+${answerFeedback.pointsEarned} poin ditambahkan`
-                    : "Tidak mendapat poin. Yuk coba lagi di soal berikutnya!"}
-                </div>
-              </div>
-            ) : null}
+
+                {answerFeedback ? (
+                  <div
+                    role="alert"
+                    aria-live="assertive"
+                    className={`mt-6 rounded-xl border-2 p-5 text-center animate-bounce-in ${
+                      answerFeedback.isCorrect
+                        ? "border-primary/50 bg-primary/10"
+                        : "border-destructive/50 bg-destructive/10"
+                    }`}
+                  >
+                    <div className={`font-display text-3xl font-bold ${answerFeedback.isCorrect ? "text-primary" : "text-destructive"}`}>
+                      {answerFeedback.isCorrect ? "Benar! ✓" : "Salah! ✗"}
+                    </div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {answerFeedback.isCorrect
+                        ? `+${answerFeedback.pointsEarned} poin ditambahkan`
+                        : "Tidak mendapat poin."}
+                    </div>
+                    {!answerFeedback.isCorrect && (
+                      <p className="mt-2 text-sm font-semibold text-muted-foreground">
+                        Ayo coba soal berikutnya! Kamu pasti bisa!
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+
+                <p className="hidden sm:block text-center text-xs text-muted-foreground mt-2">
+                  Tekan 1-4 atau A-D untuk menjawab
+                </p>
+              </>
+            )}
 
             {error ? (
               <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-4">
-                <p className="text-sm text-destructive">{error}</p>
+                <p className="text-sm font-semibold text-destructive">{error}</p>
+                <p className="mt-1 text-xs text-destructive/80">Cek koneksi internet kamu ya! Kalau masih error, coba muat ulang halaman.</p>
               </div>
             ) : null}
           </div>

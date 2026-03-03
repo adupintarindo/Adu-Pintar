@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
+import { Flag } from "lucide-react"
+import { toast } from "sonner"
 import { trackEvent } from "@/lib/analytics"
 import { playVictorySound, playDefeatSound } from "@/lib/sound-effects"
 
@@ -83,6 +85,7 @@ export default function ResultsPage() {
   const [selectedTab, setSelectedTab] = useState<"summary" | "analysis" | "breakdown" | "detail">("summary")
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null)
   const [rematchLoading, setRematchLoading] = useState(false)
+  const [rematchError, setRematchError] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -162,16 +165,45 @@ export default function ResultsPage() {
     const encodedText = encodeURIComponent(shareText)
     if (platform === "twitter") {
       window.open(`https://twitter.com/intent/tweet?text=${encodedText}`, "_blank")
+      toast.success("Hasil dibagikan!")
       return
     }
 
-    navigator.clipboard.writeText(shareText)
-    alert(`Hasil disalin. Buka ${platform === "instagram" ? "Instagram" : "TikTok"} untuk membagikan.`)
+    navigator.clipboard.writeText(shareText).then(() => {
+      toast.success("Tersalin! 📋", {
+        description: `Buka ${platform === "instagram" ? "Instagram" : "TikTok"} untuk membagikan hasil duel kamu.`,
+      })
+    }).catch(() => {
+      toast.error("Gagal menyalin teks.")
+    })
+  }
+
+  const buildQuestionReportHref = (question: GameResult["questions"][number], questionNumber: number) => {
+    const compactQuestion = question.question.replace(/\s+/g, " ").trim()
+    const message = [
+      "Halo tim Adu Pintar, saya ingin melaporkan soal duel berikut:",
+      `- Game ID: ${result?.id ?? gameId}`,
+      `- Soal ke: ${questionNumber}/${result?.totalQuestions ?? 0}`,
+      `- Question ID: ${question.id}`,
+      `- Mode: ${result?.mode ?? "practice"}`,
+      `- Grade: ${result?.grade ?? "-"}`,
+      `- Isi soal: "${compactQuestion}"`,
+      "",
+      "Alasan laporan:",
+      "(tulis alasan, misalnya opsi ambigu, typo, atau kunci jawaban tidak sesuai)",
+    ].join("\n")
+
+    const params = new URLSearchParams({
+      source: "duel-question-report",
+      category: "umum",
+      message: message.slice(0, 2000),
+    })
+    return `/contact?${params.toString()}`
   }
 
   const formatResponseTime = (ms: number) => {
     if (!ms || ms <= 0) return "-"
-    return `${(ms / 1000).toFixed(1)}d`
+    return `${(ms / 1000).toFixed(1)}dtk`
   }
 
   const getDifficultyLabel = (difficulty?: string) => {
@@ -182,9 +214,9 @@ export default function ResultsPage() {
   }
 
   const getDifficultyColor = (difficulty?: string) => {
-    if (difficulty === "mudah") return "text-green-600"
-    if (difficulty === "menengah") return "text-amber-600"
-    if (difficulty === "sulit") return "text-red-600"
+    if (difficulty === "mudah") return "text-primary"
+    if (difficulty === "menengah") return "text-lime-600 dark:text-lime-400"
+    if (difficulty === "sulit") return "text-violet-600 dark:text-violet-400"
     return "text-muted-foreground"
   }
 
@@ -192,6 +224,7 @@ export default function ResultsPage() {
     if (!result || rematchLoading) return
 
     setRematchLoading(true)
+    setRematchError(null)
     try {
       const grade = result.grade || "SD"
       const mode = result.mode || "practice"
@@ -224,9 +257,11 @@ export default function ResultsPage() {
           window.localStorage.setItem("duelPlayerId", data.playerId)
         }
         router.push(`/game/duel/playing/${data.gameId}`)
+        return
       }
+      throw new Error("Game baru gagal dibuat. Coba lagi.")
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal membuat game baru")
+      setRematchError(err instanceof Error ? err.message : "Gagal membuat game baru")
     } finally {
       setRematchLoading(false)
     }
@@ -257,15 +292,16 @@ export default function ResultsPage() {
             <button
               type="button"
               onClick={() => router.push(`/game/duel/playing/${gameId}`)}
-              className="px-6 py-3 rounded-xl bg-linear-to-r from-primary to-primary/90 font-display font-bold text-primary-foreground transition"
+              className="px-6 py-3 rounded-xl bg-linear-to-r from-primary to-primary/90 font-display font-bold text-primary-foreground transition active:scale-95"
               style={{ boxShadow: "var(--shadow-glow-primary)" }}
             >
               Kembali ke Duel
             </button>
-            <Link href="/game/duel">
-              <button className="px-6 py-3 rounded-xl border border-border/50 text-foreground font-semibold hover:border-primary/30 transition">
-                Kembali ke Lobby Duel
-              </button>
+            <Link
+              href="/game/duel"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-border/50 text-foreground font-semibold hover:border-primary/30 transition active:scale-95"
+            >
+              Kembali ke Lobby Duel
             </Link>
           </div>
         </div>
@@ -285,7 +321,7 @@ export default function ResultsPage() {
       {/* #281: Confetti celebration for winner */}
       {!isDraw && (
         <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden="true">
-          {Array.from({ length: 30 }).map((_, i) => (
+          {Array.from({ length: 60 }).map((_, i) => (
             <div
               key={i}
               className="absolute animate-confetti"
@@ -313,22 +349,32 @@ export default function ResultsPage() {
         {/* Winner Section */}
         <div className="text-center mb-10">
           <div className="mb-6 animate-bounce-in">
-            <div
-              className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full border-4 font-display text-3xl font-black text-primary-foreground bg-primary"
-              style={{ borderColor: "oklch(0.795 0.184 86.047)" }}
-            >
-              {isDraw ? "=" : "🏆"}
+            <div className="relative mx-auto mb-3">
+              {!isDraw && (
+                <>
+                  <span className="absolute -top-3 -left-3 text-2xl animate-wiggle" style={{ animationDelay: "0.1s" }}>⭐</span>
+                  <span className="absolute -top-4 -right-3 text-xl animate-wiggle" style={{ animationDelay: "0.3s" }}>🌟</span>
+                  <span className="absolute -bottom-2 -left-5 text-lg animate-wiggle" style={{ animationDelay: "0.5s" }}>✨</span>
+                  <span className="absolute -bottom-3 -right-5 text-xl animate-wiggle" style={{ animationDelay: "0.7s" }}>⭐</span>
+                </>
+              )}
+              <div
+                className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 font-display text-4xl font-black text-primary-foreground bg-primary shadow-lg"
+                style={{ borderColor: "oklch(0.795 0.184 86.047)", boxShadow: isDraw ? undefined : "0 0 30px oklch(0.795 0.184 86.047 / 0.4)" }}
+              >
+                {isDraw ? "🤝" : "🏆"}
+              </div>
             </div>
           </div>
 
           <div className="animate-fade-up">
-            <span className="inline-block rounded-full bg-primary px-6 py-3 text-lg font-bold text-primary-foreground mb-6 shadow-lg">
-              {isDraw ? "HASIL SERI" : "PEMENANG"}
+            <span className="inline-block rounded-full bg-primary px-8 py-3.5 text-xl font-bold text-primary-foreground mb-6 shadow-lg">
+              {isDraw ? "Seri! Kalian Berdua Hebat! 🤝" : "⭐ PEMENANG ⭐"}
             </span>
           </div>
 
           <h1 className="animate-fade-up font-display text-4xl font-extrabold tracking-tight text-primary md:text-5xl mb-3">
-            {isDraw ? "Hasil Seri" : winners[0]?.name || "Pemenang"}
+            {isDraw ? "Kalian Berdua Hebat!" : winners[0]?.name || "Pemenang"}
           </h1>
 
           <p className="text-lg text-muted-foreground mb-2">dengan</p>
@@ -359,13 +405,18 @@ export default function ResultsPage() {
                         {style.label}
                       </p>
                       <p className="text-lg font-bold text-foreground">
-                        {player ? player.name : "Belum ada"}
+                        {player ? player.name : "Menunggu pemain lain"}
                       </p>
                     </div>
                   </div>
                   {player ? (
                     <div>
-                      <p className="font-display text-3xl font-black text-primary">{player.score} pts</p>
+                      <p className="font-display text-3xl font-black text-primary" title={`${player.correctAnswers} soal benar dari ${result.totalQuestions}`}>
+                        {player.score} poin
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {player.correctAnswers} soal benar
+                      </p>
                       <p className="text-sm text-muted-foreground">{player.accuracy}% akurasi</p>
                     </div>
                   ) : (
@@ -379,21 +430,24 @@ export default function ResultsPage() {
           {/* Share Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-4">
             <button
+              type="button"
               onClick={() => handleShare("twitter")}
-              className="flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-3 font-display font-bold text-primary-foreground transition"
+              className="flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-3 font-display font-bold text-primary-foreground transition active:scale-95"
               style={{ boxShadow: "var(--shadow-glow-primary)" }}
             >
               Bagikan di Twitter
             </button>
             <button
+              type="button"
               onClick={() => handleShare("instagram")}
-              className="flex items-center justify-center gap-2 rounded-xl border border-border/50 px-6 py-3 font-semibold text-foreground transition hover:border-primary/30"
+              className="flex items-center justify-center gap-2 rounded-xl border border-border/50 px-6 py-3 font-semibold text-foreground transition hover:border-primary/30 active:scale-95"
             >
               Bagikan di Instagram
             </button>
             <button
+              type="button"
               onClick={() => handleShare("tiktok")}
-              className="flex items-center justify-center gap-2 rounded-xl border border-border/50 px-6 py-3 font-semibold text-foreground transition hover:border-primary/30"
+              className="flex items-center justify-center gap-2 rounded-xl border border-border/50 px-6 py-3 font-semibold text-foreground transition hover:border-primary/30 active:scale-95"
             >
               Bagikan di TikTok
             </button>
@@ -416,8 +470,8 @@ export default function ResultsPage() {
                   <p className="text-xl font-bold text-foreground">{player.name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-display text-3xl font-black text-primary">{player.score}</p>
-                  <p className="text-xs text-muted-foreground">Total poin</p>
+                  <p className="font-display text-3xl font-black text-primary" title={`${player.correctAnswers} soal benar dari ${result.totalQuestions}`}>{player.score}</p>
+                  <p className="text-xs text-muted-foreground">{player.correctAnswers} soal benar</p>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-sm text-muted-foreground">
@@ -445,7 +499,7 @@ export default function ResultsPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Ringkasan Duel</p>
-              <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">Analisis & Breakdown</h2>
+              <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">Analisis & Pembahasan</h2>
             </div>
             <div className="flex flex-wrap gap-2">
               {(["summary", "analysis", "detail", "breakdown"] as const).map((tab) => (
@@ -453,7 +507,7 @@ export default function ResultsPage() {
                   key={tab}
                   type="button"
                   onClick={() => setSelectedTab(tab)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition active:scale-95 min-h-11 ${
                     selectedTab === tab
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground hover:text-foreground"
@@ -519,7 +573,7 @@ export default function ResultsPage() {
                 return (
                   <div
                     key={question.id}
-                    className={`glass-card rounded-2xl p-4 border-2 ${isCorrect ? "border-green-500/40" : "border-red-500/40"}`}
+                    className={`glass-card rounded-2xl p-4 border-2 ${isCorrect ? "border-primary/40" : "border-destructive/40"}`}
                   >
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex-1">
@@ -536,22 +590,31 @@ export default function ResultsPage() {
                         <p className="text-sm font-semibold text-foreground">{question.question}</p>
                       </div>
                       <div className={`shrink-0 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                        isCorrect ? "bg-green-500/20 text-green-600" : "bg-red-500/20 text-red-600"
+                        isCorrect ? "bg-primary/20 text-primary" : "bg-violet-500/20 text-violet-600 dark:text-violet-300"
                       }`}>
                         {isCorrect ? "V" : "X"}
                       </div>
                     </div>
 
                     <div className="grid gap-2 sm:grid-cols-2 text-sm">
+                      <div className="sm:col-span-2">
+                        <Link
+                          href={buildQuestionReportHref(question, index + 1)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:border-destructive/40 hover:text-destructive min-h-11 active:scale-95"
+                        >
+                          <Flag className="h-3.5 w-3.5" />
+                          Laporkan Soal
+                        </Link>
+                      </div>
                       <div>
                         <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Jawaban Kamu</p>
-                        <p className={`font-semibold ${isCorrect ? "text-green-600" : "text-red-600"}`}>
+                        <p className={`font-semibold ${isCorrect ? "text-primary" : "text-violet-600 dark:text-violet-400"}`}>
                           {playerAnswerText}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Jawaban Benar</p>
-                        <p className="font-semibold text-green-600">{correctAnswerText}</p>
+                        <p className="font-semibold text-primary">{correctAnswerText}</p>
                       </div>
                     </div>
 
@@ -593,7 +656,7 @@ export default function ResultsPage() {
                     <button
                       type="button"
                       onClick={() => setExpandedQuestion(isExpanded ? null : question.id)}
-                      className="w-full px-4 py-3 text-left flex items-center justify-between"
+                      className="w-full px-4 py-3 text-left flex items-center justify-between active:scale-95"
                     >
                       <div>
                         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Soal {index + 1}</p>
@@ -607,6 +670,13 @@ export default function ResultsPage() {
                     {isExpanded ? (
                       <div className="px-4 pb-4 text-sm text-muted-foreground">
                         <p className="font-semibold text-foreground mb-2">Jawaban benar: {getOptionLabel(question.correctAnswer)}</p>
+                        <Link
+                          href={buildQuestionReportHref(question, index + 1)}
+                          className="mb-3 inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:border-destructive/40 hover:text-destructive min-h-11 active:scale-95"
+                        >
+                          <Flag className="h-3.5 w-3.5" />
+                          Laporkan Soal Ini
+                        </Link>
                         <div className="grid gap-3 md:grid-cols-2">
                           {sortedPlayers.map((player) => {
                             const answer = player.answers.find((item) => item.questionId === question.id)
@@ -636,27 +706,32 @@ export default function ResultsPage() {
         </div>
 
         {/* Bottom Actions */}
+        {rematchError ? (
+          <div className="mx-auto mt-8 max-w-xl rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-center text-sm text-destructive">
+            {rematchError}
+          </div>
+        ) : null}
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <button
             type="button"
             onClick={handleRematch}
             disabled={rematchLoading}
-            className="px-6 py-3 rounded-xl bg-linear-to-r from-primary to-primary/90 font-display font-bold text-primary-foreground transition disabled:opacity-60"
+            className="min-h-12 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-display text-lg font-bold transition active:scale-95 disabled:opacity-60"
             style={{ boxShadow: "var(--shadow-glow-primary)" }}
           >
-            {rematchLoading ? "Memuat..." : "Main Lagi"}
+            {rematchLoading ? "Membuat duel baru..." : "🔄 Tanding Ulang!"}
           </button>
-          <Link href="/game/duel">
-            <button
-              className="px-6 py-3 rounded-xl border border-border/50 text-foreground font-semibold hover:border-primary/30 transition"
-            >
-              Mulai Duel Baru
-            </button>
+          <Link
+            href="/game/duel"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-border/50 text-foreground font-semibold hover:border-primary/30 transition active:scale-95"
+          >
+            Mulai Duel Baru
           </Link>
-          <Link href="/dashboard">
-            <button className="px-6 py-3 rounded-xl border border-border/50 text-foreground font-semibold hover:border-primary/30 transition">
-              Kembali ke Dashboard
-            </button>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-primary/40 text-primary font-bold hover:bg-primary/10 transition active:scale-95"
+          >
+            Kembali ke Dashboard
           </Link>
         </div>
       </div>

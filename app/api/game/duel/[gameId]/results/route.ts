@@ -11,16 +11,20 @@ import { EXP_CONFIG, getLevel } from "@/lib/exp-config"
 import { createAdminSupabaseClient, isSupabaseAdminConfigured } from "@/lib/supabase-admin"
 import { logApiRequest, rejectIfRateLimited } from "@/lib/api-security"
 
-type StudentStatsRow = {
-  id: string
+type StudentRewardRow = {
+  awarded: boolean | null
   school_id: string
   grade_category: number
-  total_score: number | null
   total_exp: number | null
   level: number | null
-  games_played: number | null
-  wins: number | null
-  losses: number | null
+}
+
+type SettledPlayerReward = {
+  playerId: string
+  score: number
+  schoolId: string
+  gradeCategory: number
+  awarded: boolean
 }
 
 const rewardsSyncInFlight = new Map<string, Promise<void>>()
@@ -64,9 +68,9 @@ function resolveWinnerPlayerId(game: GameState): string | null {
   return null
 }
 
-async function syncSupabaseRewards(game: GameState) {
-  if (!isSupabaseAdminConfigured()) return
-  if (!isUUID(game.id)) return
+async function syncSupabaseRewards(game: GameState): Promise<boolean> {
+  if (!isSupabaseAdminConfigured()) return true
+  if (!isUUID(game.id)) return true
 
   try {
     const supabase = createAdminSupabaseClient()
@@ -83,100 +87,95 @@ async function syncSupabaseRewards(game: GameState) {
     const winnerId = resolveWinnerPlayerId(game)
 
     if (validPlayerPairs.length > 0) {
-      const { data: students } = await supabase
-        .from("students")
-        .select("id, school_id, grade_category, total_score, total_exp, level, games_played, wins, losses")
-        .in(
-          "id",
-          validPlayerPairs.map((entry) => entry.playerId),
-        )
-
-      const studentMap = new Map((students ?? []).map((student) => [student.id, student as StudentStatsRow]))
-
-      await Promise.all(
-        validPlayerPairs.map(async ({ playerId, index }) => {
-          const student = studentMap.get(playerId)
-          if (!student) return
-
-          const score = game.playerScores[index] ?? 0
-          const isWinner = winnerIndexes.includes(index)
-          const nextTotalExp = (student.total_exp ?? 0) + EXP_CONFIG.GAME_COMPLETION
-          const nextLevel = Math.max(student.level ?? 1, getLevel(nextTotalExp))
-
-          await supabase
-            .from("students")
-            .update({
-              total_score: (student.total_score ?? 0) + score,
-              total_exp: nextTotalExp,
-              level: nextLevel,
-              games_played: (student.games_played ?? 0) + 1,
-              wins: (student.wins ?? 0) + (isWinner ? 1 : 0),
-              losses: (student.losses ?? 0) + (isWinner ? 0 : 1),
-            })
-            .eq("id", playerId)
-        }),
-      )
-
-      if (game.mode === "competition") {
-        const period = new Date().toISOString().slice(0, 7)
-        const schoolIds = Array.from(
-          new Set(
-            validPlayerPairs
-              .map(({ playerId }) => studentMap.get(playerId)?.school_id)
-              .filter((schoolId): schoolId is string => Boolean(schoolId)),
-          ),
-        )
-
-        const schoolMap = new Map<string, { province: string | null; city: string | null }>()
-        if (schoolIds.length > 0) {
-          const { data: schools } = await supabase
-            .from("schools")
-            .select("id, province, city")
-            .in("id", schoolIds)
-          for (const school of schools ?? []) {
-            schoolMap.set(school.id, { province: school.province ?? null, city: school.city ?? null })
-          }
-        }
-
+      const settledPlayers = (
         await Promise.all(
-          validPlayerPairs.map(async ({ playerId, index }) => {
-            const student = studentMap.get(playerId)
-            if (!student) return
+          validPlayerPairs.map(async ({ playerId, index }): Promise<SettledPlayerReward | null> => {
             const score = game.playerScores[index] ?? 0
-            const schoolGeo = schoolMap.get(student.school_id)
-
-            const { data: existingEntry } = await supabase
-              .from("leaderboard_entries")
-              .select("id, total_score")
-              .eq("student_id", playerId)
-              .eq("competition_phase", "school")
-              .eq("period", period)
-              .maybeSingle()
-
-            if (existingEntry?.id) {
-              await supabase
-                .from("leaderboard_entries")
-                .update({
-                  total_score: (existingEntry.total_score ?? 0) + score,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", existingEntry.id)
-              return
+            const isWinner = winnerIndexes.includes(index)
+            const { data: rewardRows, error: rewardError } = await supabase.rpc("claim_student_game_result", {
+              p_game_id: game.id,
+              p_student_id: playerId,
+              p_score_delta: score,
+              p_exp_delta: EXP_CONFIG.GAME_COMPLETION,
+              p_win_delta: isWinner ? 1 : 0,
+              p_loss_delta: isWinner ? 0 : 1,
+            })
+            if (rewardError) {
+              throw rewardError
             }
 
-            await supabase.from("leaderboard_entries").insert({
-              student_id: playerId,
-              school_id: student.school_id,
-              grade_category: student.grade_category,
-              competition_phase: "school",
-              total_score: score,
-              province: schoolGeo?.province ?? null,
-              city: schoolGeo?.city ?? null,
-              period,
-              updated_at: new Date().toISOString(),
-            })
+            const rewardRow = Array.isArray(rewardRows)
+              ? (rewardRows[0] as StudentRewardRow | undefined)
+              : undefined
+            if (!rewardRow) return null
+            if (!rewardRow.school_id || !rewardRow.grade_category) return null
+            const rewardAwarded = Boolean(rewardRow.awarded)
+
+            const currentLevel = rewardRow.level ?? 1
+            const totalExp = rewardRow.total_exp ?? 0
+            const nextLevel = Math.max(currentLevel, getLevel(totalExp))
+            if (nextLevel > currentLevel) {
+              const { error: levelError } = await supabase
+                .from("students")
+                .update({ level: nextLevel })
+                .eq("id", playerId)
+                .lt("level", nextLevel)
+              if (levelError) {
+                console.error("[api/game/duel/results] Level sync failed:", levelError)
+              }
+            }
+
+            return {
+              playerId,
+              score,
+              schoolId: rewardRow.school_id,
+              gradeCategory: rewardRow.grade_category,
+              awarded: rewardAwarded,
+            }
           }),
         )
+      ).filter((entry): entry is SettledPlayerReward => Boolean(entry))
+
+      if (game.mode === "competition") {
+        const leaderboardCandidates = settledPlayers.filter((entry) => entry.awarded)
+        if (leaderboardCandidates.length > 0) {
+          const period = new Date().toISOString().slice(0, 7)
+          const schoolIds = Array.from(
+            new Set(
+              leaderboardCandidates
+                .map((entry) => entry.schoolId)
+                .filter((schoolId): schoolId is string => Boolean(schoolId)),
+            ),
+          )
+
+          const schoolMap = new Map<string, { province: string | null; city: string | null }>()
+          if (schoolIds.length > 0) {
+            const { data: schools } = await supabase
+              .from("schools")
+              .select("id, province, city")
+              .in("id", schoolIds)
+            for (const school of schools ?? []) {
+              schoolMap.set(school.id, { province: school.province ?? null, city: school.city ?? null })
+            }
+          }
+
+          await Promise.all(
+            leaderboardCandidates.map(async (entry) => {
+              const schoolGeo = schoolMap.get(entry.schoolId)
+              const { error: leaderboardError } = await supabase.rpc("upsert_leaderboard_entry_score", {
+                p_student_id: entry.playerId,
+                p_school_id: entry.schoolId,
+                p_grade_category: entry.gradeCategory,
+                p_competition_phase: "school",
+                p_period: period,
+                p_score_delta: entry.score,
+                p_province: schoolGeo?.province ?? null,
+                p_city: schoolGeo?.city ?? null,
+              })
+              if (leaderboardError) throw leaderboardError
+            }),
+          )
+        }
       }
     }
 
@@ -190,8 +189,10 @@ async function syncSupabaseRewards(game: GameState) {
         .eq("id", game.id)
     }
     await persistGameSessionSnapshot(game)
+    return true
   } catch (error) {
-    console.error("[api/game/duel/results] Supabase sync failed (best effort):", error)
+    console.error("[api/game/duel/results] Supabase sync failed:", error)
+    return false
   }
 }
 
@@ -218,7 +219,9 @@ async function ensureRewardsApplied(gameId: string): Promise<GameState | null> {
       return
     }
 
-    await syncSupabaseRewards(latestGame)
+    const synced = await syncSupabaseRewards(latestGame)
+    if (!synced) return
+
     markGameRewardsPersisted(gameId)
     await persistGameSessionSnapshot(latestGame)
   })().finally(() => {

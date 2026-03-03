@@ -9,8 +9,9 @@ import {
   rejectIfRateLimited,
 } from "@/lib/api-security"
 import { GAME_CONFIG, getGame, recordAnswer } from "@/lib/game"
+import { persistGameEventToSupabase } from "@/lib/game-events-supabase"
 import { ensureGameLoadedById, persistGameSessionSnapshot } from "@/lib/game-persistence"
-import { emitGameEvent } from "@/lib/realtime"
+import { emitGameEvent, type GameEventInput } from "@/lib/realtime"
 import { getRequestSessionUser } from "@/lib/server-session"
 
 const gameEventSchema = z.object({
@@ -100,14 +101,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await persistGameSessionSnapshot(game)
     }
 
-    emitGameEvent({
+    const gameEvent: GameEventInput = {
       type,
       gameId,
       playerId: userId,
       playerName: sessionUser?.name?.trim() || resolvePlayerName(playerName),
-      data: data ?? {},
+      data: (data ?? {}) as Record<string, unknown>,
       timestamp: new Date(),
-    })
+    }
+
+    emitGameEvent(gameEvent)
+    await persistGameEventToSupabase(gameEvent)
 
     logApiRequest(request, 200, { action: "game_event", eventType: type, gameId })
     return NextResponse.json({
@@ -120,4 +124,3 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Gagal memproses event" }, { status: 500 })
   }
 }
-

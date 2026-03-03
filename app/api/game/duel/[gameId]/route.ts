@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   try {
     const { gameId } = await params
-    const game = getGame(gameId) ?? (await ensureGameLoadedById(gameId))
+    const game = (await ensureGameLoadedById(gameId, { forceRefresh: true })) ?? getGame(gameId)
 
     if (!game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 })

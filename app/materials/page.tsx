@@ -143,7 +143,7 @@ export default function MaterialsPage() {
       />
       <div
         className="pointer-events-none absolute top-1/3 -right-20 h-96 w-96 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, oklch(0.68 0.19 52), transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, oklch(0.55 0.10 185), transparent 70%)" }}
       />
 
       <Navbar />
@@ -161,11 +161,11 @@ export default function MaterialsPage() {
                 klaim EXP setelah modul tuntas.
               </p>
               <p className="mt-2 text-xs font-medium text-muted-foreground">
-                Source: {modulesLoading ? "memuat..." : modulesSource}
+                Sumber: {modulesLoading ? "memuat..." : modulesSource}
               </p>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="glass-card rounded-2xl p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Total Modul</p>
                 <p className="mt-1 font-display text-3xl font-bold text-foreground">{modules.length}</p>
@@ -210,7 +210,7 @@ export default function MaterialsPage() {
                       key={String(value)}
                       type="button"
                       onClick={() => setGradeFilter(value)}
-                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition active:scale-95 ${
                         isActive
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border/50 bg-card/50 text-foreground hover:border-primary/30"
@@ -233,7 +233,7 @@ export default function MaterialsPage() {
                   key={topic}
                   type="button"
                   onClick={() => setTopicFilter(topic)}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
                     isActive
                       ? "border-foreground bg-foreground text-background"
                       : "border-border/50 bg-card/40 text-muted-foreground hover:text-foreground"
@@ -247,7 +247,47 @@ export default function MaterialsPage() {
         </header>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {filteredModules.map((module, index) => {
+          {modulesLoading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <article
+                key={i}
+                className="animate-pulse glass-card overflow-hidden rounded-3xl flex flex-col"
+              >
+                {/* Image placeholder */}
+                <div className="relative h-48 bg-muted" />
+
+                <div className="flex flex-1 flex-col space-y-4 p-5">
+                  {/* Duration + Section row */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-border/40 bg-card/40 px-3 py-2 space-y-2">
+                      <div className="h-2 w-12 rounded-full bg-muted" />
+                      <div className="h-4 w-16 rounded-full bg-muted" />
+                    </div>
+                    <div className="rounded-xl border border-border/40 bg-card/40 px-3 py-2 space-y-2">
+                      <div className="h-2 w-12 rounded-full bg-muted" />
+                      <div className="h-4 w-20 rounded-full bg-muted" />
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <div className="h-3 w-24 rounded-full bg-muted" />
+                      <div className="h-3 w-8 rounded-full bg-muted" />
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted" />
+                    <div className="h-3 w-52 rounded-full bg-muted" />
+                  </div>
+
+                  {/* CTA row */}
+                  <div className="mt-auto flex items-center justify-between gap-3">
+                    <div className="h-4 w-24 rounded-full bg-muted" />
+                    <div className="h-9 w-24 rounded-xl bg-muted" />
+                  </div>
+                </div>
+              </article>
+            ))
+          ) : filteredModules.map((module, index) => {
             const progressPercent = getModuleProgressPercent(progressStore, module.id)
             const isCompleted = Boolean(progressStore[module.id]?.completedAt)
 
@@ -281,14 +321,14 @@ export default function MaterialsPage() {
                       <p className="font-semibold text-foreground">{module.estimatedMinutes} menit</p>
                     </div>
                     <div className="rounded-xl border border-border/40 bg-card/40 px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Section</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Bagian</p>
                       <p className="font-semibold text-foreground">{getModuleSectionCount()} langkah</p>
                     </div>
                   </div>
 
                   <div>
                     <div className="mb-2 flex items-center justify-between text-xs">
-                      <span className="font-semibold text-foreground">Progress Modul</span>
+                      <span className="font-semibold text-foreground">Progres Modul</span>
                       <span className={isCompleted ? "text-primary font-semibold" : "text-muted-foreground"}>
                         {isCompleted ? "Selesai" : `${progressPercent}%`}
                       </span>
@@ -319,7 +359,7 @@ export default function MaterialsPage() {
                     </div>
                     <Link
                       href={`/materials/${module.id}`}
-                      className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/85 px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md transition hover:shadow-lg"
+                      className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/85 px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md transition hover:shadow-lg active:scale-95"
                       style={{ boxShadow: "var(--shadow-glow-primary)" }}
                     >
                       <Sparkles className="h-4 w-4" />

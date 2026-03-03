@@ -4,11 +4,48 @@ import { logApiRequest, parseAndValidateBody, rejectIfCrossOrigin, rejectIfInval
 import { getGame, getPlayerGameState, nextQuestion, type GameState } from "@/lib/game"
 import { ensureGameLoadedById, persistGameSessionSnapshot } from "@/lib/game-persistence"
 import { getRequestSessionUser } from "@/lib/server-session"
+import { createAdminSupabaseClient, isSupabaseAdminConfigured } from "@/lib/supabase-admin"
 import { z } from "zod"
 
 const nextQuestionSchema = z.object({
   playerNumber: z.number().int().min(1).max(2),
 })
+
+type AdvanceDuelQuestionRow = {
+  advanced: boolean | null
+  reason: string | null
+  status: "waiting" | "in_progress" | "completed" | null
+  winner: string | null
+}
+
+function isUUID(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+async function advanceQuestionInSupabase(params: {
+  gameId: string
+  playerId: string
+}): Promise<AdvanceDuelQuestionRow | null> {
+  if (!isSupabaseAdminConfigured()) return null
+  if (!isUUID(params.gameId) || !isUUID(params.playerId)) return null
+
+  try {
+    const supabase = createAdminSupabaseClient()
+    const { data, error } = await supabase.rpc("advance_duel_question", {
+      p_game_id: params.gameId,
+      p_player_id: params.playerId,
+    })
+    if (error) {
+      console.error("[api/game/duel/next] advance_duel_question RPC failed:", error)
+      return null
+    }
+    if (!Array.isArray(data) || data.length === 0) return null
+    return data[0] as AdvanceDuelQuestionRow
+  } catch (error) {
+    console.error("[api/game/duel/next] advance_duel_question failed:", error)
+    return null
+  }
+}
 
 function isRequesterAllowedToControlPlayer(request: NextRequest, game: GameState, playerIndex: number) {
   const sessionUser = getRequestSessionUser(request)
@@ -67,13 +104,50 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Player Number tidak valid" }, { status: 400 })
     }
 
-    const hydratedGame = getGame(gameId) ?? (await ensureGameLoadedById(gameId))
+    const hydratedGame = (await ensureGameLoadedById(gameId, { forceRefresh: true })) ?? getGame(gameId)
     if (!hydratedGame) {
       return NextResponse.json({ error: "Game tidak ditemukan" }, { status: 404 })
     }
     const authz = isRequesterAllowedToControlPlayer(request, hydratedGame, playerIndex)
     if (!authz.allowed) {
       return NextResponse.json({ error: "Aksi pemain tidak diizinkan" }, { status: 403 })
+    }
+
+    const targetPlayerId = hydratedGame.playerIds[playerIndex] ?? ""
+    const rpcResult = await advanceQuestionInSupabase({
+      gameId,
+      playerId: targetPlayerId,
+    })
+    if (rpcResult) {
+      const reason = rpcResult.reason ?? ""
+      if (reason === "game_not_found") {
+        return NextResponse.json({ error: "Game tidak ditemukan" }, { status: 404 })
+      }
+      if (reason === "player_not_in_game") {
+        return NextResponse.json({ error: "Aksi pemain tidak diizinkan" }, { status: 403 })
+      }
+      if (reason === "game_not_active") {
+        return NextResponse.json({ error: "Game sudah selesai atau belum dimulai" }, { status: 400 })
+      }
+
+      const refreshedGame = await ensureGameLoadedById(gameId, { forceRefresh: true })
+      if (!refreshedGame) {
+        return NextResponse.json({ error: "Game tidak ditemukan" }, { status: 404 })
+      }
+
+      const refreshedPlayerState = getPlayerGameState(gameId)
+      if (!refreshedPlayerState) {
+        return NextResponse.json({ error: "Player state tidak ditemukan" }, { status: 404 })
+      }
+
+      const response = NextResponse.json({
+        status: refreshedGame.status,
+        winner: rpcResult.winner ?? refreshedGame.winner,
+        playerQuestionOrders: refreshedPlayerState.playerQuestionOrders,
+        playerCurrentQuestions: refreshedPlayerState.playerCurrentQuestions,
+      })
+      logApiRequest(request, 200, { gameId, status: refreshedGame.status, source: "supabase_rpc" })
+      return response
     }
 
     const updatedGame = nextQuestion(gameId, playerIndex)

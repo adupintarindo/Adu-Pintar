@@ -10,6 +10,7 @@ import {
   rejectIfRateLimited,
 } from "@/lib/api-security"
 import { requireSchoolAdminSession } from "@/lib/server-session"
+import { createAdminSupabaseClient, isSupabaseAdminConfigured } from "@/lib/supabase-admin"
 
 const importQuestionSchema = z.object({
   question: z.string().min(5).max(1000),
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
 
     const imported: string[] = []
     const errors: string[] = []
+    const supabase = isSupabaseAdminConfigured() ? createAdminSupabaseClient() : null
 
     for (let i = 0; i < parsed.data.questions.length; i++) {
       const item = parsed.data.questions[i]
@@ -81,8 +83,31 @@ export async function POST(request: NextRequest) {
           isActive: true,
         }
 
-        const created = createAdminQuestion(payload)
-        imported.push(created.id)
+        if (supabase) {
+          const { data, error } = await supabase
+            .from("questions")
+            .insert({
+              grade_category: payload.gradeCategory,
+              difficulty: payload.difficulty,
+              topic: payload.topic,
+              question: payload.question,
+              options: payload.options,
+              correct_answer: payload.correctAnswer,
+              explanation: payload.explanation ?? null,
+              is_active: payload.isActive ?? true,
+            })
+            .select("id")
+            .single()
+
+          if (error || !data) {
+            throw new Error(error?.message ?? "Gagal menyimpan soal ke Supabase")
+          }
+
+          imported.push(data.id)
+        } else {
+          const created = createAdminQuestion(payload)
+          imported.push(created.id)
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Gagal membuat soal"
         errors.push(`Soal #${i + 1}: ${message}`)
@@ -91,6 +116,7 @@ export async function POST(request: NextRequest) {
 
     logApiRequest(request, 200, {
       action: "admin_questions_import",
+      source: supabase ? "supabase" : "fallback",
       total: parsed.data.questions.length,
       imported: imported.length,
       errorCount: errors.length,

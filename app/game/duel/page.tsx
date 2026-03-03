@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { fetchWithCsrf } from "@/lib/client-security"
 import { trackEvent } from "@/lib/analytics"
@@ -30,6 +31,12 @@ type CreateMode = "instant" | "invite"
 type PlayMode = "practice" | "competition"
 
 type LoadingState = CreateMode | "join" | null
+
+const duelQuickFacts = [
+  { label: "10 Soal", value: "Per pertandingan" },
+  { label: "10 Detik", value: "Batas waktu per soal" },
+  { label: "3-5 Menit", value: "Estimasi durasi duel" },
+] as const
 
 export default function DuelPage() {
   const router = useRouter()
@@ -131,8 +138,16 @@ export default function DuelPage() {
               Siapkan Duel 1v1 Terbaikmu
             </h1>
             <p className="mt-4 text-muted-foreground">
-              Pilih mode permainan, tentukan grade, lalu mulai duel instan atau buat lobby kode.
+              Pilih mode, pilih tingkat kelas, lalu mulai duel.
             </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              {duelQuickFacts.map((fact) => (
+                <div key={fact.label} className="rounded-full border border-border/50 bg-card/60 px-4 py-2 text-left">
+                  <p className="text-xs font-semibold text-foreground">{fact.label}</p>
+                  <p className="text-[11px] text-muted-foreground">{fact.value}</p>
+                </div>
+              ))}
+            </div>
           </header>
 
           {/* Play mode selection */}
@@ -140,7 +155,7 @@ export default function DuelPage() {
             <button
               type="button"
               onClick={() => setPlayMode("practice")}
-              className={`glass-card card-accent-top rounded-3xl p-6 text-left transition ${
+              className={`glass-card card-accent-top rounded-3xl p-6 text-left transition active:scale-95 ${
                 playMode === "practice" ? "border-primary bg-primary/5" : "hover:border-primary/30"
               }`}
               style={playMode === "practice" ? { boxShadow: "var(--shadow-glow-primary)" } : undefined}
@@ -159,7 +174,7 @@ export default function DuelPage() {
             <button
               type="button"
               onClick={() => setPlayMode("competition")}
-              className={`glass-card card-accent-top rounded-3xl p-6 text-left transition ${
+              className={`glass-card card-accent-top rounded-3xl p-6 text-left transition active:scale-95 ${
                 playMode === "competition" ? "border-primary bg-primary/5" : "hover:border-primary/30"
               }`}
               style={playMode === "competition" ? { boxShadow: "var(--shadow-glow-primary)" } : undefined}
@@ -176,6 +191,18 @@ export default function DuelPage() {
             </button>
           </div>
 
+          <details className="mt-6 rounded-2xl border border-border/50 bg-card/50 p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-foreground">
+              Aturan Kompetisi Lengkap
+            </summary>
+            <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+              <li>Setiap duel berisi 10 soal dengan waktu 10 detik per soal.</li>
+              <li>Poin utama berasal dari jawaban benar, plus bonus kecepatan.</li>
+              <li>Hanya 10 duel kompetisi pertama yang dihitung untuk ranking periode aktif.</li>
+              <li>Jika koneksi terputus saat bermain, gunakan tombol sambung ulang di layar duel.</li>
+            </ul>
+          </details>
+
           {/* Grade selection */}
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {gradeOptions.map((option) => (
@@ -183,7 +210,7 @@ export default function DuelPage() {
                 key={option.value}
                 type="button"
                 onClick={() => setGrade(option.value)}
-                className={`glass-card hover-lift rounded-2xl p-5 text-left transition ${
+                className={`glass-card hover-lift rounded-2xl p-5 text-left transition active:scale-95 ${
                   grade === option.value
                     ? "border-primary bg-primary/5"
                     : "hover:border-primary/30"
@@ -222,10 +249,15 @@ export default function DuelPage() {
                 type="button"
                 onClick={() => handleCreate("instant")}
                 disabled={loading !== null}
-                className="mt-6 w-full rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-3 font-display text-sm font-bold text-primary-foreground transition disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-6 w-full rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-3 font-display text-sm font-bold text-primary-foreground transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                 style={{ boxShadow: "var(--shadow-glow-primary)" }}
               >
-                {loading === "instant" ? "Menyiapkan duel..." : "Mulai Duel Instan"}
+                {loading === "instant" ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Menyiapkan duel...
+                  </span>
+                ) : "Mulai Duel Instan"}
               </button>
             </div>
 
@@ -244,9 +276,14 @@ export default function DuelPage() {
                 type="button"
                 onClick={() => handleCreate("invite")}
                 disabled={loading !== null}
-                className="mt-6 w-full rounded-xl border border-border/50 px-6 py-3 font-display text-sm font-bold text-foreground transition hover:border-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-6 w-full rounded-xl border border-border/50 px-6 py-3 font-display text-sm font-bold text-foreground transition hover:border-primary/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading === "invite" ? "Membuat lobby..." : "Buat Lobby Duel"}
+                {loading === "invite" ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Membuat lobby...
+                  </span>
+                ) : "Buat Lobby Duel"}
               </button>
             </div>
           </div>
@@ -283,9 +320,14 @@ export default function DuelPage() {
                   type="button"
                   onClick={handleJoin}
                   disabled={loading !== null}
-                  className="shrink-0 rounded-xl border border-border/50 px-5 py-3 text-sm font-semibold text-foreground transition hover:border-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="shrink-0 rounded-xl border border-border/50 px-5 py-3 text-sm font-semibold text-foreground transition hover:border-primary/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {loading === "join" ? "Menghubungkan..." : "Gabung Duel"}
+                  {loading === "join" ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Menghubungkan...
+                    </span>
+                  ) : "Gabung Duel"}
                 </button>
               </div>
             </div>

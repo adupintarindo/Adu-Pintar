@@ -92,6 +92,10 @@ function normalizeRegion(value: string): string {
   return value.trim().toLowerCase()
 }
 
+function currentPeriod(): string {
+  return new Date().toISOString().slice(0, 7)
+}
+
 function getGradeCategoryFromLevel(level: "SD" | "SMP" | "SMA"): GradeCategory {
   if (level === "SD") return 1
   if (level === "SMP") return 2
@@ -162,11 +166,13 @@ async function getSchoolRepresentativesFromSupabase(schoolId: string): Promise<S
 
   try {
     const supabase = createAdminSupabaseClient()
+    const period = currentPeriod()
     const { data, error } = await supabase
       .from("leaderboard_entries")
       .select("id, student_id, school_id, grade_category, total_score, rank, province, city, period, students(name), schools(name)")
       .eq("school_id", schoolId)
       .eq("competition_phase", "school")
+      .eq("period", period)
       .order("total_score", { ascending: false })
       .limit(200)
 
@@ -250,11 +256,13 @@ async function getBracketCandidatesFromSupabase(
 
   try {
     const supabase = createAdminSupabaseClient()
+    const period = currentPeriod()
     let query = supabase
       .from("leaderboard_entries")
       .select("school_id, total_score, rank, province, city, schools(name)")
       .eq("competition_phase", sourcePhase)
       .eq("grade_category", gradeCategory)
+      .eq("period", period)
       .order("total_score", { ascending: false })
       .limit(256)
 

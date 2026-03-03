@@ -6,6 +6,7 @@ import {
   getAdminCompetitionResultsPreview,
   listAdminCompetitions,
   updateAdminCompetition,
+  type AdminCompetitionRecord,
   type CreateAdminCompetitionInput,
 } from "@/lib/admin-console"
 import { COMPETITION_CONFIG } from "@/lib/competition"
@@ -17,6 +18,7 @@ import {
   rejectIfRateLimited,
 } from "@/lib/api-security"
 import { requireSchoolAdminSession } from "@/lib/server-session"
+import { createAdminSupabaseClient, isSupabaseAdminConfigured } from "@/lib/supabase-admin"
 
 // #145 — Date range validation: endDate harus setelah startDate
 const createCompetitionSchema = z
@@ -55,6 +57,40 @@ const updateCompetitionSchema = z
     },
   )
 
+type SupabaseCompetitionRow = {
+  id: string
+  name: string
+  phase: number
+  grade_category: number | null
+  start_date: string
+  end_date: string
+  status: "upcoming" | "active" | "completed"
+  rules: unknown
+  created_at: string | null
+}
+
+function extractRulesSummary(value: unknown): string {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return ""
+  const summary = (value as Record<string, unknown>).summary
+  return typeof summary === "string" ? summary : ""
+}
+
+function toApiCompetition(row: SupabaseCompetitionRow): AdminCompetitionRecord {
+  const updatedAt = row.created_at ?? new Date().toISOString()
+  return {
+    id: row.id,
+    name: row.name,
+    phase: row.phase as 1 | 2 | 3 | 4,
+    gradeCategory: (row.grade_category as 1 | 2 | 3 | null) ?? null,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    status: row.status,
+    rulesSummary: extractRulesSummary(row.rules),
+    source: "admin",
+    updatedAt,
+  }
+}
+
 export async function GET(request: NextRequest) {
   const session = requireSchoolAdminSession(request)
   if ("error" in session) return session.error
@@ -70,7 +106,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const competitions = listAdminCompetitions()
+    const competitions = isSupabaseAdminConfigured()
+      ? await (async () => {
+          const supabase = createAdminSupabaseClient()
+          const { data, error } = await supabase
+            .from("competitions")
+            .select("id, name, phase, grade_category, start_date, end_date, status, rules, created_at")
+            .order("start_date", { ascending: true })
+            .limit(500)
+
+          if (error) {
+            throw new Error(error.message)
+          }
+          return ((data as SupabaseCompetitionRow[] | null) ?? []).map(toApiCompetition)
+        })()
+      : listAdminCompetitions()
     const resultsPreview = getAdminCompetitionResultsPreview()
 
     const phaseTemplates = Object.entries(COMPETITION_CONFIG.PHASE_DATES).map(([phase, config]) => ({
@@ -133,8 +183,33 @@ export async function POST(request: NextRequest) {
       rulesSummary: parsed.data.rulesSummary ?? "",
     }
 
+    if (isSupabaseAdminConfigured()) {
+      const supabase = createAdminSupabaseClient()
+      const { data, error } = await supabase
+        .from("competitions")
+        .insert({
+          name: payload.name,
+          phase: payload.phase,
+          grade_category: payload.gradeCategory ?? null,
+          start_date: payload.startDate,
+          end_date: payload.endDate,
+          status: "upcoming",
+          rules: payload.rulesSummary ? { summary: payload.rulesSummary } : null,
+        })
+        .select("id, name, phase, grade_category, start_date, end_date, status, rules, created_at")
+        .single()
+
+      if (error || !data) {
+        return NextResponse.json({ error: "Gagal membuat kompetisi" }, { status: 500 })
+      }
+
+      const competition = toApiCompetition(data as SupabaseCompetitionRow)
+      logApiRequest(request, 201, { action: "admin_competition_create", competitionId: competition.id, source: "supabase" })
+      return NextResponse.json({ competition }, { status: 201 })
+    }
+
     const competition = createAdminCompetition(payload)
-    logApiRequest(request, 201, { action: "admin_competition_create", competitionId: competition.id })
+    logApiRequest(request, 201, { action: "admin_competition_create", competitionId: competition.id, source: "fallback" })
     return NextResponse.json({ competition }, { status: 201 })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Gagal membuat kompetisi"
@@ -177,6 +252,36 @@ export async function PATCH(request: NextRequest) {
       return parsed.errorResponse!
     }
 
+    if (isSupabaseAdminConfigured()) {
+      const supabase = createAdminSupabaseClient()
+      const patch: Record<string, unknown> = {}
+      if (parsed.data.name !== undefined) patch.name = parsed.data.name
+      if (parsed.data.phase !== undefined) patch.phase = parsed.data.phase
+      if (parsed.data.gradeCategory !== undefined) patch.grade_category = parsed.data.gradeCategory
+      if (parsed.data.startDate !== undefined) patch.start_date = parsed.data.startDate
+      if (parsed.data.endDate !== undefined) patch.end_date = parsed.data.endDate
+      if (parsed.data.status !== undefined) patch.status = parsed.data.status
+      if (parsed.data.rulesSummary !== undefined) patch.rules = { summary: parsed.data.rulesSummary }
+
+      const { data, error } = await supabase
+        .from("competitions")
+        .update(patch)
+        .eq("id", parsed.data.id)
+        .select("id, name, phase, grade_category, start_date, end_date, status, rules, created_at")
+        .maybeSingle()
+
+      if (error) {
+        return NextResponse.json({ error: "Gagal memperbarui kompetisi" }, { status: 500 })
+      }
+      if (!data) {
+        return NextResponse.json({ error: "Kompetisi tidak ditemukan" }, { status: 404 })
+      }
+
+      const competition = toApiCompetition(data as SupabaseCompetitionRow)
+      logApiRequest(request, 200, { action: "admin_competition_update", competitionId: parsed.data.id, source: "supabase" })
+      return NextResponse.json({ competition })
+    }
+
     const competition = updateAdminCompetition(parsed.data.id, {
       name: parsed.data.name,
       phase: parsed.data.phase as 1 | 2 | 3 | 4 | undefined,
@@ -191,7 +296,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Kompetisi tidak ditemukan" }, { status: 404 })
     }
 
-    logApiRequest(request, 200, { action: "admin_competition_update", competitionId: parsed.data.id })
+    logApiRequest(request, 200, { action: "admin_competition_update", competitionId: parsed.data.id, source: "fallback" })
     return NextResponse.json({ competition })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Gagal memperbarui kompetisi"
@@ -199,4 +304,3 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }
-

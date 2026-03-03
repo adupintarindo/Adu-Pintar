@@ -457,7 +457,7 @@ export default function ActivityPage() {
                 </div>
                 <Link
                   href="/dashboard"
-                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                  className="mt-6 inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
                   style={{ boxShadow: "var(--shadow-glow-primary)" }}
                 >
                   Kembali ke dashboard
@@ -475,7 +475,8 @@ export default function ActivityPage() {
                     key={option.key}
                     type="button"
                     onClick={() => setRange(option.key)}
-                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    aria-pressed={isActive}
+                    className={`min-h-11 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
                       isActive
                         ? "border-primary bg-primary text-primary-foreground shadow"
                         : "border-border/50 bg-card/50 text-foreground hover:border-primary/30"

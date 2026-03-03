@@ -30,8 +30,8 @@ function Command({
 }
 
 function CommandDialog({
-  title = 'Command Palette',
-  description = 'Search for a command to run...',
+  title = 'Pencarian',
+  description = 'Cari perintah...',
   children,
   className,
   showCloseButton = true,

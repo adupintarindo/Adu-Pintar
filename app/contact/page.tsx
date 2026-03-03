@@ -1,6 +1,7 @@
 "use client"
 
-import { ChangeEvent, FormEvent, useMemo, useState } from "react"
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Instagram, Mail, MessageCircle, Phone, Send, ShieldCheck } from "lucide-react"
 
 import { Navbar } from "@/components/navbar"
@@ -22,10 +23,22 @@ const defaultForm: ContactFormState = {
   message: "",
 }
 
+const prefillCategories: ContactCategory[] = ["umum", "kemitraan", "sponsor", "sekolah"]
+
+function sanitizePrefillCategory(value: string | null): ContactCategory {
+  if (value && prefillCategories.includes(value as ContactCategory)) {
+    return value as ContactCategory
+  }
+  return "umum"
+}
+
 export default function ContactPage() {
+  const searchParams = useSearchParams()
   const [form, setForm] = useState<ContactFormState>(defaultForm)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null)
+  const [prefillNotice, setPrefillNotice] = useState<string | null>(null)
+  const [prefillApplied, setPrefillApplied] = useState(false)
 
   const categoryOptions = useMemo(
     () => [
@@ -76,6 +89,28 @@ export default function ContactPage() {
     }
   }
 
+  useEffect(() => {
+    if (prefillApplied) return
+
+    const prefillMessage = searchParams.get("message")
+    const prefillCategory = searchParams.get("category")
+    const source = searchParams.get("source")
+
+    if (!prefillMessage && !prefillCategory) return
+
+    setForm((prev) => ({
+      ...prev,
+      category: sanitizePrefillCategory(prefillCategory),
+      message: prefillMessage?.trim() ? prefillMessage.trim().slice(0, 2000) : prev.message,
+    }))
+    setPrefillNotice(
+      source === "duel-question-report"
+        ? "Template laporan soal duel sudah diisi otomatis. Lengkapi nama dan email, lalu kirim."
+        : "Sebagian formulir sudah diisi otomatis. Cek kembali sebelum mengirim.",
+    )
+    setPrefillApplied(true)
+  }, [prefillApplied, searchParams])
+
   return (
     <>
       <Navbar />
@@ -94,7 +129,7 @@ export default function ContactPage() {
                 Hubungi Tim Adu Pintar
               </h1>
               <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-                Gunakan formulir ini untuk pertanyaan umum, kemitraan, sponsor, atau onboarding sekolah. Pesan akan
+                Gunakan formulir ini untuk pertanyaan umum, kemitraan, sponsor, atau pendaftaran sekolah baru. Pesan akan
                 diteruskan ke inbox tim dan dapat dibalas melalui email Anda.
               </p>
             </div>
@@ -112,6 +147,11 @@ export default function ContactPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {prefillNotice && !status && (
+                <div className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary">
+                  {prefillNotice}
+                </div>
+              )}
               {status && (
                 <div
                   className={`rounded-2xl border px-4 py-3 text-sm ${
@@ -134,7 +174,7 @@ export default function ContactPage() {
                   value={form.name}
                   onChange={handleChange("name")}
                   placeholder="Nama lengkap"
-                  className="mt-2 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
+                  className="mt-2 h-12 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
                 />
               </div>
 
@@ -148,7 +188,7 @@ export default function ContactPage() {
                   value={form.email}
                   onChange={handleChange("email")}
                   placeholder="email@domain.com"
-                  className="mt-2 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
+                  className="mt-2 h-12 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
                 />
               </div>
 
@@ -160,7 +200,7 @@ export default function ContactPage() {
                   id="contact-category"
                   value={form.category}
                   onChange={handleChange("category")}
-                  className="mt-2 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
+                  className="mt-2 h-12 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
                 >
                   {categoryOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -188,7 +228,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-5 py-3 text-sm font-display font-bold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-5 py-3 text-sm font-display font-bold text-primary-foreground transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
                   style={{ boxShadow: "var(--shadow-glow-primary)" }}
                 >
                   <Send className="h-4 w-4" />
@@ -200,9 +240,9 @@ export default function ContactPage() {
                     setForm(defaultForm)
                     setStatus(null)
                   }}
-                  className="rounded-xl border border-border/50 px-5 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground"
+                  className="rounded-xl border border-border/50 px-5 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground transition active:scale-95"
                 >
-                  Reset
+                  Hapus Isian
                 </button>
               </div>
             </form>
@@ -255,8 +295,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-display font-bold tracking-tight text-foreground">Catatan Pengiriman</h3>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Route backend mendukung pengiriman email via Resend jika `RESEND_API_KEY` tersedia. Jika belum dikonfigurasi,
-                    pesan tetap diterima dan dicatat di server log (mode fallback) untuk pengembangan/testing.
+                    Pesanmu akan langsung diterima oleh tim Adu Pintar. Kami akan membalas melalui email yang kamu tulis di formulir.
                   </p>
                 </div>
               </div>

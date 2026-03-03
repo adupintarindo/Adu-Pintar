@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getPlayerGameState, getGame } from "@/lib/game"
+import { getGame, getPlayerGameState } from "@/lib/game"
 import { ensureGameLoadedById } from "@/lib/game-persistence"
 import { logApiRequest, rejectIfRateLimited } from "@/lib/api-security"
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Game ID diperlukan" }, { status: 400 })
     }
 
-    const game = getGame(gameId) ?? (await ensureGameLoadedById(gameId))
+    const game = (await ensureGameLoadedById(gameId, { forceRefresh: true })) ?? getGame(gameId)
     if (!game) {
       return NextResponse.json({ error: "Game tidak ditemukan" }, { status: 404 })
     }

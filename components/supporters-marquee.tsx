@@ -65,11 +65,11 @@ export function SupportersMarquee({ supporters, durationMs = 35000 }: Supporters
       <div className="relative" aria-label="Daftar organisasi pendukung">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-16 bg-gradient-to-r from-white/95 via-white/75 to-transparent md:block"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-16 bg-linear-to-r from-card/95 via-card/75 to-transparent md:block"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 bg-gradient-to-l from-white/95 via-white/75 to-transparent md:block"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 bg-linear-to-l from-card/95 via-card/75 to-transparent md:block"
         />
 
         <Carousel
@@ -90,8 +90,8 @@ export function SupportersMarquee({ supporters, durationMs = 35000 }: Supporters
                     type="button"
                     className={`group flex h-full min-h-36 w-full flex-col items-center justify-center gap-3 rounded-3xl border px-5 py-6 text-center transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 ${
                       isActive
-                        ? "border-primary/45 bg-white ring-1 ring-primary/20 shadow-[0_14px_36px_-24px_rgba(13,62,32,0.7)]"
-                        : "border-border/70 bg-white/85 shadow-[0_10px_24px_-22px_rgba(13,62,32,0.55)] hover:-translate-y-0.5 hover:border-primary/35 hover:bg-white hover:shadow-[0_18px_38px_-24px_rgba(13,62,32,0.7)]"
+                        ? "border-primary/45 bg-card ring-1 ring-primary/20 shadow-[0_14px_36px_-24px_rgba(13,62,32,0.7)]"
+                        : "border-border/70 bg-card/85 shadow-[0_10px_24px_-22px_rgba(13,62,32,0.55)] hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card hover:shadow-[0_18px_38px_-24px_rgba(13,62,32,0.7)]"
                     }`}
                     onClick={() => setSelected(supporter)}
                   >
@@ -116,8 +116,8 @@ export function SupportersMarquee({ supporters, durationMs = 35000 }: Supporters
               )
             })}
           </CarouselContent>
-          <CarouselPrevious className="hidden md:flex left-2 top-1/2 size-10 -translate-y-1/2 border border-border/70 bg-white/95 text-foreground shadow-md hover:bg-white disabled:pointer-events-none disabled:opacity-35" />
-          <CarouselNext className="hidden md:flex right-2 top-1/2 size-10 -translate-y-1/2 border border-border/70 bg-white/95 text-foreground shadow-md hover:bg-white disabled:pointer-events-none disabled:opacity-35" />
+          <CarouselPrevious className="hidden md:flex left-2 top-1/2 size-10 -translate-y-1/2 border border-border/70 bg-card/95 text-foreground shadow-md hover:bg-card disabled:pointer-events-none disabled:opacity-35" />
+          <CarouselNext className="hidden md:flex right-2 top-1/2 size-10 -translate-y-1/2 border border-border/70 bg-card/95 text-foreground shadow-md hover:bg-card disabled:pointer-events-none disabled:opacity-35" />
         </Carousel>
 
         <div className="mt-4 flex justify-center gap-2 md:hidden">
@@ -139,10 +139,10 @@ export function SupportersMarquee({ supporters, durationMs = 35000 }: Supporters
           aria-modal="true"
           aria-labelledby="supporter-modal-title"
         >
-          <div className="relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl">
+          <div className="relative w-full max-w-lg rounded-3xl bg-card p-8 shadow-2xl">
             <button
               type="button"
-              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition hover:bg-muted active:scale-95"
               aria-label="Tutup"
               onClick={() => setSelected(null)}
             >
@@ -151,15 +151,15 @@ export function SupportersMarquee({ supporters, durationMs = 35000 }: Supporters
             <div className="flex flex-col gap-4 pr-6">
               <p
                 id="supporter-modal-title"
-                className="text-2xl font-semibold text-gray-900"
+                className="text-2xl font-semibold text-foreground"
               >
                 {selected.name}
               </p>
-              <p className="text-gray-600 leading-relaxed">{selected.description}</p>
+              <p className="text-muted-foreground leading-relaxed">{selected.description}</p>
               <div>
                 <button
                   type="button"
-                  className="mt-4 inline-flex items-center rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-green-200 transition hover:bg-green-700"
+                  className="mt-4 inline-flex items-center rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:bg-primary/90 active:scale-95"
                   onClick={() => setSelected(null)}
                 >
                   Mengerti

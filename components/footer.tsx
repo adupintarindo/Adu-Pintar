@@ -29,7 +29,7 @@ export function Footer() {
   return (
     <footer style={{ background: "var(--color-brand-dark, #0D3E20)" }} className="text-white/90">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-4">
+        <div className="mb-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="mb-4 flex items-center gap-3">
               <Image
@@ -68,7 +68,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               {primaryLinks.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-white/60 transition hover:text-white">
+                  <Link href={link.href} className="text-white/60 transition hover:text-white hover:underline">
                     {link.label}
                   </Link>
                 </li>
@@ -81,7 +81,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               {helpLinks.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-white/60 transition hover:text-white">
+                  <Link href={link.href} className="text-white/60 transition hover:text-white hover:underline">
                     {link.label}
                   </Link>
                 </li>
@@ -106,11 +106,11 @@ export function Footer() {
           <div className="flex flex-col items-center gap-4 text-sm text-white/50 md:flex-row md:justify-between">
             <p>&copy; {currentYear} Adu Pintar. Dibuat dengan semangat untuk pelajar Indonesia.</p>
             <div className="flex gap-4">
-              <Link href="/privacy" className="text-white/50 transition hover:text-white">
+              <Link href="/privacy" className="text-white/50 transition hover:text-white hover:underline">
                 Kebijakan Privasi
               </Link>
               <span aria-hidden="true" className="text-white/20">|</span>
-              <Link href="/terms" className="text-white/50 transition hover:text-white">
+              <Link href="/terms" className="text-white/50 transition hover:text-white hover:underline">
                 Syarat Penggunaan
               </Link>
             </div>

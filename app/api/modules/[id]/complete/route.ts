@@ -8,33 +8,43 @@ import {
   rejectIfRateLimited,
 } from "@/lib/api-security"
 import { EXP_CONFIG, getLevel } from "@/lib/exp-config"
+import { getCurriculumModuleById } from "@/lib/materials-curriculum"
 import { getRequestSessionUser } from "@/lib/server-session"
 import { createAdminSupabaseClient, isSupabaseAdminConfigured } from "@/lib/supabase-admin"
 
-type StudentExpRow = {
-  id: string
+type ClaimModuleCompletionRow = {
+  already_completed: boolean | null
   total_exp: number | null
   level: number | null
 }
 
+type ModuleRewardRow = {
+  exp_reward: number | null
+}
+
 const moduleIdSchema = z.string().min(1).max(80)
-const awardedModuleCompletionsByStudent = new Map<string, Set<string>>()
 
 function isUUID(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
-function hasAwardedModuleExp(studentId: string, moduleId: string): boolean {
-  return awardedModuleCompletionsByStudent.get(studentId)?.has(moduleId) ?? false
-}
-
-function markModuleExpAwarded(studentId: string, moduleId: string) {
-  const current = awardedModuleCompletionsByStudent.get(studentId)
-  if (current) {
-    current.add(moduleId)
-    return
+async function resolveModuleReward(moduleId: string) {
+  if (!isUUID(moduleId)) {
+    return getCurriculumModuleById(moduleId) ? EXP_CONFIG.MODULE_READ : null
   }
-  awardedModuleCompletionsByStudent.set(studentId, new Set([moduleId]))
+
+  const supabase = createAdminSupabaseClient()
+  const { data, error } = await supabase
+    .from("modules")
+    .select("exp_reward")
+    .eq("id", moduleId)
+    .eq("is_published", true)
+    .maybeSingle()
+
+  if (error || !data) return null
+
+  const row = data as ModuleRewardRow
+  return Math.max(0, Math.floor(row.exp_reward ?? EXP_CONFIG.MODULE_READ))
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -82,63 +92,62 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
+    const awardedExp = await resolveModuleReward(moduleId)
+    if (awardedExp === null) {
+      return NextResponse.json({ error: "Modul tidak ditemukan atau belum dipublikasikan" }, { status: 404 })
+    }
+
     const supabase = createAdminSupabaseClient()
+    const { data: claimResult, error: claimError } = await supabase.rpc("claim_module_completion", {
+      p_student_id: sessionUser.id,
+      p_module_id: moduleId,
+      p_awarded_exp: awardedExp,
+    })
+    if (claimError) {
+      const errorMessage = (claimError.message ?? "").toLowerCase()
+      if (errorMessage.includes("student_not_found")) {
+        return NextResponse.json({ error: "Data siswa tidak ditemukan" }, { status: 404 })
+      }
+      if (errorMessage.includes("module_not_found") || errorMessage.includes("invalid_module_id")) {
+        return NextResponse.json({ error: "Modul tidak ditemukan atau belum dipublikasikan" }, { status: 404 })
+      }
+      console.error("[api/modules/complete] claim_module_completion failed:", claimError)
+      return NextResponse.json({ error: "Gagal memproses completion modul" }, { status: 500 })
+    }
 
-    if (hasAwardedModuleExp(sessionUser.id, moduleId)) {
-      const { data: student } = await supabase
+    const claimRow = Array.isArray(claimResult)
+      ? (claimResult[0] as ClaimModuleCompletionRow | undefined)
+      : undefined
+    if (!claimRow) {
+      return NextResponse.json({ error: "Gagal membaca status completion modul" }, { status: 500 })
+    }
+
+    const alreadyCompleted = Boolean(claimRow.already_completed)
+    const totalExp = Math.max(claimRow.total_exp ?? 0, 0)
+    const currentLevel = Math.max(claimRow.level ?? 1, 1)
+    const nextLevel = Math.max(currentLevel, getLevel(totalExp))
+
+    if (nextLevel > currentLevel) {
+      const { error: levelUpdateError } = await supabase
         .from("students")
-        .select("total_exp, level")
+        .update({ level: nextLevel })
         .eq("id", sessionUser.id)
-        .maybeSingle()
+        .lt("level", nextLevel)
 
-      const totalExp = Math.max((student?.total_exp ?? 0) as number, 0)
-      const level = Math.max((student?.level ?? 1) as number, getLevel(totalExp))
-      return NextResponse.json({
-        ok: true,
-        moduleId,
-        alreadyCompleted: true,
-        awardedExp: 0,
-        totalExp,
-        level,
-        source: "runtime-cache-supabase",
-      })
+      if (levelUpdateError) {
+        console.error("[api/modules/complete] level sync failed:", levelUpdateError)
+      }
     }
 
-    const { data: student, error } = await supabase
-      .from("students")
-      .select("id, total_exp, level")
-      .eq("id", sessionUser.id)
-      .maybeSingle()
-
-    if (error || !student) {
-      return NextResponse.json({ error: "Data siswa tidak ditemukan" }, { status: 404 })
-    }
-
-    const row = student as StudentExpRow
-    const nextTotalExp = (row.total_exp ?? 0) + EXP_CONFIG.MODULE_READ
-    const nextLevel = Math.max(row.level ?? 1, getLevel(nextTotalExp))
-
-    const { error: updateError } = await supabase
-      .from("students")
-      .update({
-        total_exp: nextTotalExp,
-        level: nextLevel,
-      })
-      .eq("id", sessionUser.id)
-
-    if (updateError) {
-      return NextResponse.json({ error: "Gagal memperbarui EXP siswa" }, { status: 500 })
-    }
-
-    markModuleExpAwarded(sessionUser.id, moduleId)
+    const effectiveLevel = nextLevel > currentLevel ? nextLevel : currentLevel
     logApiRequest(request, 200, { action: "module_complete", moduleId, studentId: sessionUser.id })
     return NextResponse.json({
       ok: true,
       moduleId,
-      alreadyCompleted: false,
-      awardedExp: EXP_CONFIG.MODULE_READ,
-      totalExp: nextTotalExp,
-      level: nextLevel,
+      alreadyCompleted,
+      awardedExp: alreadyCompleted ? 0 : awardedExp,
+      totalExp,
+      level: effectiveLevel,
       source: "supabase",
     })
   } catch (error) {
@@ -147,4 +156,3 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Gagal memproses completion modul" }, { status: 500 })
   }
 }
-

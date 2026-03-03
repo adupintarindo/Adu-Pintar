@@ -49,6 +49,18 @@ const funFacts = [
   "Jagung adalah sumber karbohidrat kedua setelah beras di Indonesia.",
 ]
 
+const duelQuickFacts = [
+  { label: "Format", value: "10 soal / duel" },
+  { label: "Timer", value: "10 detik / soal" },
+  { label: "Durasi", value: "Estimasi 3-5 menit" },
+] as const
+
+const competitionRules = [
+  "Poin didapat dari jawaban benar + bonus kecepatan.",
+  "10 duel kompetisi pertama dihitung untuk ranking periode aktif.",
+  "Jika koneksi putus saat duel, gunakan tombol sambung ulang di layar permainan.",
+] as const
+
 const normalizePlayers = (game: DuelGameState): Player[] => {
   if (game.players?.length) return game.players
   const names = game.playerNames ?? []
@@ -136,7 +148,8 @@ export default function LobbyPage() {
   }
 
   const handleJoin = async () => {
-    if (!joinCode.trim()) {
+    const normalizedCode = joinCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6)
+    if (!normalizedCode) {
       setError("Masukkan kode game terlebih dahulu")
       return
     }
@@ -145,7 +158,7 @@ export default function LobbyPage() {
       const res = await fetchWithCsrf("/api/game/duel/join", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: joinCode.trim().toUpperCase() }),
+        body: JSON.stringify({ code: normalizedCode }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
@@ -188,7 +201,7 @@ export default function LobbyPage() {
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground text-center mb-2">
             {isWaitingForOpponent ? "Menunggu Lawan" : "Game Siap Dimulai"}
           </h1>
-          <p className="text-center text-muted-foreground mb-8">
+          <p role="status" aria-live="polite" className="text-center text-muted-foreground mb-8">
             {isWaitingForOpponent
               ? "Bagikan kode di bawah untuk mengundang lawan"
               : "Lawan sudah bergabung. Duel akan dimulai."}
@@ -209,20 +222,44 @@ export default function LobbyPage() {
             </div>
           </div>
 
+          <div className="mb-8 grid gap-2 sm:grid-cols-3">
+            {duelQuickFacts.map((fact) => (
+              <div key={fact.label} className="rounded-xl border border-border/50 bg-card/50 px-3 py-2">
+                <p className="text-xs font-semibold text-foreground">{fact.label}</p>
+                <p className="text-[11px] text-muted-foreground">{fact.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {game.mode === "competition" ? (
+            <details className="mb-8 rounded-xl border border-border/50 bg-card/50 p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-foreground">
+                Aturan Kompetisi Lengkap
+              </summary>
+              <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+                {competitionRules.map((rule) => (
+                  <li key={rule}>• {rule}</li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+
           {isWaitingForOpponent ? (
             <div className="glass-card rounded-2xl border border-primary/30 bg-primary/5 p-6 mb-8">
               <div className="text-sm text-center text-muted-foreground mb-3">Bagikan Kode Game Ini</div>
               <div className="flex items-center justify-center gap-4">
-                <div className="animate-pulse-glow font-display text-5xl font-extrabold tracking-[0.3em] text-primary">
+                <div className="animate-pulse-glow font-display text-3xl sm:text-5xl font-extrabold tracking-[0.3em] text-primary">
                   {game.code}
                 </div>
                 <button
+                  type="button"
                   onClick={handleCopyCode}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2 font-display font-bold transition min-h-12 ${
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2 font-display font-bold transition min-h-12 active:scale-95 ${
                     copied
                       ? "border border-primary/30 bg-primary/10 text-primary"
                       : "bg-linear-to-r from-primary to-primary/90 text-primary-foreground"
                   }`}
+                  aria-label={copied ? "Kode lobby sudah disalin" : "Salin kode lobby"}
                   style={!copied ? { boxShadow: "var(--shadow-glow-primary)" } : undefined}
                 >
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -237,7 +274,7 @@ export default function LobbyPage() {
             <div className="glass-card rounded-2xl border border-primary/30 bg-primary/5 p-4 text-center">
               <div className="text-sm text-muted-foreground mb-2">Pemain 1</div>
               <div className="font-display text-lg font-bold text-primary">{players[0]?.name || "Pemain 1"}</div>
-              <div className="mt-2 text-xs text-primary">Siap</div>
+              <div className="mt-2 text-xs text-primary font-semibold">&#10003; Siap</div>
             </div>
 
             {/* Player 2 - waiting or ready */}
@@ -256,8 +293,17 @@ export default function LobbyPage() {
               >
                 {opponent?.name || "Menunggu..."}
               </div>
-              <div className={`mt-2 text-xs ${isWaitingForOpponent ? "text-muted-foreground" : "text-primary"}`}>
-                {isWaitingForOpponent ? "Menunggu" : "Siap"}
+              <div className={`mt-2 text-xs font-semibold ${isWaitingForOpponent ? "text-muted-foreground" : "text-primary"}`}>
+                {isWaitingForOpponent ? (
+                  <span>
+                    &#9203; Menunggu
+                    <span className="inline-flex w-6 text-left">
+                      <span className="animate-pulse">...</span>
+                    </span>
+                  </span>
+                ) : (
+                  <span>&#10003; Siap</span>
+                )}
               </div>
             </div>
           </div>
@@ -269,17 +315,20 @@ export default function LobbyPage() {
                 <input
                   type="text"
                   value={joinCode}
-                  onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
+                  onChange={(event) => {
+                    const normalized = event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6)
+                    setJoinCode(normalized)
+                  }}
                   placeholder="Masukkan kode game"
                   maxLength={6}
                   aria-label="Kode game untuk bergabung"
-                  className="flex-1 rounded-xl border border-border/50 bg-card/50 px-4 py-2 text-foreground uppercase focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="flex-1 rounded-xl border border-border/50 bg-card/50 px-4 py-3 text-foreground uppercase focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-11"
                 />
                 <button
                   type="button"
                   onClick={handleJoin}
                   disabled={joinCode.length !== 6}
-                  className="rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-2 font-display font-bold text-primary-foreground transition disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-xl bg-linear-to-r from-primary to-primary/90 px-6 py-3 min-h-11 font-display font-bold text-primary-foreground transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ boxShadow: "var(--shadow-glow-primary)" }}
                 >
                   Gabung
@@ -319,14 +368,15 @@ export default function LobbyPage() {
             </div>
           ) : null}
 
-          <Link href="/game/duel">
-            <button className={`mt-8 w-full rounded-xl border px-4 py-3 min-h-12 font-display font-semibold transition ${
+          <Link
+            href="/game/duel"
+            className={`mt-8 inline-flex w-full items-center justify-center rounded-xl border px-4 py-3 min-h-12 font-display font-semibold transition active:scale-95 ${
               isWaitingForOpponent
                 ? "border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10"
                 : "border-border/50 bg-card text-foreground hover:border-primary/30"
-            }`}>
-              {isWaitingForOpponent ? "Batalkan & Kembali" : "Kembali"}
-            </button>
+            }`}
+          >
+            {isWaitingForOpponent ? "Batalkan & Kembali" : "Kembali"}
           </Link>
         </div>
       </div>

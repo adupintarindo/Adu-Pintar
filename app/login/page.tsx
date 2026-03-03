@@ -146,7 +146,7 @@ export default function LoginPage() {
     if (!trimmedEmail) {
       errors.email = "Email wajib diisi."
     } else if (!emailRegex.test(trimmedEmail)) {
-      errors.email = "Format email belum valid."
+      errors.email = "Alamat email belum benar."
     }
 
     if (!staffPassword) {
@@ -169,7 +169,7 @@ export default function LoginPage() {
     if (!trimmedName) {
       errors.studentName = "Nama siswa wajib diisi."
     } else if (trimmedName.length < 3) {
-      errors.studentName = "Nama siswa minimal 3 karakter."
+      errors.studentName = "Nama siswa minimal 3 huruf."
     }
     if (!studentPin) {
       errors.pin = "PIN siswa wajib diisi."
@@ -325,18 +325,18 @@ export default function LoginPage() {
   return (
     <main className="relative min-h-screen overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
       <div
-        className="absolute top-20 -right-32 h-96 w-96 rounded-full opacity-20 pointer-events-none hidden md:block"
+        className="orb-float absolute top-20 -right-32 h-96 w-96 rounded-full opacity-20 pointer-events-none hidden md:block"
         style={{ background: "radial-gradient(circle, oklch(0.52 0.21 142), transparent 70%)", filter: "blur(80px)" }}
         aria-hidden="true"
       />
       <div
-        className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full opacity-15 pointer-events-none hidden md:block"
+        className="orb-float-delayed absolute -bottom-24 -left-24 h-80 w-80 rounded-full opacity-15 pointer-events-none hidden md:block"
         style={{ background: "radial-gradient(circle, oklch(0.55 0.15 250), transparent 70%)", filter: "blur(60px)" }}
         aria-hidden="true"
       />
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full opacity-10 pointer-events-none hidden md:block"
-        style={{ background: "radial-gradient(circle, oklch(0.52 0.21 142), transparent 60%)", filter: "blur(100px)" }}
+        className="orb-float absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full opacity-10 pointer-events-none hidden md:block"
+        style={{ background: "radial-gradient(circle, oklch(0.52 0.21 142), transparent 60%)", filter: "blur(100px)", animationDuration: "12s" }}
         aria-hidden="true"
       />
 
@@ -367,7 +367,7 @@ export default function LoginPage() {
                   setStaffError("")
                   setStaffFieldErrors({})
                 }}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition active:scale-95 ${
                   activeTab === "student" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -380,7 +380,7 @@ export default function LoginPage() {
                   setStudentError("")
                   setStudentFieldErrors({})
                 }}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition active:scale-95 ${
                   activeTab === "staff" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -391,7 +391,7 @@ export default function LoginPage() {
             {activeTab === "student" ? (
               <form onSubmit={handleStudentSubmit} className="space-y-4">
                 {studentError ? (
-                  <div id="student-error" className="error-banner" role="alert">
+                  <div id="student-error" className="error-banner animate-fade-up" role="alert">
                     <AlertCircle className="error-icon" />
                     <span>{studentError}</span>
                   </div>
@@ -486,7 +486,7 @@ export default function LoginPage() {
                         studentName: !nextName.trim()
                           ? "Nama siswa wajib diisi."
                           : nextName.trim().length < 3
-                            ? "Nama siswa minimal 3 karakter."
+                            ? "Nama siswa minimal 3 huruf."
                             : undefined,
                       }))
                     }}
@@ -540,7 +540,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPin((prev) => !prev)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition active:scale-95"
                       aria-label={showPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
                       tabIndex={-1}
                     >
@@ -557,7 +557,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={studentLoading || optionsLoading || !supabaseConfigured}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ boxShadow: studentLoading ? undefined : "var(--shadow-glow-primary)" }}
                 >
                   <GraduationCap className="h-4 w-4" />
@@ -577,7 +577,7 @@ export default function LoginPage() {
             ) : (
               <form onSubmit={handleStaffSubmit} className="space-y-5">
                 {staffError ? (
-                  <div id="staff-error" className="error-banner" role="alert">
+                  <div id="staff-error" className="error-banner animate-fade-up" role="alert">
                     <AlertCircle className="error-icon" />
                     <span>{staffError}</span>
                   </div>
@@ -601,7 +601,7 @@ export default function LoginPage() {
                         setStaffError("")
                         setStaffFieldErrors((prev) => ({
                           ...prev,
-                          email: !nextEmail.trim() ? "Email wajib diisi." : emailRegex.test(nextEmail.trim()) ? undefined : "Format email belum valid.",
+                          email: !nextEmail.trim() ? "Email wajib diisi." : emailRegex.test(nextEmail.trim()) ? undefined : "Alamat email belum benar.",
                         }))
                       }}
                       required
@@ -654,7 +654,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition active:scale-95"
                       aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
                       tabIndex={-1}
                     >
@@ -671,7 +671,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={staffLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary/90 px-4 py-3 font-display font-bold text-primary-foreground shadow-md transition hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ boxShadow: staffLoading ? undefined : "var(--shadow-glow-primary)" }}
                 >
                   <School className="h-4 w-4" />

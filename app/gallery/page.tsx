@@ -24,19 +24,19 @@ const categoryOrder = ["all", "kompetisi", "sekolah", "workshop"] as const
 
 const categoryDecor: Record<Exclude<GalleryCategory, "all">, { badgeClass: string; chipClass: string; glowClass: string }> = {
   kompetisi: {
-    badgeClass: "border-rose-200/60 bg-rose-50/90 text-rose-700",
-    chipClass: "border-rose-200/60 bg-rose-50/70 text-rose-700",
-    glowClass: "from-rose-500/28 via-pink-400/18 to-orange-300/8",
+    badgeClass: "border-violet-200/60 bg-violet-50/90 text-violet-700 dark:border-violet-800/60 dark:bg-violet-950/90 dark:text-violet-300",
+    chipClass: "border-violet-200/60 bg-violet-50/70 text-violet-700 dark:border-violet-800/60 dark:bg-violet-950/70 dark:text-violet-300",
+    glowClass: "from-violet-500/28 via-violet-400/18 to-yellow-300/8",
   },
   sekolah: {
-    badgeClass: "border-emerald-200/60 bg-emerald-50/90 text-emerald-700",
-    chipClass: "border-emerald-200/60 bg-emerald-50/70 text-emerald-700",
+    badgeClass: "border-emerald-200/60 bg-emerald-50/90 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/90 dark:text-emerald-300",
+    chipClass: "border-emerald-200/60 bg-emerald-50/70 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/70 dark:text-emerald-300",
     glowClass: "from-emerald-500/28 via-lime-400/18 to-teal-300/8",
   },
   workshop: {
-    badgeClass: "border-amber-200/60 bg-amber-50/90 text-amber-700",
-    chipClass: "border-amber-200/60 bg-amber-50/70 text-amber-700",
-    glowClass: "from-amber-500/28 via-orange-400/18 to-yellow-300/8",
+    badgeClass: "border-lime-200/60 bg-lime-50/90 text-lime-700 dark:border-lime-800/60 dark:bg-lime-950/90 dark:text-lime-300",
+    chipClass: "border-lime-200/60 bg-lime-50/70 text-lime-700 dark:border-lime-800/60 dark:bg-lime-950/70 dark:text-lime-300",
+    glowClass: "from-lime-500/28 via-yellow-400/18 to-emerald-300/8",
   },
 }
 
@@ -71,7 +71,7 @@ const galleryItems: GalleryItem[] = [
     date: "2026-04-29",
     location: "Yogyakarta, DIY",
     heightClass: "h-72",
-    gradientClass: "from-amber-500/30 via-orange-400/20 to-yellow-300/10",
+    gradientClass: "from-lime-500/30 via-yellow-400/20 to-yellow-300/10",
     accent: "Workshop",
   },
   {
@@ -82,7 +82,7 @@ const galleryItems: GalleryItem[] = [
     date: "2026-05-30",
     location: "Surabaya, Jawa Timur",
     heightClass: "h-60",
-    gradientClass: "from-fuchsia-500/30 via-pink-400/20 to-rose-300/10",
+    gradientClass: "from-fuchsia-500/30 via-violet-400/20 to-violet-300/10",
     accent: "Kompetisi",
   },
   {
@@ -115,7 +115,7 @@ const galleryItems: GalleryItem[] = [
     date: "2026-07-22",
     location: "Denpasar, Bali",
     heightClass: "h-[19rem]",
-    gradientClass: "from-red-500/30 via-orange-400/20 to-amber-300/10",
+    gradientClass: "from-violet-500/30 via-yellow-400/20 to-lime-300/10",
     accent: "Kompetisi",
   },
   {
@@ -137,7 +137,7 @@ const galleryItems: GalleryItem[] = [
     date: "2026-01-27",
     location: "Malang, Jawa Timur",
     heightClass: "h-[17.5rem]",
-    gradientClass: "from-slate-500/30 via-zinc-400/20 to-stone-300/10",
+    gradientClass: "from-muted-foreground/30 via-muted-foreground/15 to-muted-foreground/10",
     accent: "Workshop",
   },
 ]
@@ -226,7 +226,7 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 opacity-40" style={{ backgroundImage: "linear-gradient(to right, rgba(62,125,80,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(62,125,80,0.08) 1px, transparent 1px)", backgroundSize: "44px 44px" }} />
           <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
           <div className="pointer-events-none absolute right-0 top-0 h-80 w-80 rounded-full bg-accent/14 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-8 left-1/2 h-40 w-[34rem] -translate-x-1/2 rounded-full bg-white/40 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-8 left-1/2 h-40 w-[34rem] -translate-x-1/2 rounded-full bg-white/40 dark:bg-white/5 blur-3xl" />
 
           <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
             <div className="grid items-start gap-6 xl:grid-cols-[1.12fr_0.88fr]">
@@ -238,7 +238,7 @@ export default function GalleryPage() {
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-1 text-xs font-semibold text-muted-foreground backdrop-blur">
                     <Images className="h-3.5 w-3.5 text-primary" />
-                    Preview Visual Statis
+                    Pratinjau Foto
                   </span>
                 </div>
 
@@ -300,7 +300,7 @@ export default function GalleryPage() {
 
                 <div className="relative flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Spotlight Preview</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Sorotan Pratinjau</p>
                     <p className="mt-1 text-lg font-display font-semibold text-foreground">Kurasi {categoryLabels[activeCategory]}</p>
                   </div>
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-background/80 text-primary">
@@ -312,7 +312,7 @@ export default function GalleryPage() {
                   {filteredMeta.previewItems.map((item, index) => (
                     <div
                       key={`preview-${item.id}`}
-                      className={`relative overflow-hidden rounded-2xl border border-white/50 bg-gradient-to-br ${item.gradientClass} p-3 shadow-sm`}
+                      className={`relative overflow-hidden rounded-2xl border border-white/50 dark:border-white/10 bg-linear-to-br ${item.gradientClass} p-3 shadow-sm`}
                     >
                       <div className="absolute inset-0 opacity-35" style={{ backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0.35) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.25) 75%, transparent 75%, transparent)", backgroundSize: "18px 18px" }} />
                       <div className="relative">
@@ -364,7 +364,7 @@ export default function GalleryPage() {
                 </div>
                 <div>
                   <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                    Grid Foto Masonry
+                    Koleksi Foto
                     <span className="rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                       {filteredItems.length} item
                     </span>
@@ -380,7 +380,7 @@ export default function GalleryPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-3 py-1 text-[11px] font-medium text-muted-foreground">
                   <Clock3 className="h-3.5 w-3.5 text-primary" />
-                  Update visual preview
+                  Pembaruan pratinjau
                 </span>
                 {activeCategory !== "all" && (
                   <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold ${categoryDecor[activeCategory].chipClass}`}>
@@ -397,12 +397,13 @@ export default function GalleryPage() {
                 return (
                   <article
                     key={item.id}
+                    aria-label={`${item.accent}: ${item.title} — ${item.location}`}
                     className="mb-5 break-inside-avoid animate-fade-up"
                     style={{ animationDelay: `${Math.min(index * 60, 420)}ms` }}
                   >
                     <div className="group glass-card hover-lift overflow-hidden rounded-3xl border-border/60 bg-card/85">
-                      <div className={`relative isolate ${item.heightClass} overflow-hidden bg-gradient-to-br ${item.gradientClass}`}>
-                        <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${categoryDecor[item.category].glowClass}`} />
+                      <div role="img" aria-label={`Foto dokumentasi: ${item.title}`} className={`relative isolate ${item.heightClass} overflow-hidden bg-linear-to-br ${item.gradientClass}`}>
+                        <div className={`pointer-events-none absolute inset-0 bg-linear-to-br ${categoryDecor[item.category].glowClass}`} />
                         <div className="pointer-events-none absolute inset-0 opacity-35" style={{ backgroundImage: "linear-gradient(120deg, rgba(255,255,255,0.24) 12%, transparent 12%, transparent 50%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.16) 62%, transparent 62%, transparent 100%)", backgroundSize: "28px 28px" }} />
                         <div className="pointer-events-none absolute -right-12 top-12 h-32 w-32 rounded-full border border-white/25 bg-white/10 transition-transform duration-700 group-hover:scale-110" />
                         <div className="pointer-events-none absolute left-5 top-14 h-20 w-20 rounded-full border border-white/20 bg-white/5 transition-transform duration-700 group-hover:-translate-y-1" />
@@ -439,7 +440,7 @@ export default function GalleryPage() {
                             <p className="mt-1 line-clamp-3 text-xs leading-5 text-white/80">{item.caption}</p>
                             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
                               <div
-                                className={`h-full rounded-full bg-gradient-to-r ${item.gradientClass} transition-all duration-500 group-hover:w-full`}
+                                className={`h-full rounded-full bg-linear-to-r ${item.gradientClass} transition-all duration-500 group-hover:w-full`}
                                 style={{ width: `${48 + ((index % 4) + 1) * 10}%` }}
                               />
                             </div>

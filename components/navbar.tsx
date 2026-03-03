@@ -72,6 +72,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [logoutLoading, setLogoutLoading] = useState(false)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
@@ -113,6 +114,13 @@ export function Navbar() {
     setProfileMenuOpen(false)
   }, [pathname])
 
+  // Show shadow on scroll
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10)
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
   const firstName = user?.name?.split(" ")[0] || "Player"
   const roleLabel = user?.role ? ROLE_LABELS[user.role] : null
   const isAuthenticatedArea = Boolean(
@@ -123,11 +131,11 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 border-b border-border/50 bg-card/95 backdrop-blur-lg shadow-sm">
+      <nav className={cn("sticky top-0 z-50 border-b border-border/50 bg-card/95 backdrop-blur-lg transition-shadow duration-300", scrolled ? "shadow-md" : "shadow-sm")}>
         <div className="ifp-section">
           <div className="flex items-center justify-between gap-4 py-3.5 2xl:py-5">
             {/* Logo */}
-            <Link href="/" className="flex items-center group">
+            <Link href="/" aria-label="Ke beranda Adu Pintar" className="flex items-center group">
               <Image
                 src="/adu_pintar_appicon_dark.png"
                 alt="Adu Pintar"
@@ -149,8 +157,9 @@ export function Navbar() {
                       <Link
                         key={item.href}
                         href={item.href}
+                        aria-current={isActive ? "page" : undefined}
                         className={cn(
-                          "group flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold transition-all duration-200 2xl:px-4 2xl:py-2",
+                          "group flex items-center gap-2 rounded-xl px-3 py-1.5 min-h-11 text-sm font-semibold transition-all duration-200 2xl:px-4 2xl:py-2",
                           isActive
                             ? "bg-primary text-primary-foreground shadow-md"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -159,7 +168,7 @@ export function Navbar() {
                       >
                         <span
                           className={cn(
-                            "flex h-7 w-7 items-center justify-center rounded-lg text-xs transition-all 2xl:h-8 2xl:w-8",
+                            "flex h-11 w-11 items-center justify-center rounded-lg text-xs transition-all 2xl:h-11 2xl:w-11",
                             isActive
                               ? "bg-primary-foreground/15 text-primary-foreground"
                               : "bg-muted/50 text-muted-foreground group-hover:text-foreground"
@@ -181,8 +190,9 @@ export function Navbar() {
                       <Link
                         key={item.href}
                         href={item.href}
+                        aria-current={isActive ? "page" : undefined}
                         className={cn(
-                          "group flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold transition-all duration-200 2xl:px-4 2xl:py-2",
+                          "group flex items-center gap-2 rounded-xl px-3 py-1.5 min-h-11 text-sm font-semibold transition-all duration-200 2xl:px-4 2xl:py-2",
                           isActive
                             ? "bg-primary text-primary-foreground shadow-md"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -191,7 +201,7 @@ export function Navbar() {
                       >
                         <span
                           className={cn(
-                            "flex h-7 w-7 items-center justify-center rounded-lg text-xs transition-all 2xl:h-8 2xl:w-8",
+                            "flex h-11 w-11 items-center justify-center rounded-lg text-xs transition-all 2xl:h-11 2xl:w-11",
                             isActive
                               ? "bg-primary-foreground/15 text-primary-foreground"
                               : "bg-muted/50 text-muted-foreground group-hover:text-foreground"
@@ -211,7 +221,7 @@ export function Navbar() {
             <div className="flex items-center gap-3 2xl:gap-4">
               <Link
                 href="/game/duel"
-                className="hidden md:inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition hover:shadow-lg"
+                className="hidden md:inline-flex items-center gap-2 whitespace-nowrap rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition hover:shadow-lg active:scale-95"
                 style={{ boxShadow: "var(--shadow-glow-primary)" }}
               >
                 <Swords className="h-4 w-4" />
@@ -223,8 +233,10 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground hover:text-foreground transition"
+                className="lg:hidden flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-card/80 text-muted-foreground hover:text-foreground transition active:scale-95"
                 aria-label="Buka menu navigasi"
+                aria-expanded={mobileMenuOpen}
+                aria-controls="navbar-mobile-menu"
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -236,7 +248,11 @@ export function Navbar() {
                   <button
                     type="button"
                     onClick={() => setProfileMenuOpen((prev) => !prev)}
-                    className="flex items-center gap-3 rounded-xl border border-border/50 bg-card/80 backdrop-blur-md px-3 py-1.5 shadow-sm transition hover:border-primary/30 hover:shadow-md 2xl:gap-4 2xl:px-4 2xl:py-2"
+                    className="flex items-center gap-3 rounded-xl border border-border/50 bg-card/80 backdrop-blur-md px-3 py-1.5 shadow-sm transition hover:border-primary/30 hover:shadow-md active:scale-95 2xl:gap-4 2xl:px-4 2xl:py-2"
+                    aria-label={profileMenuOpen ? "Tutup menu profil" : "Buka menu profil"}
+                    aria-haspopup="menu"
+                    aria-expanded={profileMenuOpen}
+                    aria-controls="navbar-profile-menu"
                   >
                     <div className="hidden text-right sm:block leading-tight">
                       <p className="text-xs text-muted-foreground 2xl:text-sm">Halo,</p>
@@ -252,10 +268,15 @@ export function Navbar() {
                     </div>
                   </button>
                   {profileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 glass-card rounded-2xl p-2 text-sm font-semibold shadow-lg animate-slide-up-fade 2xl:text-base">
+                    <div
+                      id="navbar-profile-menu"
+                      role="menu"
+                      className="absolute right-0 mt-2 w-56 glass-card rounded-2xl p-2 text-sm font-semibold shadow-lg animate-slide-up-fade 2xl:text-base"
+                    >
                       <button
                         type="button"
                         onClick={() => { setProfileMenuOpen(false); router.push("/dashboard") }}
+                        role="menuitem"
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-foreground transition hover:bg-primary/5 2xl:px-4 2xl:py-3"
                       >
                         <Home className="h-4 w-4 text-primary" />
@@ -269,6 +290,7 @@ export function Navbar() {
                             <button
                               type="button"
                               disabled={logoutLoading}
+                              role="menuitem"
                               onClick={async () => {
                                 try {
                                   setLogoutLoading(true)
@@ -290,6 +312,7 @@ export function Navbar() {
                             </button>
                             <button
                               type="button"
+                              role="menuitem"
                               onClick={() => setLogoutConfirmOpen(false)}
                               className="flex-1 rounded-lg border border-border/50 px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted/50"
                             >
@@ -300,6 +323,7 @@ export function Navbar() {
                       ) : (
                         <button
                           type="button"
+                          role="menuitem"
                           onClick={() => setLogoutConfirmOpen(true)}
                           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-destructive transition hover:bg-destructive/5 2xl:px-4 2xl:py-3"
                         >
@@ -312,16 +336,18 @@ export function Navbar() {
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-3">
-                  <Link href="/login">
-                    <button className="rounded-2xl border-2 border-primary/20 bg-card px-6 py-2.5 text-sm font-bold text-primary shadow-sm transition hover:shadow-md hover:border-primary/40 hover:bg-primary/5">
-                      Masuk
-                    </button>
+                  <Link
+                    href="/login"
+                    className="inline-flex rounded-2xl border-2 border-primary/20 bg-card px-6 py-2.5 text-sm font-bold text-primary shadow-sm transition hover:shadow-md hover:border-primary/40 hover:bg-primary/5 active:scale-95"
+                  >
+                    Masuk
                   </Link>
-                  <Link href="/register">
-                    <button className="rounded-2xl bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground shadow-md transition hover:shadow-lg hover:scale-105"
-                      style={{ boxShadow: "var(--shadow-glow-primary)" }}>
-                      Daftar
-                    </button>
+                  <Link
+                    href="/register"
+                    className="inline-flex rounded-2xl bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground shadow-md transition hover:shadow-lg hover:scale-105 active:scale-95"
+                    style={{ boxShadow: "var(--shadow-glow-primary)" }}
+                  >
+                    Daftar
                   </Link>
                 </div>
               )}
@@ -339,6 +365,10 @@ export function Navbar() {
             role="presentation"
           />
           <div
+            id="navbar-mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu navigasi mobile"
             className="absolute right-0 top-0 h-full w-80 max-w-[85vw] glass-card rounded-l-3xl shadow-2xl p-6 overflow-y-auto animate-slide-in-right"
             style={{ background: "var(--glass-bg)", backdropFilter: "blur(24px)" }}
           >
@@ -347,7 +377,7 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground hover:text-foreground transition"
+                className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground hover:text-foreground transition active:scale-95"
                 aria-label="Tutup menu"
               >
                 <X className="h-5 w-5" />
@@ -356,25 +386,27 @@ export function Navbar() {
 
             <Link
               href="/game/duel"
-              className="mb-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-md"
+              className="mb-6 inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-md transition active:scale-95"
               style={{ boxShadow: "var(--shadow-glow-primary)" }}
             >
               <Swords className="h-4 w-4" />
               Mulai Duel
             </Link>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {showPublicNavItems ? (
                 <>
                   {publicNavItems.map((item) => {
                     const ItemIcon = item.icon
+                    const isActive = pathname === item.href
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
+                        aria-current={isActive ? "page" : undefined}
                         className={cn(
                           "flex items-center gap-3 rounded-xl px-4 py-3 min-h-11 text-sm font-medium transition",
-                          pathname === item.href
+                          isActive
                             ? "bg-primary/10 text-primary font-semibold"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                         )}
@@ -386,16 +418,18 @@ export function Navbar() {
                   })}
                   {!user && (
                     <div className="mt-6 space-y-2.5 pt-6 border-t border-border/50">
-                      <Link href="/login" className="block">
-                        <button className="w-full rounded-2xl border-2 border-primary/20 bg-card px-5 py-3.5 text-base font-bold text-primary shadow-sm">
-                          Masuk
-                        </button>
+                      <Link
+                        href="/login"
+                        className="inline-flex w-full items-center justify-center rounded-2xl border-2 border-primary/20 bg-card px-5 py-3.5 text-base font-bold text-primary shadow-sm transition active:scale-95"
+                      >
+                        Masuk
                       </Link>
-                      <Link href="/register" className="block">
-                        <button className="w-full rounded-2xl bg-primary px-5 py-3.5 text-base font-bold text-primary-foreground shadow-md"
-                          style={{ boxShadow: "var(--shadow-glow-primary)" }}>
-                          Daftar
-                        </button>
+                      <Link
+                        href="/register"
+                        className="inline-flex w-full items-center justify-center rounded-2xl bg-primary px-5 py-3.5 text-base font-bold text-primary-foreground shadow-md transition active:scale-95"
+                        style={{ boxShadow: "var(--shadow-glow-primary)" }}
+                      >
+                        Daftar
                       </Link>
                     </div>
                   )}
@@ -408,6 +442,7 @@ export function Navbar() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      aria-current={isActive ? "page" : undefined}
                       className={cn(
                         "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition",
                         isActive

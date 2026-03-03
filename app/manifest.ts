@@ -4,11 +4,11 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Adu Pintar",
     short_name: "Adu Pintar",
-    description: "Platform kompetisi quiz pertanian untuk pelajar Indonesia",
+    description: "Platform duel pertanian untuk siswa SD, SMP, dan SMA.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f8faf8",
-    theme_color: "#4f9f4a",
+    background_color: "#0D3E2D",
+    theme_color: "#6CA644",
     lang: "id",
     icons: [
       {

@@ -17,7 +17,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           description: 'text-sm opacity-80',
           success: 'border-primary/30 bg-primary/5 text-primary',
           error: 'border-destructive/30 bg-destructive/5 text-destructive',
-          warning: 'border-amber-500/30 bg-amber-50 text-amber-900',
+          warning: 'border-lime-500/30 bg-lime-50 text-lime-900 dark:bg-lime-950 dark:text-lime-200',
           info: 'border-accent/30 bg-accent/5 text-accent',
         },
       }}
