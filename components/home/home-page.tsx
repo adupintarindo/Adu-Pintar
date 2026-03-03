@@ -1,0 +1,1257 @@
+"use client"
+
+import { useMemo, useState } from "react"
+
+import Image from "next/image"
+import Link from "next/link"
+import type { LucideIcon } from "lucide-react"
+import {
+  AlertTriangle,
+  Award,
+  Ban,
+  BellRing,
+  Brain,
+  ChevronDown,
+  ChevronRight,
+  Globe,
+  GraduationCap,
+  HelpCircle,
+  Layers,
+  Play,
+  RefreshCw,
+  School,
+  Scale,
+  ShieldCheck,
+  Sparkles,
+  Sprout,
+  ThumbsUp,
+  Trophy,
+  UserPlus,
+  Users,
+} from "lucide-react"
+
+import { MatchEntryModal } from "@/components/match-entry-modal"
+import { Navbar } from "@/components/navbar"
+import { SupportersMarquee, type SupporterInfo } from "@/components/supporters-marquee"
+import { TestimonialsCarousel } from "@/components/testimonials-carousel"
+import { TopicGrid } from "@/components/topic-grid"
+import {
+  leaderboardPlayers,
+  teamLeaderboardEntries,
+} from "@/lib/leaderboard-data"
+
+type Highlight = {
+  title: string
+  description: string
+  icon: LucideIcon
+  accent?: string
+  iconWrap?: string
+}
+
+type TutorialVideo = {
+  title: string
+  description: string
+  href: string
+  accent: string
+  ctaClass: string
+}
+
+type OversightChallenge = {
+  title: string
+  description: string
+  icon: LucideIcon
+  border: string
+  iconBg: string
+}
+
+type OversightSolution = {
+  title: string
+  description: string
+  subtitle: string
+  icon: LucideIcon
+  accent: string
+}
+
+type OversightStat = {
+  value: string
+  label: string
+  icon: LucideIcon
+}
+
+type LandingLeaderboardType = "individual" | "team"
+type LandingLeaderboardScope = "national" | "province" | "city"
+type LandingLeaderboardGrade = "all" | "SD" | "SMP" | "SMA"
+
+const heroStats: Array<{ label: string; value: string; icon: LucideIcon; accent: string }> = [
+  { label: "Sekolah bergabung", value: "482", icon: School, accent: "bg-emerald-50 text-emerald-600" },
+  { label: "Pertandingan minggu ini", value: "1.980", icon: Trophy, accent: "bg-lime-50 text-lime-600" },
+  { label: "Kakak mentor siap bantu", value: "76", icon: UserPlus, accent: "bg-sky-50 text-sky-600" },
+]
+
+const heroPills = ["Duel 1 lawan 1", "Main bareng tim 5 orang", "Belajar tiap minggu bareng mentor", "Papan Juara Nasional"]
+
+const heroSnapshotCards: Array<{
+  label: string
+  value: string
+  caption: string
+  icon: LucideIcon
+  accent: string
+}> = [
+  {
+    label: "Pertandingan hari ini",
+    value: "127 duel",
+    caption: "Sedang berlangsung di 5 provinsi",
+    icon: Trophy,
+    accent: "bg-emerald-50 text-emerald-600",
+  },
+  {
+    label: "Badge dibagikan",
+    value: "+2.430",
+    caption: "7 hari terakhir",
+    icon: Sparkles,
+    accent: "bg-lime-50 text-lime-600",
+  },
+  {
+    label: "Kakak Mentor Online",
+    value: "76 mentor",
+    caption: "Siap bantu belajar hari ini",
+    icon: ShieldCheck,
+    accent: "bg-sky-50 text-sky-600",
+  },
+  {
+    label: "Tantangan duel baru",
+    value: "342 undangan",
+    caption: "Menunggu dijawab",
+    icon: Users,
+    accent: "bg-teal-50 text-teal-600",
+  },
+]
+
+const heroVisual = {
+  src: "/hero-agrikultur.svg",
+  alt: "Sesi bootcamp agrikultur dengan mentor dan siswa",
+  badge: "Bootcamp Nusantara",
+  location: "Kabupaten Gowa, Sulawesi Selatan",
+  summary: "76 mentor memandu 25 sekolah melalui simulasi duel 5v5 dan eksperimen hidroponik.",
+}
+
+const heroHighlights: Highlight[] = [
+  {
+    title: "Soal sesuai kelasmu",
+    description: "Soal pertanian otomatis menyesuaikan tingkat kelasmu — SD, SMP, atau SMA. Makin sering latihan, makin pintar!",
+    icon: Sparkles,
+    accent: "border-emerald-100",
+    iconWrap: "bg-emerald-50 text-emerald-600",
+  },
+  {
+    title: "Papan Juara Nasional",
+    description: "Setiap kali kamu menang, namamu langsung muncul di papan juara seluruh Indonesia. Ayo jadi nomor 1!",
+    icon: Trophy,
+    accent: "border-sky-100",
+    iconWrap: "bg-sky-50 text-sky-600",
+  },
+  {
+    title: "Dibimbing Kakak Mentor",
+    description: "Kakak-kakak mentor siap membantu belajar setiap minggu lewat sesi online yang seru dan menyenangkan.",
+    icon: ShieldCheck,
+    accent: "border-teal-100",
+    iconWrap: "bg-teal-50 text-teal-600",
+  },
+]
+
+const oversightChallenges: OversightChallenge[] = [
+  {
+    title: "Pelajaran Pertanian Masih Kurang Seru",
+    description: "Banyak siswa merasa bosan karena belajar pertanian tidak interaktif",
+    icon: AlertTriangle,
+    border: "border-l-violet-500",
+    iconBg: "bg-violet-50 text-violet-600",
+  },
+  {
+    title: "Susah Tahu Kemajuan Belajar",
+    description: "Tidak ada cara mudah untuk memantau perkembangan belajar pertanian siswa",
+    icon: Scale,
+    border: "border-l-emerald-500",
+    iconBg: "bg-emerald-50 text-emerald-600",
+  },
+  {
+    title: "Kurang Teman Belajar Bersama",
+    description: "Belajar sendirian itu membosankan dan kurang semangat",
+    icon: Users,
+    border: "border-l-purple-500",
+    iconBg: "bg-purple-50 text-purple-600",
+  },
+  {
+    title: "Tidak Ada Penghargaan untuk Usahamu",
+    description: "Kerja keras belajar butuh diakui dengan hadiah dan badge prestasi",
+    icon: Ban,
+    border: "border-l-lime-500",
+    iconBg: "bg-lime-50 text-lime-600",
+  },
+]
+
+const oversightSolutions: OversightSolution[] = [
+  {
+    title: "Platform Belajar Online Seru",
+    description: "Semua materi pertanian tersedia online, bisa diakses kapan saja dan di mana saja",
+    subtitle: "Platform",
+    icon: Layers,
+    accent: "text-blue-600 bg-blue-50",
+  },
+  {
+    title: "Soal Cerdas Sesuai Kemampuanmu",
+    description: "Soal otomatis menyesuaikan kemampuanmu agar selalu pas tantangannya",
+    subtitle: "Cerdas",
+    icon: Brain,
+    accent: "text-indigo-600 bg-indigo-50",
+  },
+  {
+    title: "Badge & Hadiah Setiap Pencapaian",
+    description: "Kumpulkan badge keren dan hadiah nyata untuk setiap prestasi yang kamu raih",
+    subtitle: "Hadiah",
+    icon: Award,
+    accent: "text-lime-600 bg-lime-50",
+  },
+  {
+    title: "Notifikasi & Pengingat Belajar",
+    description: "Pengingat seru agar kamu tidak ketinggalan sesi latihan dan turnamen seru",
+    subtitle: "Pengingat",
+    icon: BellRing,
+    accent: "text-violet-600 bg-violet-50",
+  },
+]
+
+const oversightStats: OversightStat[] = [
+  { value: "10K+", label: "Pelajar Terdaftar", icon: UserPlus },
+  { value: "500+", label: "Soal Berkualitas", icon: HelpCircle },
+  { value: "482", label: "Sekolah Bergabung", icon: School },
+  { value: "98%", label: "Siswa Suka Belajar", icon: ThumbsUp },
+]
+
+const impactHighlights: Highlight[] = [
+  {
+    title: "Belajar Sambil Bermain",
+    description:
+      "Materi pertanian dikemas dalam soal kuis yang seru dan interaktif. Belajar jadi menyenangkan untuk semua pelajar SD, SMP, dan SMA!",
+    icon: Sprout,
+  },
+  {
+    title: "Kompetisi yang Seru & Sehat",
+    description: "Adu kemampuan dengan teman-teman dari seluruh Indonesia secara adil. Menang atau kalah, semua tetap belajar bersama!",
+    icon: Trophy,
+  },
+  {
+    title: "Materi Sesuai Pelajaran Sekolah",
+    description: "Semua soal dibuat oleh ahli pertanian dan sesuai dengan pelajaran di sekolahmu — dari SD sampai SMA.",
+    icon: GraduationCap,
+  },
+  {
+    title: "Teman dari Seluruh Indonesia",
+    description:
+      "Bertemu dan bersaing dengan pelajar dari Sabang sampai Merauke. Cek siapa yang paling pintar di kotamu, provinsimu, dan seluruh Indonesia!",
+    icon: Globe,
+  },
+]
+
+const supportersList: SupporterInfo[] = [
+  {
+    name: "Mitra Riset Pertanian Nasional (Placeholder)",
+    description: "Contoh placeholder mitra riset resmi. Akan diganti setelah kerja sama terverifikasi.",
+  },
+  {
+    name: "Komunitas Guru Agrikultur Indonesia",
+    description: "Melatih 220 guru untuk menjadi pembimbing lokal Adu Pintar.",
+  },
+  {
+    name: "Mitra Teknologi Pertanian (Placeholder)",
+    description: "Contoh placeholder mitra teknologi. Detail final dipublikasikan saat kerja sama resmi aktif.",
+  },
+  {
+    name: "Hidroponik Nusantara Network",
+    description: "Menyuplai perangkat hidroponik portable untuk latihan 5v5.",
+  },
+  {
+    name: "Food Resilience Foundation",
+    description: "Memberikan beasiswa paket data bagi sekolah rural agar bisa ikut duel daring.",
+  },
+  {
+    name: "Dinas Pendidikan Jawa Barat",
+    description: "Menjadi tuan rumah liga provinsi dan mengintegrasikan leaderboard dalam Jabar Super Apps.",
+  },
+]
+
+const tutorialVideos: TutorialVideo[] = [
+  {
+    title: "Cara Duel 1 lawan 1",
+    description: "Pelajari cara menjawab soal dengan cepat dan tepat, kapan harus menekan tombol jawab, dan tips tetap fokus saat duel!",
+    href: "/tutorial/duel",
+    accent: "bg-emerald-500",
+    ctaClass: "text-emerald-300 hover:text-emerald-200",
+  },
+  {
+    title: "Cara Main Tim 5 Orang",
+    description: "Belajar kerjasama tim, bagi peran dengan teman, dan cara membaca skor tim secara langsung. Main bareng lebih seru!",
+    href: "/tutorial/tim",
+    accent: "bg-teal-600",
+    ctaClass: "text-teal-200 hover:text-teal-100",
+  },
+]
+
+const LANDING_TYPE_OPTIONS: Array<{
+  key: LandingLeaderboardType
+  label: string
+  description: string
+  icon: LucideIcon
+  iconWrap: string
+}> = [
+  {
+    key: "individual",
+    label: "Pemain",
+    description: "Lihat siapa pelajar terhebat beserta kelas dan kota mereka.",
+    icon: GraduationCap,
+    iconWrap: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    key: "team",
+    label: "Tim",
+    description: "Lihat sekolah dan tim mana yang paling kompak minggu ini.",
+    icon: Users,
+    iconWrap: "bg-sky-100 text-sky-700",
+  },
+]
+
+const LANDING_SCOPE_OPTIONS: Array<{
+  key: LandingLeaderboardScope
+  label: string
+  description: string
+  icon: LucideIcon
+}> = [
+  {
+    key: "national",
+    label: "Seluruh Indonesia",
+    description: "Lihat juara terbaik dari seluruh Indonesia.",
+    icon: Globe,
+  },
+  {
+    key: "province",
+    label: "Provinsi",
+    description: "Lihat juara dari provinsimu.",
+    icon: School,
+  },
+  {
+    key: "city",
+    label: "Kota/Kabupaten",
+    description: "Lihat juara dari kotamu.",
+    icon: Sprout,
+  },
+]
+
+const GRADE_LABELS: Record<LandingLeaderboardGrade, string> = {
+  all: "Semua Tingkat",
+  SD: "SD",
+  SMP: "SMP",
+  SMA: "SMA",
+}
+
+const GRADE_ORDER: LandingLeaderboardGrade[] = ["all", "SD", "SMP", "SMA"]
+
+const TYPE_LABELS: Record<LandingLeaderboardType, string> = {
+  individual: "Leaderboard Individual",
+  team: "Leaderboard Tim",
+}
+
+const topicList = [
+  {
+    key: "media-akar",
+    title: "Tanah & Akar Tanaman",
+    image: "/topics/soil.jpg",
+    desc: "Pelajari jenis tanah, cara merawat akar tanaman, dan kenapa tanah yang sehat itu penting buat pertanian.",
+  },
+  {
+    key: "hidroponik",
+    title: "Tanam Tanpa Tanah (Hidroponik)",
+    image: "/topics/crops.jpg",
+    desc: "Belajar cara menanam sayuran pakai air saja tanpa tanah. Seru, bersih, dan bisa dicoba di rumah!",
+  },
+  {
+    key: "iklim-mikro",
+    title: "Cuaca & Iklim di Kebun",
+    image: "/topics/weather.jpg",
+    desc: "Kenali bagaimana suhu dan hujan memengaruhi tanaman. Pelajari cara melindungi tanaman dari cuaca buruk.",
+  },
+  {
+    key: "rantai-pasok",
+    title: "Perjalanan Sayur ke Meja Makan",
+    image: "/topics/agro.jpg",
+    desc: "Ikuti perjalanan sayuran dari ladang petani hingga sampai ke piring makanmu. Seru dan penuh kejutan!",
+  },
+  {
+    key: "biosekuriti",
+    title: "Merawat Hewan Ternak",
+    image: "/topics/livestock.jpg",
+    desc: "Pelajari cara menjaga ayam, sapi, dan hewan ternak agar sehat dan terhindar dari penyakit.",
+  },
+  {
+    key: "iot-lahan",
+    title: "Teknologi Canggih di Ladang",
+    image: "/topics/tools.jpg",
+    desc: "Kenali sensor pintar dan alat teknologi modern yang dipakai petani masa kini untuk bertani lebih mudah.",
+  },
+] satisfies Array<{ key: string; title: string; image: string; desc: string }>
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      name: "Adu Pintar",
+      url: "https://adupintar-dc9p.vercel.app/",
+      logo: "https://adupintar-dc9p.vercel.app/adu_pintar_appicon_dark.png",
+    },
+    {
+      "@type": "EducationalOrganization",
+      name: "Adu Pintar",
+      description: "Platform kompetisi quiz pertanian untuk pelajar Indonesia.",
+      educationalUse: "assessment",
+      audience: "students",
+    },
+    {
+      "@type": "Game",
+      name: "Adu Pintar Duel Pertanian",
+      applicationCategory: "EducationalGame",
+      operatingSystem: "Web",
+    },
+  ],
+}
+
+export default function HomePage() {
+  const [leaderboardType, setLeaderboardType] = useState<LandingLeaderboardType>("individual")
+  const [leaderboardScope, setLeaderboardScope] = useState<LandingLeaderboardScope>("national")
+  const [schoolLevelFilter, setSchoolLevelFilter] = useState<LandingLeaderboardGrade>("all")
+  const [selectedProvince, setSelectedProvince] = useState("")
+  const [selectedCity, setSelectedCity] = useState("")
+  const [landingRealtime, setLandingRealtime] = useState(true)
+  const [activeChallengeIndex, setActiveChallengeIndex] = useState(0)
+  const [activeSolutionIndex, setActiveSolutionIndex] = useState(0)
+
+  const provinceOptions = useMemo(
+    () => Array.from(new Set(leaderboardPlayers.map((player) => player.province))).sort(),
+    [],
+  )
+
+  const cityOptions = useMemo(() => {
+    if (!selectedProvince) {
+      return []
+    }
+    return Array.from(
+      new Set(
+        leaderboardPlayers
+          .filter((player) => player.province === selectedProvince)
+          .map((player) => player.city),
+      ),
+    ).sort()
+  }, [selectedProvince])
+
+  const filteredIndividuals = useMemo(() => {
+    let dataset = leaderboardPlayers
+
+    if (schoolLevelFilter !== "all") {
+      dataset = dataset.filter((player) => player.grade === schoolLevelFilter)
+    }
+
+    if (leaderboardScope === "province" && selectedProvince) {
+      dataset = dataset.filter((player) => player.province === selectedProvince)
+    }
+
+    if (leaderboardScope === "city") {
+      if (selectedProvince) {
+        dataset = dataset.filter((player) => player.province === selectedProvince)
+      }
+      if (selectedCity) {
+        dataset = dataset.filter((player) => player.city === selectedCity)
+      }
+    }
+
+    return dataset
+  }, [leaderboardScope, schoolLevelFilter, selectedCity, selectedProvince])
+
+  const handleScopeChange = (nextScope: LandingLeaderboardScope) => {
+    setLeaderboardScope(nextScope)
+    setSelectedCity("")
+    if (nextScope === "national") {
+      setSelectedProvince("")
+    }
+    if (nextScope === "province") {
+      setSelectedProvince("")
+    }
+  }
+
+  const activeScopeLabel = useMemo(() => {
+    if (leaderboardScope === "national") {
+      return "Nasional"
+    }
+    if (leaderboardScope === "province") {
+      return selectedProvince || "Semua Provinsi"
+    }
+    if (leaderboardScope === "city") {
+      if (selectedCity && selectedProvince) {
+        return `${selectedCity}, ${selectedProvince}`
+      }
+      if (selectedProvince) {
+        return `Semua kota di ${selectedProvince}`
+      }
+      return "Pilih Provinsi"
+    }
+    return "Nasional"
+  }, [leaderboardScope, selectedCity, selectedProvince])
+
+  const leaderboardSummary = useMemo(() => {
+    const dataset = leaderboardType === "individual" ? filteredIndividuals : teamLeaderboardEntries
+    if (!dataset.length) {
+      return {
+        averageScore: 0,
+        totalWins: 0,
+        totalLosses: 0,
+        highlight: "-",
+      }
+    }
+
+    const totalScore = dataset.reduce((sum, entry) => sum + entry.score, 0)
+    const totalWins = dataset.reduce((sum, entry) => sum + entry.wins, 0)
+    const totalLosses = dataset.reduce((sum, entry) => sum + entry.losses, 0)
+
+    return {
+      averageScore: Math.round(totalScore / dataset.length),
+      totalWins,
+      totalLosses,
+      highlight: dataset[0]?.name ?? "-",
+    }
+  }, [filteredIndividuals, leaderboardType])
+
+  const totalEntries = leaderboardType === "individual" ? filteredIndividuals.length : teamLeaderboardEntries.length
+  const activeGradeLabel = GRADE_LABELS[schoolLevelFilter]
+  const activeTypeLabel = TYPE_LABELS[leaderboardType]
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <Navbar />
+      <main id="main-content" className="home-page text-foreground overflow-x-hidden">
+        {/* ── HERO ── */}
+        <section className="relative overflow-hidden">
+          {/* Decorative orbs */}
+          <div className="orb-decoration bg-primary/12 w-[500px] h-[500px] -top-40 -left-40 hidden md:block" aria-hidden="true" />
+          <div className="orb-decoration bg-secondary/8 w-[350px] h-[350px] top-20 -right-32 hidden md:block" aria-hidden="true" />
+          <div className="orb-decoration bg-accent/6 w-[280px] h-[280px] bottom-10 left-1/3 hidden md:block" aria-hidden="true" />
+
+          <div className="ifp-section relative z-10 mx-auto max-w-4xl pb-16 pt-14">
+
+            {/* ── Header: Badge + Judul + Deskripsi ── */}
+            <div className="text-center space-y-5">
+              <span className="section-badge">Platform Belajar Pertanian untuk SD, SMP &amp; SMA</span>
+              <h1 className="mt-4 text-4xl font-display font-extrabold leading-[1.1] tracking-tight text-foreground md:text-5xl lg:text-6xl">
+                Adu pintar soal pertanian,<br className="hidden sm:inline" /> menangkan hadiah, jadi juara nasional!
+              </h1>
+              <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
+                Bergabung dengan ribuan pelajar dari seluruh Indonesia. Jawab soal, duel 1v1, main bareng tim, dan lihat namamu di papan juara nasional!
+              </p>
+            </div>
+
+            {/* ── Pills ── */}
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {heroPills.map((pill, i) => (
+                <span
+                  key={pill}
+                  className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 backdrop-blur-sm px-4 py-1.5 text-xs font-semibold text-primary shadow-sm animate-fade-up"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
+                  {pill}
+                </span>
+              ))}
+            </div>
+
+            {/* ── CTA Buttons ── */}
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="/register"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-10 py-4 text-base font-extrabold text-primary-foreground shadow-lg transition hover:shadow-xl hover:scale-105 sm:w-auto"
+                style={{ boxShadow: "var(--shadow-glow-primary)" }}
+              >
+                <Sparkles className="h-5 w-5" aria-hidden />
+                Main Duel Pertamamu - Gratis!
+              </Link>
+              <Link
+                href="/tutorial"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-primary/25 bg-card/80 backdrop-blur-sm px-9 py-4 text-base font-bold text-primary shadow-sm transition hover:border-primary/45 hover:bg-primary/5 sm:w-auto"
+              >
+                <Play className="h-4 w-4" aria-hidden />
+                Lihat Cara Bermain
+              </Link>
+            </div>
+
+            {/* ── Stats row ── */}
+            <div className="mt-12 grid grid-cols-3 gap-4">
+              {heroStats.map((stat) => (
+                <article key={stat.label} className="glass-card rounded-2xl p-5 text-center hover-lift">
+                  <span className={`mx-auto icon-badge h-12 w-12 rounded-xl ${stat.accent}`}>
+                    <stat.icon className="h-5 w-5" aria-hidden />
+                  </span>
+                  <p className="mt-3 text-2xl font-display font-bold text-foreground">{stat.value}</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">{stat.label}</p>
+                </article>
+              ))}
+            </div>
+
+            {/* ── Highlight cards ── */}
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              {heroHighlights.map(({ title, description, icon: Icon, iconWrap }, i) => (
+                <article
+                  key={title}
+                  className="glass-card hover-lift card-accent-top p-5 animate-fade-up"
+                  style={{ animationDelay: `${(i + 1) * 100}ms` }}
+                >
+                  <div className={`icon-badge mb-3 h-12 w-12 rounded-xl ${iconWrap}`}>
+                    <Icon className="h-5 w-5" aria-hidden />
+                  </div>
+                  <h3 className="text-base font-display font-semibold text-foreground">{title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+                </article>
+              ))}
+            </div>
+
+            {/* ── Live activity feed ── */}
+            <div className="mt-8 glass-card rounded-3xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">Status Langsung</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">Update duel dan belajar minggu ini</p>
+                </div>
+                <span className="inline-flex items-center gap-2 text-xs font-semibold text-primary">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-primary" aria-hidden />
+                  Live
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {heroSnapshotCards.map((card) => (
+                  <article key={card.label} className="flex items-center gap-4 rounded-2xl border border-border/50 bg-card/60 px-4 py-3 hover-lift">
+                    <span className={`icon-badge h-11 w-11 shrink-0 rounded-xl ${card.accent}`}>
+                      <card.icon className="h-5 w-5" aria-hidden />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{card.label}</p>
+                      <p className="text-xs text-muted-foreground">{card.caption}</p>
+                    </div>
+                    <p className="text-base font-display font-bold text-foreground shrink-0">{card.value}</p>
+                  </article>
+                ))}
+              </div>
+              <Link href="/leaderboard" className="mt-5 inline-flex items-center text-sm font-semibold text-primary transition hover:text-primary/80">
+                Lihat papan juara nasional
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── LEADERBOARD PREVIEW ── */}
+        <section className="ifp-section py-16">
+          <div className="relative overflow-hidden rounded-[2rem] border border-primary/10 bg-[linear-gradient(135deg,oklch(0.965_0.026_138)_0%,oklch(0.952_0.031_142)_44%,oklch(0.94_0.03_146)_100%)] px-5 py-7 shadow-[0_24px_80px_-36px_oklch(0.43_0.09_145/0.35)] ring-1 ring-white/40 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-700 md:px-8 md:py-8">
+            <div className="pointer-events-none absolute -top-28 right-[-9rem] h-72 w-72 rounded-full bg-primary/6 blur-3xl" />
+            <div className="pointer-events-none absolute -left-24 bottom-[-8rem] h-64 w-64 rounded-full bg-accent/5 blur-3xl" />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.22] [background-image:linear-gradient(to_right,oklch(0.48_0.07_145/.08)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.48_0.07_145/.08)_1px,transparent_1px)] [background-size:34px_34px] [mask-image:radial-gradient(ellipse_at_center,black_38%,transparent_82%)]" />
+            <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+            <div className="relative z-10">
+              <div className="flex flex-wrap items-start justify-between gap-5 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500">
+                <div className="max-w-3xl">
+                  <h2 className="text-3xl font-display font-bold tracking-tight text-foreground md:text-5xl">
+                    Siapa Juara Terbaik Hari Ini?
+                  </h2>
+                  <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                    Lihat nama-nama pelajar terhebat dari seluruh Indonesia. Pilih mode, wilayah, dan tingkat kelas untuk melihat
+                    siapa yang paling menonjol hari ini.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLandingRealtime((prev) => !prev)}
+                  aria-pressed={landingRealtime}
+                  className={`inline-flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-sm font-medium shadow-sm backdrop-blur-md transition hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 sm:min-w-[13rem] ${
+                    landingRealtime
+                      ? "border-primary/20 bg-white/80 text-foreground shadow-primary/10"
+                      : "border-primary/10 bg-white/55 text-muted-foreground hover:bg-white/70"
+                  }`}
+                >
+                  <span
+                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+                      landingRealtime ? "bg-emerald-100 text-emerald-700" : "bg-background/80 text-muted-foreground"
+                    }`}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${landingRealtime ? "animate-pulse" : ""}`} />
+                  </span>
+                  <span className="min-w-0 text-left leading-tight">
+                    <span className="block text-sm font-semibold text-foreground">
+                      {landingRealtime ? "Update otomatis" : "Mode manual"}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {landingRealtime ? "Sinkron tiap 15 menit" : "Klik untuk aktifkan"}
+                    </span>
+                  </span>
+                </button>
+              </div>
+
+              <div className="mt-6 grid gap-3 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-100 motion-safe:duration-500 sm:grid-cols-3 md:gap-3">
+                <article className="relative overflow-hidden rounded-2xl border border-primary/10 bg-white/65 px-4 py-3 shadow-sm backdrop-blur-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-100">
+                  <span className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+                  <p className="text-xs uppercase tracking-[0.22em] text-primary/80">Mode Aktif</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground md:text-[1.2rem]">{activeTypeLabel}</p>
+                </article>
+                <article className="relative overflow-hidden rounded-2xl border border-primary/10 bg-white/65 px-4 py-3 shadow-sm backdrop-blur-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-150">
+                  <span className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+                  <p className="text-xs uppercase tracking-[0.22em] text-primary/80">Wilayah</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground md:text-[1.2rem]">{activeScopeLabel}</p>
+                </article>
+                <article className="relative overflow-hidden rounded-2xl border border-primary/10 bg-white/65 px-4 py-3 shadow-sm backdrop-blur-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-200">
+                  <span className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+                  <p className="text-xs uppercase tracking-[0.22em] text-primary/80">Total Entri</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground md:text-[1.2rem]">{totalEntries.toLocaleString("id-ID")} peserta</p>
+                </article>
+              </div>
+
+              <div className="mt-10 grid items-start gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+                <div className="relative overflow-hidden rounded-3xl border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.76),rgba(255,255,255,0.58))] p-4 shadow-[0_18px_45px_-28px_oklch(0.43_0.09_145/0.28)] backdrop-blur-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-left-4 motion-safe:delay-200 motion-safe:duration-700 sm:p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-background/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary/90">
+                        <Sparkles className="h-3 w-3" />
+                        Atur Tampilan
+                      </div>
+                      <h3 className="mt-2 text-2xl font-display font-semibold leading-tight text-foreground md:text-[2rem]">Pilih papan juaramu</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Pilih jenis, wilayah, dan tingkat kelas untuk melihat juara dari kategorimu.
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-background/70 px-2.5 py-1 text-[11px] font-medium text-foreground/85">
+                      <span className={`h-2 w-2 rounded-full ${landingRealtime ? "bg-emerald-500" : "bg-amber-500"}`} />
+                      {landingRealtime ? "Live sync aktif" : "Mode manual"}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-4">
+                    <div className="rounded-2xl border border-primary/10 bg-background/60 p-3.5 shadow-sm backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-300 sm:p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-foreground">Tampilkan Juara</p>
+                        <p className="text-xs text-muted-foreground">Pilih mode leaderboard</p>
+                      </div>
+                      <div className="mt-3 grid gap-2.5 md:grid-cols-2">
+                        {LANDING_TYPE_OPTIONS.map((option) => {
+                          const isActive = option.key === leaderboardType
+                          const activeTone =
+                            option.key === "individual"
+                              ? "border-emerald-300/70 bg-gradient-to-br from-emerald-50 to-emerald-100/80 shadow-emerald-100"
+                              : "border-sky-300/70 bg-gradient-to-br from-sky-50 to-sky-100/80 shadow-sky-100"
+
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              onClick={() => setLeaderboardType(option.key)}
+                              className={`w-full rounded-2xl border px-3.5 py-2.5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0 ${
+                                isActive
+                                  ? `${activeTone} ring-1 ring-white/70`
+                                  : "border-primary/10 bg-white/70 hover:border-primary/20 hover:bg-white"
+                              }`}
+                            >
+                              <div className="flex items-start gap-2.5">
+                                <span
+                                  className={`icon-badge h-9 w-9 shrink-0 rounded-xl ${
+                                    isActive
+                                      ? option.key === "individual"
+                                        ? "bg-emerald-600 text-emerald-50"
+                                        : "bg-sky-600 text-sky-50"
+                                      : option.iconWrap
+                                  }`}
+                                >
+                                  <option.icon className="h-4 w-4" />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="text-sm font-semibold text-foreground sm:text-base">{option.label}</p>
+                                    {isActive && (
+                                      <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/80">
+                                        Aktif
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="mt-0.5 text-xs leading-snug text-muted-foreground sm:text-sm">{option.description}</p>
+                                </div>
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-primary/10 bg-background/60 p-3.5 shadow-sm backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-[350ms] sm:p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-foreground">Cakupan Wilayah</p>
+                        <p className="text-xs text-muted-foreground">Sesuaikan area penilaian</p>
+                      </div>
+                      <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+                        {LANDING_SCOPE_OPTIONS.map((option) => {
+                          const isActive = option.key === leaderboardScope
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              onClick={() => handleScopeChange(option.key)}
+                              className={`rounded-2xl border px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0 ${
+                                isActive
+                                  ? "border-primary/20 bg-white ring-1 ring-white/70"
+                                  : "border-primary/10 bg-white/70 hover:border-primary/20 hover:bg-white"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className={`icon-badge h-8 w-8 rounded-xl ${isActive ? "bg-primary/12 text-primary" : "bg-background text-muted-foreground"}`}>
+                                  <option.icon className="h-4 w-4" />
+                                </span>
+                                <span className={`h-2 w-2 rounded-full ${isActive ? "bg-primary" : "bg-primary/15"}`} />
+                              </div>
+                              <p className="mt-2 text-sm font-semibold leading-snug text-foreground sm:text-base">{option.label}</p>
+                              <p className="mt-0.5 text-xs leading-snug text-muted-foreground sm:text-sm">{option.description}</p>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-primary/10 bg-background/60 p-3.5 shadow-sm backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-[400ms] sm:p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-foreground">Filter Detail</p>
+                        <p className="text-xs text-muted-foreground">Tingkat sekolah & wilayah spesifik</p>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div className={`rounded-2xl border border-primary/10 bg-white/75 p-2.5 sm:p-3 ${leaderboardScope === "national" ? "sm:col-span-2" : ""}`}>
+                          <label className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">Kelas / Tingkat Sekolah</label>
+                          <div className="relative mt-2">
+                            <select
+                              value={schoolLevelFilter}
+                              onChange={(event) => setSchoolLevelFilter(event.target.value as LandingLeaderboardGrade)}
+                              className="h-10 w-full appearance-none rounded-xl border border-primary/10 bg-background/70 px-3 pr-9 text-sm font-medium text-foreground shadow-sm outline-none transition focus:border-primary/35 focus:bg-white sm:text-base"
+                            >
+                              {GRADE_ORDER.map((key) => (
+                                <option key={key} value={key}>{GRADE_LABELS[key]}</option>
+                              ))}
+                            </select>
+                            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          </div>
+                        </div>
+
+                        {leaderboardScope !== "national" && (
+                          <div className="rounded-2xl border border-primary/10 bg-white/75 p-2.5 sm:p-3">
+                            <label className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">Provinsi</label>
+                            <div className="relative mt-2">
+                              <select
+                                value={selectedProvince}
+                                onChange={(event) => {
+                                  setSelectedProvince(event.target.value)
+                                  setSelectedCity("")
+                                }}
+                                className="h-10 w-full appearance-none rounded-xl border border-primary/10 bg-background/70 px-3 pr-9 text-sm font-medium text-foreground shadow-sm outline-none transition focus:border-primary/35 focus:bg-white sm:text-base"
+                              >
+                                <option value="">Semua Provinsi</option>
+                                {provinceOptions.map((province) => (
+                                  <option key={province} value={province}>{province}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            </div>
+                          </div>
+                        )}
+
+                        {leaderboardScope === "city" && (
+                          <div className="rounded-2xl border border-primary/10 bg-white/75 p-2.5 sm:p-3 sm:col-span-2">
+                            <label className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">Kota / Kabupaten</label>
+                            <div className="relative mt-2">
+                              <select
+                                value={selectedCity}
+                                onChange={(event) => setSelectedCity(event.target.value)}
+                                disabled={!selectedProvince}
+                                className="h-10 w-full appearance-none rounded-xl border border-primary/10 bg-background/70 px-3 pr-9 text-sm font-medium text-foreground shadow-sm outline-none transition focus:border-primary/35 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
+                              >
+                                <option value="">{selectedProvince ? "Semua Kota" : "Pilih provinsi dulu"}</option>
+                                {cityOptions.map((city) => (
+                                  <option key={city} value={city}>{city}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative overflow-hidden rounded-3xl border border-primary/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.8),rgba(255,255,255,0.62))] p-4 shadow-[0_18px_45px_-28px_oklch(0.43_0.09_145/0.28)] backdrop-blur-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-4 motion-safe:delay-300 motion-safe:duration-700 sm:p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">Snapshot Aktif</p>
+                      <h3 className="mt-1.5 text-2xl font-display font-semibold text-foreground md:text-[2rem]">{activeTypeLabel}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground md:text-base">
+                        {activeScopeLabel} · {leaderboardType === "individual" ? activeGradeLabel : "Tim unggulan"}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-primary/10 bg-background/75 px-3 py-2.5 shadow-sm backdrop-blur-sm">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary/80">Total Entri</p>
+                      <p className="mt-1 text-xl font-display font-semibold text-foreground">{totalEntries.toLocaleString("id-ID")}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-[380ms]">
+                    <span className="rounded-full border border-primary/15 bg-background/75 px-3 py-1 text-xs font-medium text-foreground">{activeTypeLabel}</span>
+                    <span className="rounded-full border border-primary/15 bg-background/75 px-3 py-1 text-xs font-medium text-foreground">{activeScopeLabel}</span>
+                    {leaderboardType === "individual" && (
+                      <span className="rounded-full border border-primary/15 bg-background/75 px-3 py-1 text-xs font-medium text-foreground">{activeGradeLabel}</span>
+                    )}
+                  </div>
+
+                  <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-primary/10 bg-gradient-to-br from-white to-emerald-50/60 p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-[420ms]">
+                      <dt className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-primary/80">
+                        <span className="icon-badge h-7 w-7 rounded-lg bg-emerald-100 text-emerald-700">
+                          <Scale className="h-3.5 w-3.5" />
+                        </span>
+                        Rata-rata poin
+                      </dt>
+                      <dd className="mt-3 text-4xl font-display font-bold leading-none text-foreground md:text-[3rem]">
+                        {leaderboardSummary.averageScore.toLocaleString("id-ID")}
+                      </dd>
+                      <p className="mt-2 text-sm text-muted-foreground">Dari {totalEntries} entri aktif</p>
+                    </div>
+
+                    <div className="rounded-2xl border border-primary/10 bg-gradient-to-br from-white to-lime-50/70 p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-[470ms]">
+                      <dt className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-primary/80">
+                        <span className="icon-badge h-7 w-7 rounded-lg bg-lime-100 text-lime-700">
+                          <Trophy className="h-3.5 w-3.5" />
+                        </span>
+                        Total menang
+                      </dt>
+                      <dd className="mt-3 text-2xl font-display font-semibold text-primary md:text-[2rem]">{leaderboardSummary.totalWins}</dd>
+                      <p className="mt-1 text-sm text-muted-foreground">Akumulasi musim ini</p>
+                    </div>
+
+                    <div className="rounded-2xl border border-primary/10 bg-gradient-to-br from-white to-rose-50/60 p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-[520ms]">
+                      <dt className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-primary/80">
+                        <span className="icon-badge h-7 w-7 rounded-lg bg-rose-100 text-rose-700">
+                          <Ban className="h-3.5 w-3.5" />
+                        </span>
+                        Total kalah
+                      </dt>
+                      <dd className="mt-3 text-2xl font-display font-semibold text-accent md:text-[2rem]">{leaderboardSummary.totalLosses}</dd>
+                      <p className="mt-1 text-sm text-muted-foreground">Seluruh mode permainan</p>
+                    </div>
+
+                    <div className="rounded-2xl border border-primary/10 bg-gradient-to-br from-white to-sky-50/70 p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md motion-reduce:hover:translate-y-0 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-[570ms] sm:col-span-2">
+                      <dt className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-primary/80">
+                        <span className="icon-badge h-7 w-7 rounded-lg bg-sky-100 text-sky-700">
+                          <Award className="h-3.5 w-3.5" />
+                        </span>
+                        Sorotan
+                      </dt>
+                      <dd className="mt-3 text-2xl font-display font-semibold leading-tight text-foreground md:text-[2rem]">
+                        {leaderboardSummary.highlight}
+                      </dd>
+                      <p className="mt-1 text-sm text-muted-foreground">Peringkat teratas saat ini berdasarkan filter yang dipilih</p>
+                    </div>
+                  </dl>
+
+                  <div className="mt-4 rounded-2xl border border-primary/10 bg-background/75 p-3.5 shadow-sm backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:delay-[620ms]">
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`icon-badge mt-0.5 h-9 w-9 rounded-xl ${
+                          landingRealtime ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        <RefreshCw className={`h-4 w-4 ${landingRealtime ? "animate-pulse" : ""}`} />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {landingRealtime ? "Sinkron otomatis aktif" : "Sinkron otomatis nonaktif"}
+                        </p>
+                        <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
+                          {landingRealtime
+                            ? "Landing akan diperbarui otomatis setiap 15 menit mengikuti filter leaderboard."
+                            : "Aktifkan sinkron real-time agar ringkasan di landing langsung mengikuti perubahan filter."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── MATCH ENTRY ── */}
+        <section className="ifp-section pb-12">
+          <MatchEntryModal />
+        </section>
+
+        {/* ── CHALLENGES & SOLUTIONS ── */}
+        <section className="ifp-section py-16">
+          <div className="mx-auto max-w-4xl text-center">
+            <span className="section-badge" style={{ borderColor: "oklch(0.68 0.24 41 / 0.2)", background: "oklch(0.68 0.24 41 / 0.08)", color: "oklch(0.68 0.24 41)" }}>
+              Dari Tantangan ke Solusi
+            </span>
+            <h2 className="mt-6 text-3xl font-display font-bold text-foreground md:text-4xl">
+              Menjawab <span className="text-destructive">Tantangan Utama</span> Pembelajaran Agrikultur lewat{" "}
+              <span className="text-secondary">Solusi Teknologi</span>
+            </h2>
+            <p className="mt-4 text-base text-muted-foreground md:text-lg">
+              Empat tantangan besar dalam pembinaan talenta pertanian kami rangkum menjadi dua klaster: akar masalah dan solusi
+              digital yang siap diterapkan bersama pemerintah daerah, mentor, serta sekolah mitra.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-8 lg:grid-cols-2">
+            <div className="oversight-cluster oversight-cluster--challenge">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <span className="icon-badge h-11 w-11 rounded-xl bg-destructive/10 text-destructive">
+                    <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="text-2xl font-display font-semibold text-foreground">Tantangan Utama</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Area prioritas yang perlu diawasi secara berkelanjutan.</p>
+                  </div>
+                </div>
+                <span className="section-badge text-[10px]">{oversightChallenges.length} area prioritas</span>
+              </div>
+              <div className="mt-6 space-y-4">
+                {oversightChallenges.map((challenge, index) => (
+                  <button
+                    type="button"
+                    key={challenge.title}
+                    onClick={() => setActiveChallengeIndex(index)}
+                    onMouseEnter={() => setActiveChallengeIndex(index)}
+                    onFocus={() => setActiveChallengeIndex(index)}
+                    aria-pressed={activeChallengeIndex === index}
+                    data-active={activeChallengeIndex === index ? "true" : undefined}
+                    className={`oversight-card oversight-card--challenge group glass-card hover-lift w-full rounded-2xl border-l-4 p-5 text-left lg:p-6 ${challenge.border}`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`icon-badge h-12 w-12 rounded-xl ring-1 ring-background/70 ${challenge.iconBg}`}>
+                        <challenge.icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tantangan #{index + 1}</p>
+                        <h4 className="mt-1 text-base font-display font-semibold text-foreground">{challenge.title}</h4>
+                        <p className="mt-1 text-sm text-muted-foreground">{challenge.description}</p>
+                      </div>
+                      <span className="oversight-card-index">{String(index + 1).padStart(2, "0")}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="oversight-cluster oversight-cluster--solution">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <span className="icon-badge h-11 w-11 rounded-xl bg-primary/10 text-primary">
+                    <Layers className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="text-2xl font-display font-semibold text-foreground">Solusi Teknologi</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Inisiatif platform Adu Pintar Insight untuk menjawab tiap tantangan.</p>
+                  </div>
+                </div>
+                <span className="section-badge text-[10px]">{oversightSolutions.length} inisiatif digital</span>
+              </div>
+              <div className="mt-6 space-y-4">
+                {oversightSolutions.map((solution, index) => (
+                  <button
+                    type="button"
+                    key={solution.title}
+                    onClick={() => setActiveSolutionIndex(index)}
+                    onMouseEnter={() => setActiveSolutionIndex(index)}
+                    onFocus={() => setActiveSolutionIndex(index)}
+                    aria-pressed={activeSolutionIndex === index}
+                    data-active={activeSolutionIndex === index ? "true" : undefined}
+                    className="oversight-card oversight-card--solution group glass-card hover-lift card-accent-top w-full rounded-2xl p-5 text-left lg:p-6"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`icon-badge h-12 w-12 rounded-xl ring-1 ring-background/70 ${solution.accent}`}>
+                        <solution.icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <span className="oversight-solution-chip">{solution.subtitle}</span>
+                        <h4 className="mt-3 text-base font-display font-semibold text-foreground">{solution.title}</h4>
+                        <p className="mt-1 text-sm text-muted-foreground">{solution.description}</p>
+                      </div>
+                      <span className="oversight-card-index">{String(index + 1).padStart(2, "0")}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="mt-12 text-center">
+            <p className="text-sm text-muted-foreground md:text-base">
+              Mari ubah tantangan ini menjadi peluang untuk meningkatkan kualitas pembelajaran agrikultur bersama-sama.
+            </p>
+            <Link
+              href="/impact"
+              className="mt-6 inline-flex items-center rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg transition hover:shadow-xl"
+              style={{ boxShadow: "var(--shadow-glow-primary)" }}
+            >
+              Solusi Terintegrasi untuk Masa Depan Adu Pintar
+            </Link>
+          </div>
+        </section>
+
+        {/* ── IMPACT STATS ── */}
+        <section className="relative overflow-hidden">
+          <div className="orb-decoration bg-primary/6 w-[400px] h-[400px] -top-20 -right-20 hidden md:block" aria-hidden="true" />
+          <div className="ifp-section relative z-10 py-16">
+            <div className="mx-auto max-w-3xl text-center">
+              <span className="section-badge">Dampak Nyata</span>
+              <h3 className="mt-4 text-3xl font-display font-bold text-foreground">Dampak Positif Platform Adu Pintar</h3>
+              <p className="mt-3 text-base text-muted-foreground">
+                Metode pembelajaran kompetitif ini sudah menjangkau ribuan pelajar, guru, dan sekolah mitra di seluruh Indonesia.
+              </p>
+            </div>
+            <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {oversightStats.map((stat) => (
+                <article key={stat.label} className="glass-card hover-lift rounded-2xl p-6 text-center">
+                  <div className="mx-auto icon-badge h-12 w-12 rounded-xl bg-primary/10 text-primary">
+                    <stat.icon className="h-5 w-5" />
+                  </div>
+                  <p className="mt-4 text-3xl font-display font-bold text-primary">{stat.value}</p>
+                  <p className="text-sm font-semibold text-foreground">{stat.label}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── WHY THIS PLATFORM ── */}
+        <section className="ifp-section py-16">
+          <div className="mx-auto max-w-4xl text-center">
+            <span className="section-badge">Tujuan Program</span>
+            <h2 className="mt-4 text-3xl font-display font-bold text-foreground">Mengapa Platform Ini Diciptakan?</h2>
+            <p className="mt-3 text-muted-foreground">
+              Pertanian adalah tulang punggung ekonomi Indonesia. Kami percaya bahwa generasi muda harus memahami dan mencintai dunia pertanian.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {impactHighlights.map(({ title, description, icon: Icon }) => (
+              <article key={title} className="glass-card hover-lift card-accent-top rounded-2xl p-6">
+                <div className="icon-badge h-14 w-14 rounded-xl bg-primary/10 text-primary">
+                  <Icon className="h-6 w-6" />
+                </div>
+                <h3 className="mt-4 text-lg font-display font-semibold text-foreground">{title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ── TUTORIAL VIDEOS ── */}
+        <section className="ifp-section py-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <span className="section-badge">Panduan Video</span>
+            <h2 className="mt-4 text-3xl font-display font-bold text-foreground">Cara Bermain</h2>
+            <p className="mt-3 text-muted-foreground">Tonton video tutorial singkat untuk memahami cara bermain di setiap mode.</p>
+          </div>
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            {tutorialVideos.map((video) => (
+              <article key={video.title} className="glass-card hover-lift card-accent-top rounded-2xl border-foreground/10 bg-foreground/95 p-8 text-card">
+                <div className={`icon-badge h-16 w-16 rounded-2xl ${video.accent}`}>
+                  <Play className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="mt-6 text-2xl font-display font-semibold">{video.title}</h3>
+                <p className="mt-3 text-sm text-card/70">{video.description}</p>
+                <Link href={video.href} className={`mt-6 inline-flex items-center text-sm font-semibold transition ${video.ctaClass}`}>
+                  Tonton Video
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ── TESTIMONIALS ── */}
+        <section className="ifp-section py-16">
+          <TestimonialsCarousel />
+        </section>
+
+        {/* ── TOPIC GRID ── */}
+        <section className="ifp-section py-16">
+          <div className="mx-auto max-w-5xl text-center">
+            <span className="section-badge">Topik Andalan Minggu Ini</span>
+            <h2 className="mt-4 text-3xl font-display font-bold text-foreground">Materi visual yang siap dipelajari</h2>
+            <p className="mt-3 text-muted-foreground">
+              Buka modul untuk membaca ringkasan, contoh soal, dan tips duel dari mentor komunitas.
+            </p>
+            <div className="mt-10">
+              <TopicGrid topics={topicList} />
+            </div>
+          </div>
+        </section>
+
+        {/* ── SUPPORTERS ── */}
+        <section className="ifp-section py-16">
+          <div className="mx-auto max-w-6xl text-center">
+            <span className="section-badge">Kolaborasi Terbuka</span>
+            <h2 className="mt-4 text-3xl font-display font-bold text-foreground">Didukung banyak lembaga</h2>
+            <p className="mt-3 text-muted-foreground">
+              Mereka menyediakan fasilitas, akses data, hingga beasiswa konektivitas untuk peserta.
+            </p>
+          </div>
+          <div className="relative mt-10 overflow-hidden rounded-[2rem] border border-white/70 bg-linear-to-br from-white/95 via-white/90 to-emerald-50/70 p-4 shadow-lg sm:p-6">
+            <div className="pointer-events-none absolute -left-20 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl" aria-hidden />
+            <div className="pointer-events-none absolute -bottom-28 right-10 h-56 w-56 rounded-full bg-accent/10 blur-3xl" aria-hidden />
+            <div className="relative">
+              <SupportersMarquee supporters={supportersList} durationMs={45000} />
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA ── */}
+        <section className="ifp-section pb-20 pt-12 relative">
+          <div className="orb-decoration bg-primary/10 w-[300px] h-[300px] -bottom-20 -left-20 hidden md:block" aria-hidden="true" />
+          <div className="relative z-10 mx-auto max-w-4xl rounded-3xl bg-primary px-8 py-12 text-center text-primary-foreground shadow-2xl"
+            style={{ boxShadow: "var(--shadow-glow-primary)" }}>
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-primary-foreground/70">
+              Siap dukung sekolahmu?
+            </span>
+            <h2 className="mt-4 text-3xl font-display font-bold">Gabung dan bawa tim kamu ke papan skor nasional</h2>
+            <p className="mt-4 text-base text-primary-foreground/80">
+              Hubungkan guru, siswa, dan komunitas dalam satu dashboard. Program gratis untuk sekolah negeri maupun swasta.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center rounded-xl bg-card px-8 py-3.5 text-base font-semibold text-primary shadow-md transition hover:shadow-lg"
+              >
+                Tantang Temanmu Sekarang!
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center rounded-xl border border-primary-foreground/30 px-8 py-3.5 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/10"
+              >
+                Hubungi Admin
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+    </>
+  )
+}
+

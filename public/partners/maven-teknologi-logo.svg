@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 110" role="img" aria-labelledby="title desc">
+  <title id="title">PT Maven Melek Teknologi</title>
+  <desc id="desc">Logotype PT Maven Melek Teknologi dengan huruf M dan ikon lampu</desc>
+  <rect width="320" height="110" rx="12" fill="#031f3c" />
+  <g transform="translate(18 18)">
+    <path
+      d="M0 74V0h24l18 30L58 0h24v74H58V38L42 64 26 38v36z"
+      fill="#00b6ff"
+    />
+    <path
+      d="M110 16h36c18 0 30 10 30 26s-12 26-30 26h-12v16h-24zm32 16h-8v20h8c6 0 10-4 10-10s-4-10-10-10z"
+      fill="#67d1ff"
+    />
+    <g transform="translate(206 0)">
+      <circle cx="30" cy="30" r="28" stroke="#00b6ff" stroke-width="4" fill="none" />
+      <path
+        d="M30 12c10 0 18 8 18 18s-8 18-18 18-18-8-18-18 8-18 18-18zm-6 48h12l-2 8h-8z"
+        fill="#fff"
+        opacity="0.8"
+      />
+    </g>
+  </g>
+  <text
+    x="280"
+    y="92"
+    font-family="Inter, Arial, sans-serif"
+    font-weight="600"
+    font-size="20"
+    fill="#8ed6ff"
+    text-anchor="end"
+  >
+    PT MAVEN MELEK TEKNOLOGI
+  </text>
+</svg>

@@ -1,0 +1,16 @@
+<svg width="220" height="140" viewBox="0 0 220 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="220" height="140" rx="24" fill="url(#soil-bg)"/>
+  <path d="M0 70C40 88 70 76 110 66C150 56 180 60 220 74V140H0V70Z" fill="#92400E" opacity="0.8"/>
+  <path d="M0 100C30 90 60 96 110 116C160 136 190 132 220 118V140H0V100Z" fill="#451A03" opacity="0.7"/>
+  <circle cx="72" cy="42" r="32" fill="#FCD34D"/>
+  <path d="M72 20C54 42 54 72 72 94C90 72 90 42 72 20Z" fill="#FBBF24"/>
+  <rect x="138" y="28" width="48" height="24" rx="12" fill="#FED7AA"/>
+  <rect x="126" y="52" width="60" height="10" rx="5" fill="#FED7AA" opacity="0.8"/>
+  <circle cx="160" cy="88" r="18" fill="#D97706"/>
+  <defs>
+    <linearGradient id="soil-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFEDD5"/>
+      <stop offset="100%" stop-color="#FED7AA"/>
+    </linearGradient>
+  </defs>
+</svg>

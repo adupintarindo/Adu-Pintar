@@ -1,0 +1,16 @@
+<svg width="220" height="140" viewBox="0 0 220 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="220" height="140" rx="24" fill="url(#nur-bg)"/>
+  <path d="M0 90C30 74 60 72 110 88C160 104 190 94 220 78V140H0V90Z" fill="#6EE7B7"/>
+  <rect x="66" y="24" width="48" height="68" rx="18" fill="#FDE68A"/>
+  <rect x="106" y="34" width="48" height="58" rx="18" fill="#FBBF24"/>
+  <circle cx="90" cy="30" r="12" fill="#FCD34D"/>
+  <circle cx="142" cy="34" r="12" fill="#FCD34D"/>
+  <path d="M80 68C72 76 72 96 80 104C88 96 88 76 80 68Z" fill="#10B981"/>
+  <path d="M140 74C132 82 132 102 140 110C148 102 148 82 140 74Z" fill="#059669"/>
+  <defs>
+    <linearGradient id="nur-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FEF9C3"/>
+      <stop offset="100%" stop-color="#DCFCE7"/>
+    </linearGradient>
+  </defs>
+</svg>

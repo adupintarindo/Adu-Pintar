@@ -1,0 +1,148 @@
+              <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr,0.9fr]">
+                <div className="rounded-[32px] border border-emerald-100 bg-emerald-50/40 p-6 shadow-inner shadow-emerald-50">
+                  <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-600">Filter Leaderboard</p>
+                  <h3 className="mt-2 text-2xl font-semibold text-slate-900">Sesuaikan papan peringkatmu</h3>
+                  <p className="text-sm text-slate-600">Pilih tipe leaderboard, jangkauan, dan tingkat sekolah agar cuplikan ini tetap sinkron dengan halaman leaderboard.</p>
+                  <div className="mt-6 space-y-6">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-600">Tipe Leaderboard</p>
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        {LANDING_TYPE_OPTIONS.map((option) => {
+                          const isActive = option.key === leaderboardType
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              onClick={() => setLeaderboardType(option.key)}
+                              className={lex min-w-[160px] flex-1 flex-col rounded-2xl border px-5 py-4 text-left transition }
+                            >
+                              <span className="text-base font-semibold text-slate-900">{option.label}</span>
+                              <span className="text-xs text-slate-500">{option.description}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-600">Jangkauan</p>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                        {LANDING_SCOPE_OPTIONS.map((option) => {
+                          const isActive = option.key === leaderboardScope
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              onClick={() => handleScopeChange(option.key)}
+                              className={ounded-2xl border px-5 py-4 text-left transition }
+                            >
+                              <p className="text-base font-semibold text-slate-900">{option.label}</p>
+                              <p className="text-xs text-slate-500">{option.description}</p>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    {leaderboardType === "individual" && (
+                      <div>
+                        <p className="text-sm font-semibold text-slate-600">Tingkat Sekolah</p>
+                        <div className="relative mt-2">
+                          <select
+                            value={schoolLevelFilter}
+                            onChange={(event) => setSchoolLevelFilter(event.target.value as LandingLeaderboardGrade)}
+                            className="w-full appearance-none rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                          >
+                            {GRADE_ORDER.map((key) => (
+                              <option key={key} value={key}>
+                                {GRADE_LABELS[key]}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        </div>
+                      </div>
+                    )}
+                    {leaderboardScope !== "national" && (
+                      <div>
+                        <p className="text-sm font-semibold text-slate-600">Provinsi</p>
+                        <div className="relative mt-2">
+                          <select
+                            value={selectedProvince}
+                            onChange={(event) => {
+                              setSelectedProvince(event.target.value)
+                              setSelectedCity("")
+                            }}
+                            className="w-full appearance-none rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                          >
+                            <option value="">Semua Provinsi</option>
+                            {provinceOptions.map((province) => (
+                              <option key={province} value={province}>
+                                {province}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        </div>
+                      </div>
+                    )}
+                    {leaderboardScope === "city" && (
+                      <div>
+                        <p className="text-sm font-semibold text-slate-600">Kota/Kabupaten</p>
+                        <div className="relative mt-2">
+                          <select
+                            value={selectedCity}
+                            onChange={(event) => setSelectedCity(event.target.value)}
+                            disabled={!selectedProvince}
+                            className="w-full appearance-none rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                          >
+                            <option value="">{selectedProvince ? "Semua Kota" : "Pilih provinsi dulu"}</option>
+                            {cityOptions.map((city) => (
+                              <option key={city} value={city}>
+                                {city}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-[32px] border border-emerald-100 bg-white/95 p-6 shadow-sm shadow-emerald-50">
+                  <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-600">Snapshot Aktif</p>
+                  <h3 className="mt-2 text-2xl font-semibold text-slate-900">{activeTypeLabel}</h3>
+                  <p className="text-sm text-slate-500">
+                    {activeScopeLabel}
+                    {" \u00B7 "}
+                    {leaderboardType === "individual" ? activeGradeLabel : "Tim unggulan"}
+                  </p>
+                  <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
+                    <div>
+                      <dt className="text-xs uppercase text-slate-500">Rata-rata poin</dt>
+                      <dd className="text-2xl font-semibold text-slate-900">
+                        {leaderboardSummary.averageScore.toLocaleString("id-ID")}
+                      </dd>
+                      <p className="text-xs text-slate-500">Dari {totalEntries} entri</p>
+                    </div>
+                    <div>
+                      <dt className="text-xs uppercase text-slate-500">Sorotan</dt>
+                      <dd className="text-lg font-semibold text-slate-900">{leaderboardSummary.highlight}</dd>
+                      <p className="text-xs text-slate-500">Peringkat teratas saat ini</p>
+                    </div>
+                    <div>
+                      <dt className="text-xs uppercase text-slate-500">Total menang</dt>
+                      <dd className="text-lg font-semibold text-emerald-600">{leaderboardSummary.totalWins}</dd>
+                      <p className="text-xs text-slate-500">Akumulasi musim ini</p>
+                    </div>
+                    <div>
+                      <dt className="text-xs uppercase text-slate-500">Total kalah</dt>
+                      <dd className="text-lg font-semibold text-amber-600">{leaderboardSummary.totalLosses}</dd>
+                      <p className="text-xs text-slate-500">Seluruh mode permainan</p>
+                    </div>
+                  </dl>
+                  <div className="mt-4 rounded-2xl bg-emerald-50/60 p-4 text-sm text-emerald-700">
+                    {landingRealtime
+                      ? "Sinkron otomatis setiap 15 menit agar landing mengikuti filter leaderboard."
+                      : "Aktifkan sinkron real-time agar landing langsung menyesuaikan ketika filter leaderboard diubah."}
+                  </div>
+                </div>
+              </div>

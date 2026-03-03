@@ -1,0 +1,16 @@
+<svg width="220" height="140" viewBox="0 0 220 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="220" height="140" rx="24" fill="url(#crops-bg)"/>
+  <path d="M0 92C30 74 80 70 110 78C140 86 160 82 220 60V140H0V92Z" fill="#22C55E" opacity="0.8"/>
+  <path d="M0 110C50 92 100 98 130 114C160 130 190 128 220 120V140H0V110Z" fill="#15803D" opacity="0.7"/>
+  <rect x="70" y="32" width="26" height="46" rx="13" fill="#F97316"/>
+  <rect x="124" y="32" width="26" height="46" rx="13" fill="#FACC15"/>
+  <path d="M83 24C75 34 75 48 83 58C91 48 91 34 83 24Z" fill="#FDBA74"/>
+  <path d="M137 24C129 34 129 48 137 58C145 48 145 34 137 24Z" fill="#FDE047"/>
+  <circle cx="108" cy="32" r="12" fill="#10B981"/>
+  <defs>
+    <linearGradient id="crops-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ECFCCB"/>
+      <stop offset="100%" stop-color="#BBF7D0"/>
+    </linearGradient>
+  </defs>
+</svg>

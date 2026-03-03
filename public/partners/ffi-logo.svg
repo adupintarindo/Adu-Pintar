@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 110" role="img" aria-labelledby="title desc">
+  <title id="title">Future Farmers Indonesia</title>
+  <desc id="desc">Logotype Future Farmers Indonesia bernuansa merah dan emas</desc>
+  <rect width="320" height="110" rx="12" fill="#2a0f0a" />
+  <g transform="translate(18 20)" fill="none" fill-rule="evenodd">
+    <path d="M0 0h80v24H24v12h52v24H24v14h56v20H0z" fill="#bf3b24" />
+    <path d="M92 0h32v74h-32z" fill="#bf3b24" />
+    <path d="M140 0h32v74h-32z" fill="#bf3b24" />
+    <path
+      d="M60 6c-6 10-6 20 0 30-6 10-6 20 0 30"
+      stroke="#f7c046"
+      stroke-width="8"
+      stroke-linecap="round"
+    />
+    <circle cx="166" cy="20" r="8" fill="#f7c046" />
+    <circle cx="166" cy="46" r="8" fill="#f7c046" />
+    <circle cx="166" cy="70" r="8" fill="#f7c046" />
+  </g>
+  <text
+    x="180"
+    y="90"
+    font-family="Inter, Arial, sans-serif"
+    font-weight="600"
+    font-size="22"
+    fill="#f7c046"
+    text-anchor="middle"
+  >
+    FUTURE FARMERS INDONESIA
+  </text>
+</svg>

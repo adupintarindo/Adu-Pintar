@@ -1,0 +1,570 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { useParams, useRouter } from "next/navigation"
+
+interface GameData {
+  id: string
+  playerNames: string[]
+  playerScores: number[]
+  playerAnswers: Array<Array<{ questionId: string; answerIndex: number; isCorrect: boolean; pointsEarned: number }>>
+  currentQuestionIndex: number
+  totalQuestions: number
+  status: string
+  winner: string | null
+  numPlayers: number
+  questions: Array<{
+    id: string
+    question: string
+    options: string[]
+    correctAnswer: number
+    explanation: string
+    points: number
+  }>
+}
+
+interface PlayerGameState {
+  playerQuestionOrders: number[][]
+  playerCurrentQuestions: number[]
+}
+
+const avatarGradients = [
+  "from-emerald-500 to-lime-500",
+  "from-sky-500 to-blue-500",
+  "from-purple-500 to-fuchsia-500",
+  "from-orange-500 to-amber-500",
+  "from-rose-500 to-pink-500",
+]
+
+const getPlayerInitials = (name: string) => {
+  if (!name) return "?"
+  const trimmed = name.trim()
+  if (!trimmed) return "?"
+  const parts = trimmed.split(/\s+/)
+  if (parts.length === 1) {
+    return trimmed.slice(0, 2).toUpperCase()
+  }
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+export default function PlayingPage() {
+  const params = useParams()
+  const router = useRouter()
+  const gameId = params.gameId as string
+  const [game, setGame] = useState<GameData | null>(null)
+  const [playerState, setPlayerState] = useState<PlayerGameState | null>(null)
+  const [playerAnswers, setPlayerAnswers] = useState<(number | null)[]>([])
+  const [playerTimers, setPlayerTimers] = useState<number[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const timerRefs = useRef<(NodeJS.Timeout | null)[]>([])
+  const autoAdvanceRefs = useRef<(NodeJS.Timeout | null)[]>([])
+  const playerAnswersRef = useRef<(number | null)[]>([])
+  const previousQuestionsRef = useRef<number[]>([]) // Track previous question indices
+  const hasNavigatedToResults = useRef(false)
+  const advancingQuestionRefs = useRef<boolean[]>([]) // Prevent multiple next calls per player
+
+  const playerHasNextQuestion = (playerIndex: number) => {
+    if (!playerState) return false
+    const questionOrder = playerState.playerQuestionOrders[playerIndex]
+    if (!questionOrder) return false
+    const currentIndex = playerState.playerCurrentQuestions[playerIndex]
+    return currentIndex < questionOrder.length - 1
+  }
+
+  const playerCanAdvance = (playerIndex: number) => {
+    if (!playerState) return false
+    const questionOrder = playerState.playerQuestionOrders[playerIndex]
+    if (!questionOrder) return false
+    const currentIndex = playerState.playerCurrentQuestions[playerIndex]
+    return currentIndex < questionOrder.length
+  }
+
+  useEffect(() => {
+    const fetchGame = async () => {
+      try {
+        console.log("[v0] Fetching game data for gameId:", gameId)
+        const res = await fetch(`/api/game/duel/${gameId}/sync`)
+        if (!res.ok) {
+          const errorData = await res.json()
+          console.log("[v0] Sync API error:", errorData)
+          throw new Error(errorData.error || "Gagal mengambil data game")
+        }
+        const data = await res.json()
+        console.log("[v0] Game data fetched:", data)
+        setGame(data)
+        setError(null)
+
+        if (data.numPlayers) {
+          setPlayerAnswers((prev) => {
+            if (prev.length === data.numPlayers) return prev
+            const next = Array(data.numPlayers).fill(null) as (number | null)[]
+            playerAnswersRef.current = next
+            return next
+          })
+          setPlayerTimers((prev) => (prev.length === data.numPlayers ? prev : Array(data.numPlayers).fill(10)))
+        }
+
+        let playerStateRes = null
+        let retries = 0
+        const maxRetries = 5
+
+        while (retries < maxRetries) {
+          playerStateRes = await fetch(`/api/game/duel/${gameId}/player-state`)
+          if (playerStateRes.ok) {
+            break
+          }
+          retries++
+          if (retries < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, 100 * Math.pow(2, retries)))
+          }
+        }
+
+        if (!playerStateRes || !playerStateRes.ok) {
+          const errorData = await playerStateRes?.json()
+          console.log("[v0] Player state API error:", errorData)
+          throw new Error(errorData?.error || "Gagal mengambil player state")
+        }
+
+        const state = await playerStateRes.json()
+        console.log("[v0] Player state fetched:", state)
+        setPlayerState(state)
+
+        setLoading(false)
+      } catch (error) {
+        console.error("[v0] Error fetching game data:", error)
+        setError(String(error))
+        setLoading(false)
+      }
+    }
+
+    if (gameId) {
+      fetchGame()
+      const interval = setInterval(fetchGame, 500)
+      return () => clearInterval(interval)
+    }
+  }, [gameId])
+
+  useEffect(() => {
+    if (!playerState || !game) return
+
+    for (let playerIndex = 0; playerIndex < game.numPlayers; playerIndex++) {
+      const currentIndex = playerState.playerCurrentQuestions[playerIndex]
+      const previousIndex = previousQuestionsRef.current[playerIndex]
+
+      if (currentIndex !== previousIndex) {
+        previousQuestionsRef.current[playerIndex] = currentIndex
+
+        setPlayerAnswers((prev) => {
+          if (playerIndex < prev.length && prev[playerIndex] === null) {
+            return prev
+          }
+          const nextAnswers = [...prev]
+          nextAnswers[playerIndex] = null
+          playerAnswersRef.current = nextAnswers
+          return nextAnswers
+        })
+
+        // Clear existing timer for this player
+        if (timerRefs.current[playerIndex]) clearInterval(timerRefs.current[playerIndex]!)
+
+        setPlayerTimers((prev) => {
+          const newTimers = [...prev]
+          newTimers[playerIndex] = 10
+          return newTimers
+        })
+
+        const questionOrder = playerState.playerQuestionOrders[playerIndex]
+        if (currentIndex >= questionOrder.length) continue
+
+        timerRefs.current[playerIndex] = setInterval(() => {
+          let shouldTriggerTimeout = false
+
+          setPlayerTimers((prev) => {
+            const newTimers = [...prev]
+            if (newTimers[playerIndex] <= 1) {
+              shouldTriggerTimeout = true
+              newTimers[playerIndex] = 0
+            } else {
+              newTimers[playerIndex]--
+            }
+            return newTimers
+          })
+
+          if (shouldTriggerTimeout) {
+            void (async () => {
+              if (playerAnswersRef.current[playerIndex] == null) {
+                // Record the timeout as a wrong answer before advancing.
+                await handlePlayerAnswer(playerIndex, -1, { force: true, autoAdvance: false })
+              }
+              await handleNextQuestion(playerIndex)
+            })()
+            if (timerRefs.current[playerIndex]) {
+              clearInterval(timerRefs.current[playerIndex]!)
+              timerRefs.current[playerIndex] = null
+            }
+          }
+        }, 1000)
+      }
+    }
+
+  }, [playerState, game])
+
+  useEffect(() => {
+    return () => {
+      for (let i = 0; i < timerRefs.current.length; i++) {
+        if (timerRefs.current[i]) clearInterval(timerRefs.current[i]!)
+      }
+      for (let i = 0; i < autoAdvanceRefs.current.length; i++) {
+        if (autoAdvanceRefs.current[i]) clearTimeout(autoAdvanceRefs.current[i]!)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (game?.status === "completed" && !hasNavigatedToResults.current) {
+      hasNavigatedToResults.current = true
+      router.push(`/game/duel/results/${gameId}`)
+    }
+  }, [game?.status, gameId, router])
+
+  useEffect(() => {
+    playerAnswersRef.current = playerAnswers
+  }, [playerAnswers])
+
+  const handlePlayerAnswer = async (
+    playerIndex: number,
+    answerIndex: number,
+    options?: {
+      force?: boolean
+      autoAdvance?: boolean
+    },
+  ) => {
+    console.log("[v0] handlePlayerAnswer called for player", playerIndex, "answer:", answerIndex)
+
+    if (!options?.force && playerAnswersRef.current[playerIndex] !== null) return
+
+    const shouldAutoAdvance = options?.autoAdvance ?? true
+
+    setPlayerAnswers((prev) => {
+      const updated = [...prev]
+      updated[playerIndex] = answerIndex
+      playerAnswersRef.current = updated
+      return updated
+    })
+
+    try {
+      console.log("[v0] Submitting answer to API for player", playerIndex)
+      await fetch(`/api/game/duel/${gameId}/answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer: answerIndex, playerNumber: playerIndex + 1 }),
+      })
+    } catch (err) {
+      console.error("Error submitting answer:", err)
+    }
+
+    if (shouldAutoAdvance) {
+      if (autoAdvanceRefs.current[playerIndex]) {
+        clearTimeout(autoAdvanceRefs.current[playerIndex]!)
+      }
+      autoAdvanceRefs.current[playerIndex] = setTimeout(() => {
+        handleNextQuestion(playerIndex)
+      }, 0)
+    }
+  }
+
+  const handleNextQuestion = async (playerIndex: number) => {
+    if (advancingQuestionRefs.current[playerIndex]) {
+      console.log("[v0] Next question already in progress for player", playerIndex)
+      return
+    }
+    advancingQuestionRefs.current[playerIndex] = true
+    console.log("[v0] handleNextQuestion called for player", playerIndex)
+
+    try {
+      const shouldAdvanceLocally = playerHasNextQuestion(playerIndex)
+      const canAdvanceState = playerCanAdvance(playerIndex)
+
+      if (shouldAdvanceLocally) {
+        setPlayerAnswers((prev) => {
+          const updated = [...prev]
+          updated[playerIndex] = null
+          playerAnswersRef.current = updated
+          return updated
+        })
+
+        setPlayerTimers((prev) => {
+          const updated = [...prev]
+          updated[playerIndex] = 10
+          return updated
+        })
+      }
+
+      if (canAdvanceState) {
+        setPlayerState((prev) => {
+          if (!prev) return prev
+          const questionOrder = prev.playerQuestionOrders[playerIndex]
+          if (!questionOrder) return prev
+          const updatedCurrentQuestions = [...prev.playerCurrentQuestions]
+          const currentIndex = updatedCurrentQuestions[playerIndex] ?? 0
+          if (currentIndex >= questionOrder.length) {
+            return prev
+          }
+          updatedCurrentQuestions[playerIndex] = Math.min(currentIndex + 1, questionOrder.length)
+          return {
+            ...prev,
+            playerCurrentQuestions: updatedCurrentQuestions,
+          }
+        })
+      }
+
+      console.log("[v0] Calling next API for player", playerIndex)
+      const res = await fetch(`/api/game/duel/${gameId}/next`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerNumber: playerIndex + 1 }),
+      })
+
+      if (res.ok) {
+        const newState = await res.json()
+        console.log("[v0] Next API response:", newState)
+        setPlayerState(newState)
+      }
+    } catch (err) {
+      console.error("Error loading next question:", err)
+    } finally {
+      advancingQuestionRefs.current[playerIndex] = false
+    }
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50 to-blue-50">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="text-6xl mb-4">??</div>
+          <div className="text-xl font-semibold text-red-600 mb-2">Terjadi Error</div>
+          <div className="text-gray-700 mb-6">{error}</div>
+          <button
+            onClick={() => router.push("/game/duel")}
+            className="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90"
+          >
+            Kembali ke Menu
+          </button>
+        </div>
+      </main>
+    )
+  }
+
+  if (loading || !game || !playerState) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50 to-blue-50">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-full border-4 border-green-200 border-t-primary animate-spin mx-auto mb-4"></div>
+          <div className="text-xl font-semibold text-foreground">Memuat Game...</div>
+        </div>
+      </main>
+    )
+  }
+
+  if (!game.playerNames || !game.playerScores || !game.questions) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50 to-blue-50">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="text-6xl mb-4">??</div>
+          <div className="text-xl font-semibold text-red-600 mb-2">Data Game Invalid</div>
+          <div className="text-gray-700 mb-6">Data game tidak lengkap atau tidak valid</div>
+          <button
+            onClick={() => router.push("/game/duel")}
+            className="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90"
+          >
+            Kembali ke Menu
+          </button>
+        </div>
+      </main>
+    )
+  }
+
+  if (game.status === "completed") {
+    return null
+  }
+
+  const playerScores = game.playerScores ?? []
+  const maxScore = playerScores.length ? Math.max(...playerScores) : 0
+  const minScore = playerScores.length ? Math.min(...playerScores) : 0
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-green-50 via-blue-50 to-white">
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b-2 border-green-200 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+            {game.playerNames.map((name, index) => {
+              const avatarClass = avatarGradients[index % avatarGradients.length]
+              const initials = getPlayerInitials(name)
+
+              return (
+                <div
+                  key={index}
+                  className={`min-w-[240px] flex-1 snap-start p-3 rounded-2xl border-2 transition-all ${(() => {
+                    const score = playerScores[index] ?? 0
+                    const isLeading = score === maxScore && maxScore !== minScore
+                    const isTrailing = score === minScore && maxScore !== minScore
+                    if (isLeading) return "border-emerald-500 bg-emerald-50/60 shadow-lg shadow-emerald-100 scale-[1.01]"
+                    if (isTrailing) return "border-rose-400 bg-rose-50/70"
+                    return "border-gray-200 bg-white"
+                  })()}`}
+                >
+                  <div className="flex items-center justify-between text-xs font-bold text-gray-600">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div
+                        className={`h-8 w-8 rounded-full bg-gradient-to-br ${avatarClass} text-white flex items-center justify-center text-xs shadow-inner`}
+                        aria-hidden="true"
+                      >
+                        {initials}
+                      </div>
+                      <span className="truncate" title={name}>
+                        {name}
+                      </span>
+                    </div>
+                    {(() => {
+                      const score = playerScores[index] ?? 0
+                      const isLeading = score === maxScore && maxScore !== minScore
+                      const isTrailing = score === minScore && maxScore !== minScore
+                      const label = isLeading ? "Unggul" : isTrailing ? "Tertinggal" : "Seimbang"
+                      const statusColor = isLeading
+                        ? "bg-emerald-100 text-emerald-700"
+                        : isTrailing
+                          ? "bg-rose-100 text-rose-600"
+                          : "bg-slate-100 text-slate-600"
+                      return <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor}`}>{label}</span>
+                    })()}
+                  </div>
+                  <div className="text-2xl font-black text-primary mt-1">{playerScores[index] ?? 0}</div>
+                  <div className="text-[11px] text-gray-500">
+                    {(() => {
+                      const score = playerScores[index] ?? 0
+                      if (maxScore === minScore) return "Skor sementara imbang"
+                      if (score === maxScore) return `Memimpin +${score - minScore} poin`
+                      return `Tertinggal ${maxScore - score} poin`
+                    })()}
+                  </div>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        playerScores[index] === maxScore ? "bg-emerald-500" : playerScores[index] === minScore && maxScore !== minScore ? "bg-rose-400" : "bg-blue-400"
+                      }`}
+                      style={{
+                        width: `${(() => {
+                          const score = playerScores[index] ?? 0
+                          if (maxScore === 0) return 5
+                          return Math.max((score / maxScore) * 100, 5)
+                        })()}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={`grid gap-4 p-4 min-h-[calc(100vh-200px)] ${game.numPlayers === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 lg:grid-cols-" + Math.min(game.numPlayers, 3)}`}
+      >
+        {game.playerNames.map((playerName, playerIndex) => {
+          const currentQIndex = playerState.playerCurrentQuestions[playerIndex]
+          const questionOrder = playerState.playerQuestionOrders[playerIndex]
+          const questionNum = questionOrder[Math.min(currentQIndex, questionOrder.length - 1)]
+          const question = game.questions[questionNum]
+          const isPlayerCorrect = playerAnswers[playerIndex] === question.correctAnswer
+          const isPlayerFinished = currentQIndex >= questionOrder.length
+
+          return (
+            <div key={playerIndex} className="flex flex-col">
+            <div className="mb-3 px-3 py-2 bg-blue-50 rounded-lg border-2 border-primary">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-10 w-10 rounded-full bg-gradient-to-br ${avatarGradients[playerIndex % avatarGradients.length]} text-white flex items-center justify-center font-semibold shadow-inner`}
+                  aria-hidden="true"
+                >
+                  {getPlayerInitials(playerName)}
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-primary">{playerName}</div>
+                  <div className="text-xs font-semibold text-primary/70">Pemain #{playerIndex + 1}</div>
+                </div>
+              </div>
+              <div className="text-2xl font-black text-primary mt-2">
+                {game.playerAnswers[playerIndex].filter((a) => a.isCorrect).length} Benar
+              </div>
+            </div>
+
+              {isPlayerFinished ? (
+                <div className="flex-1 bg-white rounded-xl shadow-lg border-2 border-blue-200 p-5 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-4xl mb-3">?</div>
+                    <div className="text-lg font-bold text-primary">Selesai!</div>
+                    <div className="text-sm text-gray-600 mt-2">Menunggu pemain lain selesai...</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 bg-white rounded-xl shadow-lg border-2 border-blue-200 p-5 overflow-auto">
+                  <div className="mb-4 flex justify-between items-center">
+                    <span className="text-xs font-bold text-gray-600">
+                      Soal {Math.min(currentQIndex + 1, questionOrder.length)}/{questionOrder.length}
+                    </span>
+                    <div
+                      className={`px-3 py-1 rounded-lg font-bold text-lg transition-all ${
+                        playerTimers[playerIndex] <= 3
+                          ? "bg-red-100 text-red-600 animate-pulse"
+                          : playerTimers[playerIndex] <= 5
+                            ? "bg-orange-100 text-orange-600"
+                            : "bg-green-100 text-primary"
+                      }`}
+                    >
+                      {playerTimers[playerIndex]}s
+                    </div>
+                  </div>
+
+                  <div className="mb-6">
+                    <h2 className="text-lg font-bold text-foreground mb-4">{question.question}</h2>
+
+                    <div className="space-y-2">
+                      {question.options.map((option, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePlayerAnswer(playerIndex, index)}
+                          disabled={playerAnswers[playerIndex] !== null}
+                          className={`w-full p-3 text-left rounded-lg border-2 transition-all font-semibold text-sm ${
+                            playerAnswers[playerIndex] === index
+                              ? "border-primary bg-blue-100 text-foreground"
+                              : "border-gray-300 bg-white text-foreground hover:border-primary hover:bg-blue-50"
+                          } ${playerAnswers[playerIndex] !== null ? "opacity-70 cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${
+                                playerAnswers[playerIndex] === index
+                                  ? "bg-primary text-white"
+                                  : "bg-gray-200 text-gray-600"
+                              }`}
+                            >
+                              {String.fromCharCode(65 + index)}
+                            </div>
+                            <span>{option}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </main>
+  )
+}
+

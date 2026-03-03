@@ -1,0 +1,40 @@
+"use client"
+
+import Image from "next/image"
+import { useEffect, useRef, useState } from "react"
+import type { ChangeEvent, FormEvent, KeyboardEvent } from "react"
+import type { LucideIcon } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Camera,
+  Compass,
+  Crown,
+  Edit3,
+  Flame,
+  Gem,
+  Globe2,
+  Leaf,
+  Medal,
+  MessageSquare,
+  RefreshCcw,
+  Rocket,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Trophy,
+  Users,
+  X,
+} from "lucide-react"
+
+const badges: Array<{
+  title: string
+  desc: string
+  detail: string
+  icon: LucideIcon
+  gradient: string
+  chip: string
+  iconBg: string
+  category: string
+}> = [
