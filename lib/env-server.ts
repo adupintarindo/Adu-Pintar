@@ -30,9 +30,9 @@ export function validateCriticalServerEnv() {
 
   if (missing.length === 0) return
 
-  if (serverEnv.NODE_ENV === "production") {
+  if (serverEnv.NODE_ENV === "production" && process.env.NEXT_PHASE !== "phase-production-build") {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
   }
 
-  console.warn(`[env] Missing environment variables (dev): ${missing.join(", ")}`)
+  console.warn(`[env] Missing environment variables: ${missing.join(", ")}`)
 }

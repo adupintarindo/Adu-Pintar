@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { MATCH_PROMPT_STORAGE_KEY } from "@/lib/ui-flags"
 import { fetchWithCsrf } from "@/lib/client-security"
 import { trackEvent } from "@/lib/analytics"
+import { Navbar } from "@/components/navbar"
 
 type LoginTab = "student" | "staff"
 
@@ -324,6 +325,8 @@ export default function LoginPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
+      <Navbar />
+
       <div
         className="orb-float absolute top-20 -right-32 h-96 w-96 rounded-full opacity-20 pointer-events-none hidden md:block"
         style={{ background: "radial-gradient(circle, oklch(0.52 0.21 142), transparent 70%)", filter: "blur(80px)" }}

@@ -623,23 +623,25 @@ export default function RegisterPage() {
       />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4 py-8">
-        <div className="mx-auto w-full max-w-4xl lg:grid lg:grid-cols-[0.8fr,1.2fr] lg:items-center lg:gap-10">
+        <div className="mx-auto w-full max-w-5xl lg:grid lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:items-center lg:gap-8">
           {/* Illustration - desktop only */}
-          <div className="hidden lg:flex lg:flex-col lg:items-center lg:justify-center">
-            <Image
-              src="/illustrations/register-join.svg"
-              alt="Ilustrasi bergabung bersama"
-              width={300}
-              height={400}
-              className="h-auto w-full max-w-[260px] drop-shadow-xl animate-fade-up"
-              priority
-            />
-            <div className="mt-5 text-center animate-fade-up" style={{ animationDelay: "150ms" }}>
+          <aside className="hidden lg:flex lg:flex-col lg:items-center lg:justify-center">
+            <div className="glass-card w-full max-w-[250px] rounded-3xl border border-border/40 bg-card/50 p-3 shadow-lg animate-fade-up">
+              <Image
+                src="/illustrations/register-join.svg"
+                alt="Ilustrasi bergabung bersama"
+                width={260}
+                height={340}
+                className="mx-auto h-auto w-[210px] max-w-full drop-shadow-lg"
+                priority
+              />
+            </div>
+            <div className="mt-4 max-w-[220px] text-center animate-fade-up" style={{ animationDelay: "150ms" }}>
               <p className="font-display text-xl font-bold text-foreground">Ayo Bergabung!</p>
               <p className="mt-1.5 text-sm text-muted-foreground">Buat akun dan mulai belajar pertanian yang seru</p>
             </div>
-          </div>
-        <div className="w-full max-w-lg mx-auto">
+          </aside>
+          <section className="mx-auto w-full max-w-lg">
           {/* Logo */}
           <div className="mb-6 flex flex-col items-center animate-fade-up">
             <Link href="/" aria-label="Kembali ke beranda Adu Pintar">
@@ -655,7 +657,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Register card */}
-          <div className="glass-card card-accent-top rounded-3xl p-6 sm:p-8 shadow-lg animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <div className="glass-card card-accent-top rounded-3xl p-6 shadow-lg animate-fade-up sm:p-8" style={{ animationDelay: "100ms" }}>
             <div className="mb-6 text-center">
               <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Buat Akun Baru</h1>
               <p className="mt-1 text-sm text-muted-foreground">Langkah {step} dari {TOTAL_STEPS}</p>
@@ -1486,7 +1488,7 @@ export default function RegisterPage() {
               </Link>
             </div>
           </div>
-        </div>
+          </section>
         </div>
       </div>
     </main>

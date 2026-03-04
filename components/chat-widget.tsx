@@ -42,11 +42,11 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 sm:bottom-6 sm:left-auto sm:right-6">
+    <div className="pointer-events-none fixed bottom-4 left-4 right-4 z-50 flex flex-col items-end sm:bottom-6 sm:left-auto sm:right-6">
       {isOpen && (
         <div
           id="chat-widget-panel"
-          className="mb-4 w-[calc(100vw-2rem)] max-w-[360px] rounded-2xl bg-card shadow-2xl border border-border flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
+          className="pointer-events-auto mb-4 w-[calc(100vw-2rem)] max-w-[360px] rounded-2xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
         >
           <div
             style={{ background: "var(--color-brand-dark, #0D3E2D)" }}
@@ -135,7 +135,7 @@ export function ChatWidget() {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="rounded-full bg-primary text-primary-foreground shadow-xl px-5 py-3.5 min-h-11 flex items-center gap-2 hover:opacity-90 hover:scale-105 active:scale-95 transition font-bold text-sm"
+        className="pointer-events-auto rounded-full bg-primary px-5 py-3.5 min-h-11 text-sm font-bold text-primary-foreground shadow-xl flex items-center gap-2 transition hover:opacity-90 hover:scale-105 active:scale-95"
         aria-expanded={isOpen}
         aria-controls="chat-widget-panel"
         aria-label={isOpen ? "Tutup panel kontak" : "Buka panel kontak"}

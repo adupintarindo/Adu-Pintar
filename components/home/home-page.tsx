@@ -773,7 +773,7 @@ export default function HomePage() {
             <div className="pointer-events-none absolute -left-20 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl" aria-hidden />
             <div className="pointer-events-none absolute -bottom-28 right-10 h-56 w-56 rounded-full bg-accent/10 blur-3xl" aria-hidden />
             <div className="relative">
-              <SupportersMarquee supporters={supportersList} durationMs={45000} />
+              <SupportersMarquee supporters={supportersList} durationMs={70000} />
             </div>
           </div>
         </section>
