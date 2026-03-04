@@ -1,5 +1,6 @@
 'use client'
 
+import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ArrowRight, BookOpen, CheckCircle2, Sparkles, X } from "lucide-react"
@@ -38,15 +39,15 @@ const TOPIC_CONFIG: Record<string, TopicConfig> = {
     emoji: "💧",
     soalCount: 18,
     category: "Teknik Modern",
-    cardClass: "from-cyan-50 via-white to-teal-50/50 border-cyan-100/60 dark:from-cyan-950/30 dark:via-background dark:to-teal-950/20 dark:border-cyan-800/30",
-    iconClass: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-400",
-    tagClass: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-400",
+    cardClass: "from-teal-50 via-white to-teal-50/50 border-teal-100/60 dark:from-teal-950/30 dark:via-background dark:to-teal-950/20 dark:border-teal-800/30",
+    iconClass: "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-400",
+    tagClass: "bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-400",
   },
   "iklim-mikro": {
     emoji: "🌤️",
     soalCount: 20,
     category: "Lingkungan Kebun",
-    cardClass: "from-sky-50 via-white to-blue-50/50 border-sky-100/60 dark:from-sky-950/30 dark:via-background dark:to-blue-950/20 dark:border-sky-800/30",
+    cardClass: "from-sky-50 via-white to-sky-50/50 border-sky-100/60 dark:from-sky-950/30 dark:via-background dark:to-sky-950/20 dark:border-sky-800/30",
     iconClass: "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-400",
     tagClass: "bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-400",
   },
@@ -70,7 +71,7 @@ const TOPIC_CONFIG: Record<string, TopicConfig> = {
     emoji: "🤖",
     soalCount: 16,
     category: "Teknologi Tani",
-    cardClass: "from-violet-50 via-white to-purple-50/50 border-violet-100/60 dark:from-violet-950/30 dark:via-background dark:to-purple-950/20 dark:border-violet-800/30",
+    cardClass: "from-violet-50 via-white to-violet-50/50 border-violet-100/60 dark:from-violet-950/30 dark:via-background dark:to-violet-950/20 dark:border-violet-800/30",
     iconClass: "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-400",
     tagClass: "bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-400",
   },
@@ -144,41 +145,38 @@ export function TopicGrid({ topics, loading = false }: TopicGridProps) {
               type="button"
               aria-label={`Belajar topik ${topic.title}`}
               onClick={() => setSelectedTopic(topic)}
-              className={`group relative flex h-full min-h-56 w-full flex-col overflow-hidden rounded-3xl border bg-linear-to-br p-6 text-left shadow-sm transition hover:-translate-y-1.5 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/30 ${cfg.cardClass}`}
+              className={`group relative flex h-full w-full flex-col overflow-hidden rounded-3xl border bg-linear-to-br text-left shadow-sm transition hover:-translate-y-1.5 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/30 ${cfg.cardClass}`}
             >
-              {/* Subtle inner glow */}
-              <div className="pointer-events-none absolute inset-0">
-                <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/60 dark:bg-white/10 blur-2xl" />
-                <div className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-white/60 dark:bg-white/10 blur-2xl" />
-              </div>
-
-              {/* Large watermark emoji */}
-              <span
-                className="pointer-events-none absolute bottom-3 right-4 select-none text-[96px] leading-none opacity-[0.10] transition duration-500 group-hover:opacity-[0.18] group-hover:scale-110"
-                aria-hidden="true"
-              >
-                {cfg.emoji}
-              </span>
-
-              {/* Card content */}
-              <div className="relative z-10 flex h-full flex-col gap-4">
-                {/* Top meta row */}
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${cfg.tagClass}`}>
+              {/* Topic image header */}
+              <div className="relative h-36 w-full overflow-hidden">
+                <Image
+                  src={topic.image}
+                  alt={topic.title}
+                  fill
+                  className="object-cover transition duration-500 group-hover:scale-110"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-white/90 via-white/30 to-transparent dark:from-background/90 dark:via-background/30" aria-hidden="true" />
+                {/* Floating meta tags */}
+                <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2">
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm backdrop-blur-sm ${cfg.tagClass}`}>
                     {cfg.category}
                   </span>
-                  <span className="rounded-full border border-border/80 bg-white/70 dark:bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                  <span className="rounded-full border border-white/40 bg-white/80 dark:bg-background/80 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold text-muted-foreground shadow-sm">
                     📚 {cfg.soalCount} soal
                   </span>
                 </div>
+              </div>
 
+              {/* Card content */}
+              <div className="relative z-10 flex flex-1 flex-col gap-3 p-5">
                 {/* Icon + title */}
                 <div>
-                  <div className={`mb-3 flex h-14 w-14 items-center justify-center rounded-2xl text-3xl shadow-sm ${cfg.iconClass}`}>
+                  <div className={`mb-2 flex h-11 w-11 items-center justify-center rounded-xl text-2xl shadow-sm ${cfg.iconClass}`}>
                     {cfg.emoji}
                   </div>
-                  <h3 className="text-xl font-bold leading-snug text-foreground">{topic.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-2">{topic.desc}</p>
+                  <h3 className="text-lg font-bold leading-snug text-foreground">{topic.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground line-clamp-2">{topic.desc}</p>
                 </div>
 
                 {/* CTA */}
@@ -205,13 +203,26 @@ export function TopicGrid({ topics, loading = false }: TopicGridProps) {
               role="dialog"
               aria-modal="true"
               aria-labelledby={modalTitleId}
-              className="w-full max-w-2xl rounded-3xl bg-card p-4 sm:p-6 shadow-2xl"
+              className="w-full max-w-2xl overflow-hidden rounded-3xl bg-card shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Modal image banner */}
+              <div className="relative h-40 w-full sm:h-48">
+                <Image
+                  src={selectedTopic.image}
+                  alt={selectedTopic.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 672px) 100vw, 672px"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-card via-card/40 to-transparent" aria-hidden="true" />
+              </div>
+
+              <div className="p-4 sm:p-6 -mt-12 relative">
               {/* Modal header */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-4">
-                  <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-4xl shadow-sm ${cfg.iconClass}`}>
+                  <div className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-4xl shadow-lg ring-4 ring-card ${cfg.iconClass}`}>
                     {cfg.emoji}
                   </div>
                   <div>
@@ -282,6 +293,7 @@ export function TopicGrid({ topics, loading = false }: TopicGridProps) {
                 >
                   Pilih Topik Lain
                 </button>
+              </div>
               </div>
             </div>
           </div>

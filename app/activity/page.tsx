@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { useMemo, useState } from "react"
 import { Navbar } from "@/components/navbar"
@@ -350,7 +351,7 @@ export default function ActivityPage() {
     {
       label: "Pertandingan",
       value: String(stats.totalMatches),
-      helper: `${stats.wins} menang / ${stats.losses} kalah`,
+      helper: `${stats.wins} menang / ${stats.losses} belum menang`,
       icon: History,
       accent: "bg-primary/10 text-primary",
     },
@@ -383,18 +384,15 @@ export default function ActivityPage() {
       <main className="relative min-h-screen overflow-hidden text-foreground" style={{ background: "var(--gradient-hero)" }}>
         {/* Decorative orbs */}
         <div
-          className="pointer-events-none absolute top-20 -right-32 hidden h-96 w-96 rounded-full opacity-20 md:block"
-          style={{ background: "radial-gradient(circle, oklch(0.52 0.21 142), transparent 70%)", filter: "blur(80px)" }}
+          className="pointer-events-none absolute top-20 -right-32 hidden h-96 w-96 rounded-full bg-primary/20 blur-[80px] opacity-20 md:block"
           aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute -bottom-24 -left-24 hidden h-80 w-80 rounded-full opacity-15 md:block"
-          style={{ background: "radial-gradient(circle, oklch(0.55 0.15 250), transparent 70%)", filter: "blur(60px)" }}
+          className="pointer-events-none absolute -bottom-24 -left-24 hidden h-80 w-80 rounded-full bg-accent/15 blur-[60px] opacity-15 md:block"
           aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute top-1/2 left-1/2 hidden h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-10 md:block"
-          style={{ background: "radial-gradient(circle, oklch(0.52 0.21 142), transparent 60%)", filter: "blur(100px)" }}
+          className="pointer-events-none absolute top-1/2 left-1/2 hidden h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 blur-[100px] opacity-10 md:block"
           aria-hidden="true"
         />
 
@@ -423,6 +421,15 @@ export default function ActivityPage() {
                   Halaman aktivitas menampilkan riwayat pertandingan terbaru, statistik kemenangan, serta insight yang
                   digunakan coach untuk memantau progres {INDIVIDUAL_PROFILE.name}.
                 </p>
+                <div className="mt-2 hidden lg:block">
+                  <Image
+                    src="/illustrations/activity-history.svg"
+                    alt="Ilustrasi riwayat aktivitas pertandingan"
+                    width={400}
+                    height={300}
+                    className="h-auto w-40 drop-shadow-md"
+                  />
+                </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
                   <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-primary">
                     <Shield className="h-4 w-4" />
@@ -551,7 +558,7 @@ export default function ActivityPage() {
                             : "bg-destructive/10 text-destructive"
                         }`}
                       >
-                        {match.result === "win" ? "Menang" : "Kalah"}
+                        {match.result === "win" ? "Menang" : "Coba Lagi"}
                       </span>
                     </div>
                     <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">

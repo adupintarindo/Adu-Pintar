@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useMemo, useState } from "react"
 import { ArrowUpRight, CalendarDays, Camera, Clock3, Images, LayoutGrid, MapPin, SlidersHorizontal, Sparkles } from "lucide-react"
 
@@ -18,6 +19,7 @@ type GalleryItem = {
   heightClass: string
   gradientClass: string
   accent: string
+  image: string
 }
 
 const categoryOrder = ["all", "kompetisi", "sekolah", "workshop"] as const
@@ -49,8 +51,9 @@ const galleryItems: GalleryItem[] = [
     date: "2026-06-12",
     location: "Bandung, Jawa Barat",
     heightClass: "h-64",
-    gradientClass: "from-blue-500/30 via-cyan-400/20 to-sky-300/10",
+    gradientClass: "from-teal-500/30 via-teal-400/20 to-emerald-300/10",
     accent: "Kompetisi",
+    image: "/topics/crops.jpg",
   },
   {
     id: "g2",
@@ -62,6 +65,7 @@ const galleryItems: GalleryItem[] = [
     heightClass: "h-80",
     gradientClass: "from-emerald-500/30 via-lime-400/20 to-green-300/10",
     accent: "Sekolah",
+    image: "/topics/environment.jpg",
   },
   {
     id: "g3",
@@ -73,6 +77,7 @@ const galleryItems: GalleryItem[] = [
     heightClass: "h-72",
     gradientClass: "from-lime-500/30 via-yellow-400/20 to-yellow-300/10",
     accent: "Workshop",
+    image: "/topics/soil.jpg",
   },
   {
     id: "g4",
@@ -82,8 +87,9 @@ const galleryItems: GalleryItem[] = [
     date: "2026-05-30",
     location: "Surabaya, Jawa Timur",
     heightClass: "h-60",
-    gradientClass: "from-fuchsia-500/30 via-violet-400/20 to-violet-300/10",
+    gradientClass: "from-teal-600/30 via-emerald-400/20 to-lime-300/10",
     accent: "Kompetisi",
+    image: "/topics/agro.jpg",
   },
   {
     id: "g5",
@@ -93,8 +99,9 @@ const galleryItems: GalleryItem[] = [
     date: "2026-03-21",
     location: "Makassar, Sulawesi Selatan",
     heightClass: "h-[22rem]",
-    gradientClass: "from-indigo-500/30 via-violet-400/20 to-purple-300/10",
+    gradientClass: "from-sky-500/30 via-teal-400/20 to-emerald-300/10",
     accent: "Sekolah",
+    image: "/topics/nursery.jpg",
   },
   {
     id: "g6",
@@ -104,8 +111,9 @@ const galleryItems: GalleryItem[] = [
     date: "2026-07-05",
     location: "Jakarta, DKI Jakarta",
     heightClass: "h-56",
-    gradientClass: "from-teal-500/30 via-cyan-400/20 to-blue-300/10",
+    gradientClass: "from-teal-500/30 via-teal-400/20 to-sky-300/10",
     accent: "Workshop",
+    image: "/topics/tools.jpg",
   },
   {
     id: "g7",
@@ -115,8 +123,9 @@ const galleryItems: GalleryItem[] = [
     date: "2026-07-22",
     location: "Denpasar, Bali",
     heightClass: "h-[19rem]",
-    gradientClass: "from-violet-500/30 via-yellow-400/20 to-lime-300/10",
+    gradientClass: "from-emerald-500/30 via-lime-400/20 to-teal-300/10",
     accent: "Kompetisi",
+    image: "/topics/cropping.jpg",
   },
   {
     id: "g8",
@@ -128,6 +137,7 @@ const galleryItems: GalleryItem[] = [
     heightClass: "h-68",
     gradientClass: "from-lime-500/30 via-green-400/20 to-emerald-300/10",
     accent: "Sekolah",
+    image: "/topics/fertilizer.jpg",
   },
   {
     id: "g9",
@@ -139,6 +149,7 @@ const galleryItems: GalleryItem[] = [
     heightClass: "h-[17.5rem]",
     gradientClass: "from-muted-foreground/30 via-muted-foreground/15 to-muted-foreground/10",
     accent: "Workshop",
+    image: "/topics/agencies.jpg",
   },
 ]
 
@@ -298,6 +309,16 @@ export default function GalleryPage() {
                 <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
                 <div className="pointer-events-none absolute -left-8 bottom-8 h-28 w-28 rounded-full bg-accent/10 blur-2xl" />
 
+                <div className="relative mb-4 flex justify-center">
+                  <Image
+                    src="/illustrations/gallery-photos.svg"
+                    alt="Ilustrasi galeri foto kegiatan"
+                    width={400}
+                    height={300}
+                    className="h-auto w-36 drop-shadow-sm"
+                  />
+                </div>
+
                 <div className="relative flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Sorotan Pratinjau</p>
@@ -402,13 +423,17 @@ export default function GalleryPage() {
                     style={{ animationDelay: `${Math.min(index * 60, 420)}ms` }}
                   >
                     <div className="group glass-card hover-lift overflow-hidden rounded-3xl border-border/60 bg-card/85">
-                      <div role="img" aria-label={`Foto dokumentasi: ${item.title}`} className={`relative isolate ${item.heightClass} overflow-hidden bg-linear-to-br ${item.gradientClass}`}>
-                        <div className={`pointer-events-none absolute inset-0 bg-linear-to-br ${categoryDecor[item.category].glowClass}`} />
-                        <div className="pointer-events-none absolute inset-0 opacity-35" style={{ backgroundImage: "linear-gradient(120deg, rgba(255,255,255,0.24) 12%, transparent 12%, transparent 50%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.16) 62%, transparent 62%, transparent 100%)", backgroundSize: "28px 28px" }} />
-                        <div className="pointer-events-none absolute -right-12 top-12 h-32 w-32 rounded-full border border-white/25 bg-white/10 transition-transform duration-700 group-hover:scale-110" />
-                        <div className="pointer-events-none absolute left-5 top-14 h-20 w-20 rounded-full border border-white/20 bg-white/5 transition-transform duration-700 group-hover:-translate-y-1" />
-                        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-white/25 via-white/5 to-transparent" />
-                        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 via-black/15 to-transparent" />
+                      <div role="img" aria-label={`Foto dokumentasi: ${item.title}`} className={`relative isolate ${item.heightClass} overflow-hidden`}>
+                        <Image
+                          src={item.image}
+                          alt=""
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                        />
+                        <div className={`pointer-events-none absolute inset-0 bg-linear-to-br ${item.gradientClass} mix-blend-multiply`} aria-hidden="true" />
+                        <div className={`pointer-events-none absolute inset-0 bg-linear-to-br ${categoryDecor[item.category].glowClass} opacity-60`} aria-hidden="true" />
+                        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" aria-hidden="true" />
 
                         <div className="absolute left-4 right-4 top-4 flex items-start justify-between gap-3">
                           <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold backdrop-blur ${categoryDecor[item.category].badgeClass}`}>

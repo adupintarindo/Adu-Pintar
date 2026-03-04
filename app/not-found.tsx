@@ -1,17 +1,27 @@
+import Image from "next/image"
 import Link from "next/link"
 import { Home, Search } from "lucide-react"
 
 export default function NotFound() {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4" style={{ background: "var(--gradient-hero)" }}>
-      <div className="orb-decoration pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
-      <div className="orb-decoration pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4" style={{ background: "var(--gradient-hero)" }} aria-labelledby="not-found-title">
+      <div className="orb-decoration pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
+      <div className="orb-decoration pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-accent/10 blur-3xl" aria-hidden="true" />
       <div className="glass-card relative w-full max-w-lg rounded-3xl p-8 text-center animate-fade-up">
-        <span className="text-6xl animate-emoji-bounce" role="img" aria-label="emoji">🌾</span>
-        <div className="mt-4 inline-block rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+        <div className="mx-auto mb-4 w-56 sm:w-72">
+          <Image
+            src="/illustrations/404-lost-farmer.svg"
+            alt="Ilustrasi anak petani yang tersesat"
+            width={400}
+            height={350}
+            className="h-auto w-full drop-shadow-md"
+            priority
+          />
+        </div>
+        <div className="inline-block rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
           Halaman Tidak Ditemukan
         </div>
-        <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-foreground">Oops! Salah Jalan</h1>
+        <h1 id="not-found-title" className="mt-4 font-display text-3xl font-bold tracking-tight text-foreground">Oops! Salah Jalan</h1>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
           Halaman yang kamu cari tidak ada. Mungkin sudah dipindahkan atau alamatnya salah.
         </p>

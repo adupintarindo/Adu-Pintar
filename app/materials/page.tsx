@@ -138,12 +138,12 @@ export default function MaterialsPage() {
   return (
     <main className="relative min-h-screen overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
       <div
-        className="pointer-events-none absolute -top-32 -left-20 h-80 w-80 rounded-full opacity-25 blur-3xl"
-        style={{ background: "radial-gradient(circle, oklch(0.58 0.18 155), transparent 70%)" }}
+        className="pointer-events-none absolute -top-32 -left-20 h-80 w-80 rounded-full bg-primary/25 blur-3xl"
+        aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute top-1/3 -right-20 h-96 w-96 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, oklch(0.55 0.10 185), transparent 70%)" }}
+        className="pointer-events-none absolute top-1/3 -right-20 h-96 w-96 rounded-full bg-accent/20 blur-3xl"
+        aria-hidden="true"
       />
 
       <Navbar />
@@ -165,7 +165,16 @@ export default function MaterialsPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="hidden xl:flex items-center justify-center">
+              <Image
+                src="/illustrations/materials-books.svg"
+                alt="Ilustrasi anak membaca buku materi pertanian"
+                width={400}
+                height={300}
+                className="h-auto w-52 drop-shadow-md"
+              />
+            </div>
+            <div className="xl:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="glass-card rounded-2xl p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Total Modul</p>
                 <p className="mt-1 font-display text-3xl font-bold text-foreground">{modules.length}</p>
@@ -373,11 +382,18 @@ export default function MaterialsPage() {
         </div>
 
         {filteredModules.length === 0 && (
-          <div className="glass-card rounded-2xl p-8 text-center">
+          <div className="glass-card rounded-2xl p-8 text-center" role="status">
             <p className="font-display text-xl font-semibold text-foreground">Tidak ada modul yang cocok</p>
             <p className="mt-2 text-sm text-muted-foreground">
               Coba ubah filter kategori/topik atau kata kunci pencarian.
             </p>
+            <button
+              type="button"
+              onClick={() => { setSearch(""); setGradeFilter("all"); setTopicFilter("all") }}
+              className="mt-4 rounded-xl border border-border/50 px-4 py-2 text-sm font-semibold text-foreground transition hover:border-primary/30 active:scale-95"
+            >
+              Hapus semua filter
+            </button>
           </div>
         )}
       </section>

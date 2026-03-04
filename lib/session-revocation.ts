@@ -1,3 +1,11 @@
+/**
+ * In-memory session revocation store.
+ *
+ * Limitation: this store is lost on server restart or redeployment.
+ * For production at scale, consider persisting revoked session IDs
+ * in Redis or a database table with TTL-based expiry.
+ */
+
 type RevokedSessionEntry = {
   expiresAt: number
 }

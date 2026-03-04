@@ -141,7 +141,10 @@ function ChartTooltipContent({
     labelKey?: string
   }) {
   const { config } = useChart()
-  const payloadItems = (payload ?? []) as ReadonlyArray<ChartTooltipItem>
+  const payloadItems = React.useMemo(
+    () => (payload ?? []) as ReadonlyArray<ChartTooltipItem>,
+    [payload],
+  )
 
   const tooltipLabel = React.useMemo(() => {
     if (hideLabel || payloadItems.length === 0) {

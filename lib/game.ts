@@ -780,7 +780,7 @@ export function cleanupAbandonedGames(): number {
   return cleaned
 }
 
-// Auto-cleanup abandoned games every 5 minutes
-if (typeof setInterval !== "undefined") {
+// Auto-cleanup abandoned games every 5 minutes (client-side only)
+if (typeof window !== "undefined" && typeof setInterval !== "undefined") {
   setInterval(cleanupAbandonedGames, GAME_CONFIG.CLEANUP_INTERVAL_MS)
 }

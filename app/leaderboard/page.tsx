@@ -1,6 +1,7 @@
 "use client"
 
 import { type FormEvent, useEffect, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { CircleHelp, Crown, Medal, Search, Trophy, UserRound, Users } from "lucide-react"
 
@@ -105,15 +106,15 @@ const MEDAL_CONFIG = {
     rowBg: "bg-slate-100/70 dark:bg-slate-800/40",
   },
   3: {
-    podiumBg: "from-orange-200 via-orange-100 to-amber-100 dark:from-orange-950/75 dark:via-orange-900/55 dark:to-amber-950/75",
-    border: "border-orange-300 dark:border-orange-700",
-    ring: "ring-1 ring-orange-300/80 dark:ring-orange-700/80",
-    avatar: "bg-orange-500 border-orange-300 shadow-lg shadow-orange-500/25",
-    scoreColor: "text-orange-700 dark:text-orange-300",
-    badge: "bg-orange-200 text-orange-900 border border-orange-300 dark:bg-orange-900/70 dark:text-orange-100 dark:border-orange-700",
+    podiumBg: "from-lime-200 via-lime-100 to-emerald-100 dark:from-lime-950/75 dark:via-lime-900/55 dark:to-emerald-950/75",
+    border: "border-lime-300 dark:border-lime-700",
+    ring: "ring-1 ring-lime-300/80 dark:ring-lime-700/80",
+    avatar: "bg-lime-600 border-lime-300 shadow-lg shadow-lime-600/25",
+    scoreColor: "text-lime-700 dark:text-lime-300",
+    badge: "bg-lime-200 text-lime-900 border border-lime-300 dark:bg-lime-900/70 dark:text-lime-100 dark:border-lime-700",
     label: "Juara 3",
     medal: "🥉",
-    rowBg: "bg-orange-100/70 dark:bg-orange-900/30",
+    rowBg: "bg-lime-100/70 dark:bg-lime-900/30",
   },
 } as const
 
@@ -471,15 +472,21 @@ export default function LeaderboardPage() {
                 Siapa yang paling pintar? Temukan juara dari seluruh Indonesia.
               </p>
             </div>
-            <div className="hidden lg:flex h-36 w-36 shrink-0 self-start items-center justify-center rounded-3xl border border-primary/20 bg-primary/10 shadow-2xl shadow-primary/20">
-              <Trophy className="h-20 w-20 text-primary/60" />
+            <div className="hidden lg:block shrink-0 self-start overflow-hidden rounded-3xl border border-primary/20 bg-primary/5 p-3 shadow-2xl shadow-primary/20">
+              <Image
+                src="/illustrations/leaderboard-podium.svg"
+                alt="Ilustrasi podium juara"
+                width={400}
+                height={300}
+                className="h-auto w-44 rounded-xl"
+              />
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Sticky Filter Bar ── */}
-      <div className="sticky top-14 z-30 border-b border-border/50 bg-background/95 shadow-sm backdrop-blur-lg hidden">
+      <div className="sticky top-14 z-30 border-b border-border/50 bg-background/95 shadow-sm backdrop-blur-lg hidden lg:block">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center gap-2 py-3">
 
@@ -998,7 +1005,7 @@ export default function LeaderboardPage() {
                             <th className="py-4 px-4 text-left">Pemain</th>
                             <th className="py-4 px-4 text-center">Tingkat</th>
                             <th className="py-4 px-4 text-center">Menang</th>
-                            <th className="py-4 px-4 text-center">Kalah</th>
+                            <th className="py-4 px-4 text-center">Belum Menang</th>
                             <th className="py-4 pr-6 text-right">Poin</th>
                           </tr>
                         </thead>

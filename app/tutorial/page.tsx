@@ -156,7 +156,7 @@ const tips: TipCard[] = [
     icon: Timer,
     title: "Manfaatkan Waktu Secara Efisien",
     text: "Anda hanya punya 30 detik per soal. Jangan terpaku terlalu lama pada satu soal yang meragukan.",
-    accent: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    accent: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-800",
     category: "Kecepatan",
   },
   {
@@ -381,7 +381,7 @@ export default function TutorialPage() {
                   </div>
 
                   <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/70 p-4">
-                    <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-primary/8 to-transparent" />
+                    <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-primary/8 to-transparent" aria-hidden="true" />
                     <Image
                       src="/hero-agrikultur.svg"
                       alt="Ilustrasi peserta Adu Pintar"
@@ -515,7 +515,7 @@ export default function TutorialPage() {
             </div>
 
             <div className="relative">
-              <div className="pointer-events-none absolute left-5 top-0 bottom-0 hidden w-px bg-linear-to-b from-primary/40 via-primary/20 to-transparent sm:block" />
+              <div className="pointer-events-none absolute left-5 top-0 bottom-0 hidden w-px bg-linear-to-b from-primary/40 via-primary/20 to-transparent sm:block" aria-hidden="true" />
               <div className="space-y-5">
                 {tutorials.map((tutorial, index) => {
                   const Icon = tutorial.icon
@@ -669,7 +669,7 @@ export default function TutorialPage() {
                         <span className="font-semibold text-primary">{reward.win}</span>
                       </div>
                       <div className="flex items-center justify-between rounded-xl border border-border/50 bg-background/60 px-4 py-3">
-                        <span className="text-sm text-muted-foreground">Jika Kalah</span>
+                        <span className="text-sm text-muted-foreground">Jika Belum Menang</span>
                         <span className="font-semibold text-foreground">{reward.lose}</span>
                       </div>
                     </div>

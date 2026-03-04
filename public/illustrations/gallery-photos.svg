@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <rect width="400" height="300" fill="#f0fdf4"/>
+
+  <!-- Photo stack -->
+  <g transform="translate(60,40)">
+    <!-- Back photo -->
+    <rect x="10" y="15" width="130" height="100" rx="10" fill="white" stroke="#6CA644" stroke-width="1" opacity="0.5" transform="rotate(-8,75,65)"/>
+    <!-- Middle photo -->
+    <rect x="5" y="10" width="130" height="100" rx="10" fill="white" stroke="#14b8a6" stroke-width="1" opacity="0.7" transform="rotate(5,70,60)"/>
+    <!-- Front photo -->
+    <rect x="0" y="5" width="130" height="100" rx="10" fill="white" stroke="#6CA644" stroke-width="1.5"/>
+    <!-- Photo content: landscape -->
+    <rect x="8" y="13" width="114" height="70" rx="6" fill="#6CA644" opacity="0.1"/>
+    <circle cx="35" cy="35" r="10" fill="#fbbf24" opacity="0.3"/>
+    <path d="M8 70 L40 45 L65 60 L90 40 L122 65 L122 83 L8 83Z" fill="#6CA644" opacity="0.2"/>
+    <!-- Caption area -->
+    <rect x="12" y="90" width="60" height="4" rx="2" fill="#6CA644" opacity="0.2"/>
+  </g>
+
+  <!-- Camera icon -->
+  <g transform="translate(240,60)" opacity="0.5">
+    <rect x="5" y="10" width="50" height="35" rx="8" fill="#0D3E2D" opacity="0.15"/>
+    <circle cx="30" cy="28" r="12" fill="none" stroke="#0D3E2D" stroke-width="2" opacity="0.2"/>
+    <circle cx="30" cy="28" r="6" fill="#6CA644" opacity="0.15"/>
+    <rect x="15" y="8" width="14" height="6" rx="2" fill="#0D3E2D" opacity="0.12"/>
+  </g>
+
+  <!-- Grid of mini photos -->
+  <g transform="translate(230,110)">
+    <rect x="0" y="0" width="55" height="45" rx="6" fill="#6CA644" opacity="0.08" stroke="#6CA644" stroke-width="0.5" opacity="0.2"/>
+    <rect x="60" y="0" width="55" height="45" rx="6" fill="#14b8a6" opacity="0.08" stroke="#14b8a6" stroke-width="0.5" opacity="0.2"/>
+    <rect x="0" y="50" width="55" height="45" rx="6" fill="#14b8a6" opacity="0.08" stroke="#14b8a6" stroke-width="0.5" opacity="0.2"/>
+    <rect x="60" y="50" width="55" height="45" rx="6" fill="#6CA644" opacity="0.08" stroke="#6CA644" stroke-width="0.5" opacity="0.2"/>
+    <!-- Mini landscape icons in grid -->
+    <path d="M10 35 L20 20 L30 30 L40 15 L45 30 L45 40 L10 40Z" fill="#6CA644" opacity="0.15"/>
+    <path d="M70 35 L80 22 L90 28 L100 18 L105 30 L105 40 L70 40Z" fill="#14b8a6" opacity="0.15"/>
+    <path d="M10 85 L20 72 L30 78 L40 65 L45 80 L45 90 L10 90Z" fill="#14b8a6" opacity="0.15"/>
+    <path d="M70 85 L80 70 L90 80 L100 68 L105 80 L105 90 L70 90Z" fill="#6CA644" opacity="0.15"/>
+  </g>
+
+  <!-- Sparkles -->
+  <g fill="#fbbf24" opacity="0.3">
+    <circle cx="210" cy="50" r="3"/>
+    <circle cx="350" cy="130" r="2.5"/>
+    <circle cx="45" cy="180" r="2"/>
+  </g>
+
+  <!-- Nature decoration -->
+  <g opacity="0.4">
+    <ellipse cx="50" cy="260" rx="8" ry="12" fill="#6CA644" transform="rotate(-20,50,260)"/>
+    <ellipse cx="360" cy="250" rx="7" ry="10" fill="#81c784" transform="rotate(15,360,250)"/>
+  </g>
+
+  <!-- Category badges -->
+  <g transform="translate(60,240)" opacity="0.5">
+    <rect x="0" y="0" width="80" height="28" rx="10" fill="#6CA644" opacity="0.12"/>
+    <text x="40" y="18" font-family="sans-serif" font-size="9" fill="#6CA644" text-anchor="middle" font-weight="bold">Kompetisi</text>
+  </g>
+  <g transform="translate(155,240)" opacity="0.5">
+    <rect x="0" y="0" width="70" height="28" rx="10" fill="#14b8a6" opacity="0.12"/>
+    <text x="35" y="18" font-family="sans-serif" font-size="9" fill="#14b8a6" text-anchor="middle" font-weight="bold">Sekolah</text>
+  </g>
+  <g transform="translate(240,240)" opacity="0.5">
+    <rect x="0" y="0" width="75" height="28" rx="10" fill="#0D3E2D" opacity="0.12"/>
+    <text x="37" y="18" font-family="sans-serif" font-size="9" fill="#0D3E2D" text-anchor="middle" font-weight="bold">Workshop</text>
+  </g>
+</svg>

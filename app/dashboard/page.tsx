@@ -1,4 +1,5 @@
 import { Award, BadgeCheck, Clock, Crown, Flame, Sparkles, Star, Users } from "lucide-react"
+import Image from "next/image"
 import { cookies } from "next/headers"
 import { Navbar } from "@/components/navbar"
 import { MatchEntryModal } from "@/components/match-entry-modal"
@@ -18,7 +19,7 @@ const fallbackLevelInfo = {
 const fallbackHighlightStats = [
   { label: "Level Saat Ini", value: "3", desc: "Tingkat Perunggu", icon: Crown, accent: "bg-primary/10 text-primary" },
   { label: "Total EXP", value: "1.250", desc: "+250 dalam 7 hari", icon: Flame, accent: "bg-accent/10 text-accent-foreground" },
-  { label: "Rasio Menang", value: "72%", desc: "37 Menang / 14 Kalah", icon: Sparkles, accent: "bg-secondary/10 text-secondary-foreground" },
+  { label: "Rasio Menang", value: "72%", desc: "37 Menang / 14 Belum Menang", icon: Sparkles, accent: "bg-secondary/10 text-secondary-foreground" },
   { label: "Lencana Aktif", value: "8", desc: "Target 12 lencana", icon: BadgeCheck, accent: "bg-primary/15 text-primary" },
 ]
 
@@ -55,7 +56,7 @@ const badges = [
   },
   {
     title: "Jagoan Peternakan",
-    desc: "Kalahkan 10 lawan di topik Peternakan",
+    desc: "Menangkan 10 duel di topik Peternakan",
     accent: "text-destructive",
     border: "border-destructive/20",
     pill: "bg-destructive/10 text-destructive",
@@ -74,6 +75,22 @@ type SessionUser = {
   name: string
   role: "school_admin" | "teacher" | "student"
   schoolName?: string
+}
+
+type DataStatus = "live" | "preview"
+
+function DataStatusBadge({ status }: { status: DataStatus }) {
+  const isLive = status === "live"
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+        isLive ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+      }`}
+    >
+      {isLive ? "Live" : "Preview"}
+    </span>
+  )
 }
 
 export default async function DashboardPage() {
@@ -149,7 +166,7 @@ export default async function DashboardPage() {
           value: `${winRate}%`,
           numericValue: winRate,
           suffix: "%" as string | undefined,
-          desc: `${wins} Menang / ${losses} Kalah`,
+          desc: `${wins} Menang / ${losses} Belum Menang`,
           icon: Sparkles,
           accent: "bg-secondary/10 text-secondary-foreground",
         },
@@ -180,21 +197,9 @@ export default async function DashboardPage() {
   return (
     <main className="relative min-h-screen overflow-hidden text-foreground" style={{ background: "var(--gradient-hero)" }}>
       {/* Decorative orbs */}
-      <div
-        className="absolute top-20 -right-32 h-96 w-96 rounded-full opacity-20 pointer-events-none hidden md:block"
-        style={{ background: "radial-gradient(circle, oklch(0.52 0.21 142), transparent 70%)", filter: "blur(80px)" }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full opacity-15 pointer-events-none hidden md:block"
-        style={{ background: "radial-gradient(circle, oklch(0.55 0.15 250), transparent 70%)", filter: "blur(60px)" }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute top-1/2 left-1/3 h-[500px] w-[500px] rounded-full opacity-10 pointer-events-none hidden md:block"
-        style={{ background: "radial-gradient(circle, oklch(0.55 0.10 185), transparent 60%)", filter: "blur(100px)" }}
-        aria-hidden="true"
-      />
+      <div className="absolute top-20 -right-32 h-96 w-96 rounded-full bg-primary/20 blur-[80px] pointer-events-none hidden md:block" aria-hidden="true" />
+      <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-accent/15 blur-[60px] pointer-events-none hidden md:block" aria-hidden="true" />
+      <div className="absolute top-1/2 left-1/3 h-[500px] w-[500px] rounded-full bg-primary/10 blur-[100px] pointer-events-none hidden md:block" aria-hidden="true" />
 
       <Navbar />
 
@@ -221,8 +226,17 @@ export default async function DashboardPage() {
                 </p>
               </div>
             </div>
-            {/* Team info */}
-            <div className="shrink-0">
+            {/* Team info + illustration */}
+            <div className="shrink-0 space-y-4">
+              <div className="hidden md:block">
+                <Image
+                  src="/illustrations/dashboard-growth.svg"
+                  alt="Ilustrasi grafik pertumbuhan belajar"
+                  width={400}
+                  height={300}
+                  className="h-auto w-36 drop-shadow-md"
+                />
+              </div>
               <div className="inline-flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
                 <span className="icon-badge bg-primary/10 text-primary">
                   <Users className="h-5 w-5" />
@@ -258,10 +272,32 @@ export default async function DashboardPage() {
           </ol>
         </section>
 
-        <div className="glass-card rounded-2xl border border-border/50 bg-card/70 px-4 py-3 text-sm text-muted-foreground">
-          Statistik utama (level, EXP, rasio menang) kini mengikuti akun aktif. Panel EXP Mingguan, misi, dan lencana masih
-          menggunakan data contoh sampai pembaruan aktivitas sistem selesai.
-        </div>
+        <section className="glass-card rounded-2xl border border-border/50 bg-card/70 p-4 sm:p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <h2 className="text-sm font-semibold text-foreground">Status Data Dashboard</h2>
+            <p className="text-xs text-muted-foreground">Setiap panel kini menampilkan sumber data secara eksplisit.</p>
+          </div>
+          <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <article className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-foreground">Data akun aktif</p>
+                <DataStatusBadge status="live" />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Statistik utama, progres level, dan riwayat aktivitas mengikuti data akun yang sedang login.
+              </p>
+            </article>
+            <article className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-foreground">Panel simulasi</p>
+                <DataStatusBadge status="preview" />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                EXP mingguan, misi aktif, dan koleksi lencana saat ini masih menggunakan data contoh.
+              </p>
+            </article>
+          </div>
+        </section>
 
         {/* Stats grid */}
         <ScrollReveal direction="up" delay={0}>
@@ -275,8 +311,11 @@ export default async function DashboardPage() {
                   className="glass-card hover-lift rounded-2xl p-5 animate-fade-up"
                   style={{ animationDelay: `${(idx + 1) * 80}ms` }}
                 >
-                  <div className={`icon-badge h-12 w-12 rounded-xl ${stat.accent}`}>
-                    <Icon className="h-5 w-5" />
+                  <div className="flex items-start justify-between gap-3">
+                    <div className={`icon-badge h-12 w-12 rounded-xl ${stat.accent}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <DataStatusBadge status="live" />
                   </div>
                   <p className="mt-4 text-sm text-muted-foreground">{stat.label}</p>
                   <p className="font-display text-2xl font-bold tracking-tight text-foreground">
@@ -315,11 +354,14 @@ export default async function DashboardPage() {
                   ) : "Login sebagai siswa untuk melihat progres EXP."}
                 </p>
               </div>
-              <div
-                className="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-primary/70 text-primary-foreground"
-                style={{ boxShadow: "var(--shadow-glow-primary)" }}
-              >
-                <Award className="h-7 w-7" />
+              <div className="flex items-start gap-2">
+                <DataStatusBadge status="live" />
+                <div
+                  className="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-primary/70 text-primary-foreground"
+                  style={{ boxShadow: "var(--shadow-glow-primary)" }}
+                >
+                  <Award className="h-7 w-7" />
+                </div>
               </div>
             </div>
 
@@ -349,7 +391,10 @@ export default async function DashboardPage() {
             </div>
 
             <div className="mt-6 rounded-2xl bg-primary/5 border border-primary/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">Rata-rata</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">Rata-rata</p>
+                <DataStatusBadge status="preview" />
+              </div>
               <p className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground">
                 {hasStudentStats ? <><AnimatedNumber value={averageWeeklyExp} /> EXP</> : "—"}
               </p>
@@ -363,11 +408,14 @@ export default async function DashboardPage() {
           <article className="glass-card rounded-3xl p-6 animate-fade-up" style={{ animationDelay: "150ms" }}>
             <div className="flex items-center justify-between">
               <div>
-                <span className="section-badge">EXP Mingguan (Contoh)</span>
+                <span className="section-badge">EXP Mingguan</span>
                 <p className="mt-2 text-sm text-muted-foreground">Pantau konsistensi latihan kamu.</p>
               </div>
-              <div className="icon-badge bg-accent/10 text-accent-foreground rounded-xl h-10 w-10">
-                <Flame className="h-5 w-5" />
+              <div className="flex items-center gap-2">
+                <DataStatusBadge status="preview" />
+                <div className="icon-badge bg-accent/10 text-accent-foreground rounded-xl h-10 w-10">
+                  <Flame className="h-5 w-5" />
+                </div>
               </div>
             </div>
 
@@ -396,12 +444,13 @@ export default async function DashboardPage() {
           <article className="glass-card rounded-3xl p-6 animate-fade-up" style={{ animationDelay: "200ms" }}>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <span className="section-badge">Misi Aktif (Contoh)</span>
+                <span className="section-badge">Misi Aktif</span>
                 <h2 className="mt-3 font-display text-2xl font-bold tracking-tight text-foreground">
                   Tingkatkan EXP kamu
                 </h2>
               </div>
               <div className="flex flex-wrap items-center gap-3">
+                <DataStatusBadge status="preview" />
                 <div className="icon-badge bg-primary/10 text-primary rounded-xl h-10 w-10">
                   <BadgeCheck className="h-5 w-5" />
                 </div>
@@ -442,13 +491,16 @@ export default async function DashboardPage() {
           <article className="glass-card rounded-3xl p-6 animate-fade-up" style={{ animationDelay: "250ms" }}>
             <div className="flex items-center justify-between">
               <div>
-                <span className="section-badge">Koleksi Lencana (Contoh)</span>
+                <span className="section-badge">Koleksi Lencana</span>
                 <h2 className="mt-3 font-display text-2xl font-bold tracking-tight text-foreground">
                   Pertahankan semangat belajar
                 </h2>
               </div>
-              <div className="icon-badge bg-accent/10 text-accent-foreground rounded-xl h-10 w-10">
-                <Star className="h-5 w-5" />
+              <div className="flex items-center gap-2">
+                <DataStatusBadge status="preview" />
+                <div className="icon-badge bg-accent/10 text-accent-foreground rounded-xl h-10 w-10">
+                  <Star className="h-5 w-5" />
+                </div>
               </div>
             </div>
 
@@ -483,8 +535,11 @@ export default async function DashboardPage() {
                 Riwayat Aktivitas
               </h2>
             </div>
-            <div className="icon-badge bg-primary/10 text-primary rounded-xl h-10 w-10">
-              <Clock className="h-5 w-5" />
+            <div className="flex items-center gap-2">
+              <DataStatusBadge status="live" />
+              <div className="icon-badge bg-primary/10 text-primary rounded-xl h-10 w-10">
+                <Clock className="h-5 w-5" />
+              </div>
             </div>
           </div>
 

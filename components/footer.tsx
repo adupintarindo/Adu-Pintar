@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Instagram } from "lucide-react"
+import { CONTACT } from "@/lib/constants"
 
 const socialLinks = [
   { href: "https://www.instagram.com/adupintar.id", label: "Instagram", icon: Instagram },
@@ -92,9 +93,9 @@ export function Footer() {
           <div>
             <h3 className="mb-4 font-bold text-white">Hubungi Kami</h3>
             <ul className="space-y-2.5 text-sm text-white/60">
-              <li>📧 adupintar.id@gmail.com</li>
-              <li>📱 +62 813 9509 8825</li>
-              <li>📍 Jakarta, Indonesia</li>
+              <li>📧 {CONTACT.EMAIL}</li>
+              <li>📱 {CONTACT.WHATSAPP_DISPLAY}</li>
+              <li>📍 {CONTACT.LOCATION}</li>
             </ul>
             <p className="mt-4 text-xs text-white/40 leading-relaxed">
               Ada pertanyaan? Hubungi kami via WhatsApp atau email. Kami siap membantu!

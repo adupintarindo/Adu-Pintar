@@ -1,4 +1,6 @@
 export default function DashboardLoading() {
+  const weeklyBars = [36, 58, 72, 45, 66, 52, 80]
+
   return (
     <main className="relative min-h-screen overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
       <section className="relative z-10 mx-auto max-w-6xl space-y-10 px-4 py-10 sm:px-6 lg:px-8">
@@ -68,7 +70,7 @@ export default function DashboardLoading() {
                 <div key={i} className="flex flex-1 flex-col items-center gap-2">
                   <div
                     className="w-5 rounded-full bg-muted skeleton-shimmer"
-                    style={{ height: `${30 + Math.random() * 70}%` }}
+                    style={{ height: `${weeklyBars[i % weeklyBars.length]}%` }}
                   />
                   <div className="h-3 w-6 rounded-full bg-muted skeleton-shimmer" />
                 </div>

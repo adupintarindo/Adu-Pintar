@@ -7,7 +7,12 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
   error: 3,
 }
 
-const currentLevel: LogLevel = (process.env.LOG_LEVEL as LogLevel) || "info"
+const VALID_LOG_LEVELS: readonly LogLevel[] = ["debug", "info", "warn", "error"]
+
+const rawLevel = process.env.LOG_LEVEL
+const currentLevel: LogLevel = rawLevel && VALID_LOG_LEVELS.includes(rawLevel as LogLevel)
+  ? (rawLevel as LogLevel)
+  : "info"
 
 function shouldLog(level: LogLevel): boolean {
   return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[currentLevel]

@@ -341,23 +341,42 @@ export default function LoginPage() {
       />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
-        <div className="w-full max-w-lg">
-          <div className="mb-8 flex flex-col items-center animate-fade-up">
+        <div className="mx-auto w-full max-w-5xl lg:grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-10">
+          {/* Illustration panel - only for large desktop */}
+          <aside className="hidden xl:flex flex-col items-center justify-center">
             <Image
-              src="/adu_pintar_logo_horizontal_dark.png"
-              alt="Adu Pintar"
-              width={220}
-              height={72}
-              className="object-contain h-16 w-auto"
+              src="/illustrations/login-welcome.svg"
+              alt="Ilustrasi selamat datang"
+              width={340}
+              height={440}
+              className="h-auto w-full max-w-[320px] drop-shadow-xl animate-fade-up"
               priority
             />
-          </div>
-
-          <div className="glass-card card-accent-top rounded-3xl p-8 shadow-lg animate-fade-up" style={{ animationDelay: "100ms" }}>
-            <div className="mb-8 text-center">
-              <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Masuk Adu Pintar</h1>
-              <p className="mt-2 text-muted-foreground">Pilih jenis akun untuk melanjutkan</p>
+            <div className="mt-5 max-w-[18rem] text-center animate-fade-up" style={{ animationDelay: "150ms" }}>
+              <p className="font-display text-xl font-bold text-foreground">Selamat Datang Kembali!</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">Masuk dan lanjutkan petualangan belajarmu</p>
             </div>
+          </aside>
+
+          <section className="w-full max-w-lg mx-auto">
+            <div className="mb-8 flex flex-col items-center animate-fade-up">
+              <Link href="/" aria-label="Kembali ke beranda Adu Pintar">
+                <Image
+                  src="/adu_pintar_logo_horizontal_dark.png"
+                  alt="Adu Pintar"
+                  width={220}
+                  height={72}
+                  className="object-contain h-16 w-auto"
+                  priority
+                />
+              </Link>
+            </div>
+
+            <div className="glass-card card-accent-top rounded-3xl p-8 shadow-lg animate-fade-up" style={{ animationDelay: "100ms" }}>
+              <div className="mb-8 text-center">
+                <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Masuk Adu Pintar</h1>
+                <p className="mt-2 text-muted-foreground">Pilih jenis akun untuk melanjutkan</p>
+              </div>
 
             <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl border border-border/40 bg-card/40 p-1">
               <button
@@ -542,7 +561,6 @@ export default function LoginPage() {
                       onClick={() => setShowPin((prev) => !prev)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition active:scale-95"
                       aria-label={showPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
-                      tabIndex={-1}
                     >
                       {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -656,7 +674,6 @@ export default function LoginPage() {
                       onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition active:scale-95"
                       aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                      tabIndex={-1}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -692,11 +709,11 @@ export default function LoginPage() {
                 Daftar di sini
               </Link>
             </div>
-          </div>
-
-          <div className="mt-8 text-center text-sm text-muted-foreground animate-fade-up" style={{ animationDelay: "200ms" }}>
-            <p>Platform Quiz Pertanian untuk Pelajar Indonesia</p>
-          </div>
+            </div>
+            <div className="mt-8 text-center text-sm text-muted-foreground animate-fade-up" style={{ animationDelay: "200ms" }}>
+              <p>Platform Quiz Pertanian untuk Pelajar Indonesia</p>
+            </div>
+          </section>
         </div>
       </div>
     </main>

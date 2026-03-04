@@ -10,14 +10,15 @@ import {
   Trophy,
   Users,
 } from "lucide-react"
+import Image from "next/image"
 
 import { Navbar } from "@/components/navbar"
 
 const heroStats = [
-  { label: "Sekolah Terdaftar", value: "500+", icon: Building2, tone: "from-blue-500/20 to-cyan-500/10" },
+  { label: "Sekolah Terdaftar", value: "500+", icon: Building2, tone: "from-primary/20 to-accent/10" },
   { label: "Siswa Aktif", value: "25.000+", icon: Users, tone: "from-emerald-500/20 to-lime-500/10" },
-  { label: "Pertandingan", value: "120.000+", icon: Trophy, tone: "from-lime-500/20 to-yellow-500/10" },
-  { label: "Sebaran Wilayah", value: "34 Provinsi", icon: Globe2, tone: "from-fuchsia-500/20 to-violet-500/10" },
+  { label: "Pertandingan", value: "120.000+", icon: Trophy, tone: "from-lime-500/20 to-emerald-500/10" },
+  { label: "Sebaran Wilayah", value: "34 Provinsi", icon: Globe2, tone: "from-accent/20 to-teal-500/10" },
 ]
 
 const strategicChanges = [
@@ -78,6 +79,16 @@ export default function ImpactPage() {
 
           <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-4xl text-center">
+              <div className="mx-auto mb-6 w-44 sm:w-56">
+                <Image
+                  src="/illustrations/impact-map.svg"
+                  alt="Ilustrasi peta dampak Adu Pintar di seluruh Indonesia"
+                  width={400}
+                  height={300}
+                  className="h-auto w-full drop-shadow-md"
+                  priority
+                />
+              </div>
               <span className="section-badge inline-flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
                 Dampak Adu Pintar
@@ -150,6 +161,7 @@ export default function ImpactPage() {
 
               <div className="rounded-2xl border border-border/50 bg-background p-4">
                 <svg viewBox="0 0 460 220" className="h-auto w-full" role="img" aria-label="Peta persebaran sekolah mitra Adu Pintar di Indonesia (ilustrasi)">
+                  <title>Peta sebaran implementasi Adu Pintar di seluruh Indonesia</title>
                   <rect x="0" y="0" width="460" height="220" rx="16" fill="rgba(148,163,184,0.08)" />
                   <path d="M24 110 C 40 86, 72 84, 90 98 S 124 124, 138 116" fill="none" stroke="currentColor" strokeWidth="12" className="text-primary/50" strokeLinecap="round" />
                   <path d="M138 146 C 168 144, 196 146, 228 150" fill="none" stroke="currentColor" strokeWidth="10" className="text-primary/60" strokeLinecap="round" />
@@ -159,9 +171,10 @@ export default function ImpactPage() {
                   <path d="M244 162 C 254 160, 270 162, 284 168" fill="none" stroke="currentColor" strokeWidth="6" className="text-primary/50" strokeLinecap="round" />
 
                   {mapRegions.map((region) => (
-                    <g key={region.label}>
+                    <g key={region.label} role="img" aria-label={`${region.label}: ${region.coverage}`}>
                       <circle cx={region.x} cy={region.y} r="6" className="fill-primary" />
                       <circle cx={region.x} cy={region.y} r="14" className="fill-primary/10" />
+                      <text x={region.x} y={region.y - 18} textAnchor="middle" className="fill-foreground text-[8px] font-semibold">{region.label}</text>
                     </g>
                   ))}
                 </svg>

@@ -42,25 +42,25 @@ const whatWeDo = [
     title: "Suara Pelajar",
     description: "Memfasilitasi pelajar untuk menyampaikan isu lapangan dan tantangan belajar pertanian.",
     icon: GraduationCap,
-    tone: "from-emerald-500/15 to-lime-400/10",
+    tone: "from-primary/15 to-accent/10",
   },
   {
     title: "Laporan & Analisis",
     description: "Mengumpulkan data performa dan menyajikannya dalam laporan, analisis, serta infografis.",
     icon: BarChart3,
-    tone: "from-sky-500/15 to-cyan-400/10",
+    tone: "from-accent/15 to-secondary/10",
   },
   {
     title: "Dukungan Sekolah",
     description: "Mendukung kebijakan sekolah agar program belajar lebih efektif, tepat sasaran, dan bebas bias.",
     icon: Building2,
-    tone: "from-lime-500/18 to-yellow-400/10",
+    tone: "from-accent/18 to-primary/10",
   },
   {
     title: "Kolaborasi Multi-Pihak",
     description: "Menjalin kolaborasi dengan pemerintah daerah, organisasi masyarakat sipil, dan media pendidikan.",
     icon: Handshake,
-    tone: "from-fuchsia-500/15 to-violet-400/10",
+    tone: "from-secondary/15 to-accent/10",
   },
 ]
 
@@ -69,25 +69,25 @@ const heroStats = [
     label: "Inisiator Lintas Profesi",
     value: "9+",
     icon: Users,
-    tone: "from-emerald-500/18 to-lime-500/10",
+    tone: "from-primary/18 to-accent/10",
   },
   {
     label: "Fokus Utama",
     value: "Literasi Pertanian",
     icon: Leaf,
-    tone: "from-lime-500/18 to-emerald-500/10",
+    tone: "from-accent/18 to-primary/10",
   },
   {
     label: "Nilai Kerja",
     value: "Transparan",
     icon: ShieldCheck,
-    tone: "from-blue-500/18 to-cyan-500/10",
+    tone: "from-accent/18 to-secondary/10",
   },
   {
     label: "Cakupan",
     value: "Sekolah • Komunitas",
     icon: Globe2,
-    tone: "from-fuchsia-500/15 to-violet-500/10",
+    tone: "from-secondary/15 to-accent/10",
   },
 ]
 
@@ -174,13 +174,13 @@ function getInitiatorTheme(role: string): InitiatorTheme {
     return {
       label: "Kesehatan",
       icon: Stethoscope,
-      accentBarClass: "from-cyan-500/90 via-sky-400/80 to-emerald-300/80",
-      glowClass: "bg-cyan-400/20",
-      avatarClass: "from-cyan-500/15 via-sky-500/10 to-background",
-      avatarBorderClass: "border-cyan-500/20",
-      badgeClass: "border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
-      dotClass: "bg-cyan-500",
-      iconClass: "text-cyan-600 dark:text-cyan-300",
+      accentBarClass: "from-teal-500/90 via-teal-400/80 to-emerald-300/80",
+      glowClass: "bg-teal-400/20",
+      avatarClass: "from-teal-500/15 via-teal-400/10 to-background",
+      avatarBorderClass: "border-teal-500/20",
+      badgeClass: "border-teal-500/20 bg-teal-500/10 text-teal-700 dark:text-teal-300",
+      dotClass: "bg-teal-500",
+      iconClass: "text-teal-600 dark:text-teal-300",
     }
   }
 
@@ -188,13 +188,13 @@ function getInitiatorTheme(role: string): InitiatorTheme {
     return {
       label: "Data & Teknologi",
       icon: Database,
-      accentBarClass: "from-indigo-500/90 via-blue-500/80 to-cyan-300/80",
-      glowClass: "bg-indigo-400/20",
-      avatarClass: "from-indigo-500/15 via-blue-500/10 to-background",
-      avatarBorderClass: "border-indigo-500/20",
-      badgeClass: "border-indigo-500/20 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300",
-      dotClass: "bg-indigo-500",
-      iconClass: "text-indigo-600 dark:text-indigo-300",
+      accentBarClass: "from-sky-500/90 via-sky-400/80 to-teal-300/80",
+      glowClass: "bg-sky-400/20",
+      avatarClass: "from-sky-500/15 via-sky-400/10 to-background",
+      avatarBorderClass: "border-sky-500/20",
+      badgeClass: "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300",
+      dotClass: "bg-sky-500",
+      iconClass: "text-sky-600 dark:text-sky-300",
     }
   }
 
@@ -216,9 +216,9 @@ function getInitiatorTheme(role: string): InitiatorTheme {
     return {
       label: "Ekonomi",
       icon: BarChart3,
-      accentBarClass: "from-lime-500/90 via-yellow-400/80 to-emerald-300/80",
+      accentBarClass: "from-lime-500/90 via-lime-400/80 to-emerald-300/80",
       glowClass: "bg-lime-400/20",
-      avatarClass: "from-lime-500/15 via-yellow-500/10 to-background",
+      avatarClass: "from-lime-500/15 via-lime-400/10 to-background",
       avatarBorderClass: "border-lime-500/20",
       badgeClass: "border-lime-500/20 bg-lime-500/10 text-lime-700 dark:text-lime-300",
       dotClass: "bg-lime-500",
@@ -255,7 +255,7 @@ export default function AboutPage() {
             aria-hidden="true"
           />
           <div
-            className="pointer-events-none absolute -bottom-32 left-1/4 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl"
+            className="pointer-events-none absolute -bottom-32 left-1/4 h-72 w-72 rounded-full bg-accent/10 blur-3xl"
             aria-hidden="true"
           />
           <div
@@ -319,6 +319,17 @@ export default function AboutPage() {
               <div className="relative flex items-center justify-center lg:justify-end">
                 <div className="relative w-full max-w-xl">
                   <div className="pointer-events-none absolute inset-x-8 top-8 h-40 rounded-[2rem] bg-primary/15 blur-2xl" />
+
+                  {/* Mission illustration */}
+                  <div className="mb-5 overflow-hidden rounded-2xl border border-border/40 bg-card/30 p-3">
+                    <Image
+                      src="/illustrations/about-mission.svg"
+                      alt="Ilustrasi kolaborasi anak-anak Indonesia belajar pertanian"
+                      width={600}
+                      height={350}
+                      className="h-auto w-full rounded-xl"
+                    />
+                  </div>
 
                   <div className="glass-card relative overflow-hidden rounded-[1.75rem] border border-border/60 p-5 sm:p-6">
                     <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/8 via-transparent to-accent/12" />
@@ -584,13 +595,14 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3" role="list" aria-label="Daftar inisiator Adu Pintar">
               {initiators.map((person) => (
-                <div
+                <article
                   key={person.name}
+                  role="listitem"
                   className="glass-card hover-lift card-accent-top relative overflow-hidden rounded-2xl p-6 flex flex-col items-center text-center"
                 >
-                  <div className="mb-4 h-32 w-32 rounded-2xl bg-linear-to-br from-muted to-card border border-border/50 flex items-center justify-center text-3xl font-semibold text-muted-foreground shadow-sm">
+                  <div className="mb-4 h-32 w-32 rounded-2xl bg-linear-to-br from-muted to-card border border-border/50 flex items-center justify-center text-3xl font-semibold text-muted-foreground shadow-sm" aria-hidden="true">
                     {person.name
                       .split(" ")
                       .slice(0, 2)
@@ -599,7 +611,7 @@ export default function AboutPage() {
                   </div>
                   <p className="font-display font-semibold text-foreground">{person.name}</p>
                   <p className="mt-1 text-sm text-muted-foreground">{person.role}</p>
-                </div>
+                </article>
               ))}
             </div>
           </div>

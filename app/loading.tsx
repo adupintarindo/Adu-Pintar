@@ -3,12 +3,12 @@ import Image from "next/image"
 export default function GlobalLoading() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4" style={{ background: "var(--gradient-hero)" }}>
-      <div className="orb-decoration pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
-      <div className="orb-decoration pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
+      <div className="orb-decoration pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
+      <div className="orb-decoration pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-accent/15 blur-3xl" aria-hidden="true" />
 
       <div className="glass-card relative w-full max-w-sm rounded-3xl p-8 text-center animate-fade-up">
         <Image
-          src="/adu_pintar_symbol_dark.png"
+          src="/adu_pintar_appicon_dark.png"
           alt="Adu Pintar"
           width={64}
           height={64}

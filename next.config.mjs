@@ -71,7 +71,7 @@ const nextConfig = {
         ],
       },
       {
-        source: "/api/admin/questions/:path*",
+        source: "/api/admin/:path*",
         headers: [
           {
             key: "Cache-Control",

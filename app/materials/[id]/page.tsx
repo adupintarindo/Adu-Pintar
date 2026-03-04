@@ -328,8 +328,8 @@ export default function MaterialDetailPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
-      <div className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/3 -left-12 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute top-1/3 -left-12 h-80 w-80 rounded-full bg-accent/10 blur-3xl" aria-hidden="true" />
 
       <Navbar />
 

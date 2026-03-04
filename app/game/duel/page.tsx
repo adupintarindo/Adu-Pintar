@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
+import Image from "next/image"
 import { Navbar } from "@/components/navbar"
 import { fetchWithCsrf } from "@/lib/client-security"
 import { trackEvent } from "@/lib/analytics"
@@ -11,17 +12,17 @@ const gradeOptions = [
   {
     value: "SD",
     label: "Sekolah Dasar",
-    description: "Yuk kenalan sama dunia pertanian. Sederhana dan gampang dipahami.",
+    description: "Yuk kenalan sama dunia pertanian! Soalnya mudah dan seru.",
   },
   {
     value: "SMP",
     label: "Sekolah Menengah Pertama",
-    description: "Pelajari cara menanam yang lebih canggih, rahasia tanah subur, dan kehidupan di kebun.",
+    description: "Soal lebih menantang tentang cara menanam, tanah, dan kehidupan kebun.",
   },
   {
     value: "SMA",
     label: "Sekolah Menengah Atas",
-    description: "Kuasai strategi pertanian modern, teknologi canggih, dan analisis data kebun.",
+    description: "Soal paling menantang tentang pertanian modern dan teknologi kebun.",
   },
 ] as const
 
@@ -133,12 +134,22 @@ export default function DuelPage() {
         <section className="mx-auto max-w-6xl px-4 py-12">
           {/* Header */}
           <header className="mx-auto max-w-3xl text-center">
+            <div className="mx-auto mb-6 w-48 sm:w-60">
+              <Image
+                src="/illustrations/game-duel.svg"
+                alt="Ilustrasi dua anak berlomba menjawab kuis"
+                width={400}
+                height={300}
+                className="h-auto w-full drop-shadow-md"
+                priority
+              />
+            </div>
             <div className="section-badge">Mode Duel</div>
             <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
-              Siapkan Duel 1v1 Terbaikmu
+              Ayo Mulai Duel!
             </h1>
             <p className="mt-4 text-muted-foreground">
-              Pilih mode, pilih tingkat kelas, lalu mulai duel.
+              Pilih mode bermain, pilih kelas kamu, lalu mulai duel seru.
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               {duelQuickFacts.map((fact) => (
@@ -333,7 +344,7 @@ export default function DuelPage() {
             </div>
 
             {error ? (
-              <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <div role="alert" aria-live="assertive" className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {error}
               </div>
             ) : null}

@@ -35,7 +35,7 @@ export default function TeamDetailsPage() {
             </div>
             <div className="glass-card rounded-2xl p-3 text-center">
               <div className="font-display text-2xl font-bold text-primary">2</div>
-              <div className="text-xs text-muted-foreground">Kalah</div>
+              <div className="text-xs text-muted-foreground">Belum Menang</div>
             </div>
             <div className="glass-card rounded-2xl p-3 text-center">
               <div className="font-display text-2xl font-bold text-primary">1250</div>

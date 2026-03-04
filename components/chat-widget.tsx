@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { MessageCircle, Send, X, CheckCircle2 } from "lucide-react"
+import { CONTACT } from "@/lib/constants"
 
 type FormState = "idle" | "sending" | "sent"
 
@@ -29,7 +30,7 @@ export function ChatWidget() {
     const whatsappText = encodeURIComponent(
       `Halo Adu Pintar!\n\nNama: ${name.trim()}\nPesan: ${message.trim()}`
     )
-    window.open(`https://wa.me/6281395098825?text=${whatsappText}`, "_blank")
+    window.open(`https://wa.me/${CONTACT.WHATSAPP_NUMBER}?text=${whatsappText}`, "_blank")
 
     setFormState("sent")
     setName("")
@@ -41,11 +42,11 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 left-4 right-4 z-50 sm:bottom-6 sm:left-auto sm:right-6">
       {isOpen && (
         <div
           id="chat-widget-panel"
-          className="mb-4 w-[320px] sm:w-[360px] rounded-2xl bg-card shadow-2xl border border-border flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
+          className="mb-4 w-[calc(100vw-2rem)] max-w-[360px] rounded-2xl bg-card shadow-2xl border border-border flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200"
         >
           <div
             style={{ background: "var(--color-brand-dark, #0D3E2D)" }}

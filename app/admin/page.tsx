@@ -4,28 +4,39 @@ import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   BarChart3,
+  BookOpen,
   CalendarDays,
   CheckCircle2,
   ClipboardList,
+  FileText,
+  Gamepad2,
   Loader2,
+  Medal,
   Plus,
   RefreshCw,
   School,
   Search,
   Shield,
+  Swords,
   TrendingUp,
   Trophy,
   Users,
   XCircle,
 } from "lucide-react"
 
+import { AuditLogsTab } from "@/components/admin/audit-logs-tab"
+import { GameSessionsTab } from "@/components/admin/game-sessions-tab"
+import { LeaderboardTab } from "@/components/admin/leaderboard-tab"
+import { ModulesTab } from "@/components/admin/modules-tab"
 import { MonitoringDashboard } from "@/components/admin/monitoring-dashboard"
 import { QuestionImport } from "@/components/admin/question-import"
+import { StudentsTab } from "@/components/admin/students-tab"
+import { TeamsTab } from "@/components/admin/teams-tab"
 import { Navbar } from "@/components/navbar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-type AdminTab = "users" | "questions" | "competitions" | "analytics" | "monitoring"
+type AdminTab = "users" | "students" | "questions" | "competitions" | "game-sessions" | "teams" | "modules" | "leaderboard" | "analytics" | "monitoring" | "audit-logs"
 type SchoolStatus = "pending" | "verified" | "suspended"
 type Difficulty = "mudah" | "menengah" | "sulit"
 type CompetitionStatus = "upcoming" | "active" | "completed"
@@ -580,7 +591,7 @@ export default function AdminPage() {
                   Manajemen Platform Adu Pintar
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Tab Users, Questions, Competitions, dan Analytics tersambung ke API admin dengan fallback runtime.
+                  Kelola sekolah, siswa, soal, modul, game, tim, kompetisi, dan lihat monitoring/analytics dari Supabase.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -620,19 +631,37 @@ export default function AdminPage() {
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AdminTab)}>
             <TabsList className="mb-6 h-auto w-full flex-wrap justify-start gap-2 rounded-2xl bg-muted p-2">
               <TabsTrigger value="users" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
-                Users
+                <School className="mr-1.5 h-3.5 w-3.5" /> Sekolah
+              </TabsTrigger>
+              <TabsTrigger value="students" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
+                <Users className="mr-1.5 h-3.5 w-3.5" /> Siswa
               </TabsTrigger>
               <TabsTrigger value="questions" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
-                Questions
+                <ClipboardList className="mr-1.5 h-3.5 w-3.5" /> Soal
+              </TabsTrigger>
+              <TabsTrigger value="modules" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
+                <BookOpen className="mr-1.5 h-3.5 w-3.5" /> Modul
+              </TabsTrigger>
+              <TabsTrigger value="game-sessions" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
+                <Gamepad2 className="mr-1.5 h-3.5 w-3.5" /> Game
+              </TabsTrigger>
+              <TabsTrigger value="teams" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
+                <Swords className="mr-1.5 h-3.5 w-3.5" /> Tim
               </TabsTrigger>
               <TabsTrigger value="competitions" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
-                Competitions
+                <Trophy className="mr-1.5 h-3.5 w-3.5" /> Kompetisi
+              </TabsTrigger>
+              <TabsTrigger value="leaderboard" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
+                <Medal className="mr-1.5 h-3.5 w-3.5" /> Peringkat
               </TabsTrigger>
               <TabsTrigger value="monitoring" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
-                Monitoring
+                <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Monitoring
               </TabsTrigger>
               <TabsTrigger value="analytics" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
-                Analytics
+                <TrendingUp className="mr-1.5 h-3.5 w-3.5" /> Analytics
+              </TabsTrigger>
+              <TabsTrigger value="audit-logs" className="rounded-xl px-4 py-2 data-[state=active]:bg-background">
+                <FileText className="mr-1.5 h-3.5 w-3.5" /> Audit Log
               </TabsTrigger>
             </TabsList>
 
@@ -735,6 +764,10 @@ export default function AdminPage() {
                   </Table>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="students" className="space-y-6">
+              <StudentsTab />
             </TabsContent>
 
             <TabsContent value="questions" className="space-y-6">
@@ -1200,6 +1233,22 @@ export default function AdminPage() {
               </div>
             </TabsContent>
 
+            <TabsContent value="game-sessions" className="space-y-6">
+              <GameSessionsTab />
+            </TabsContent>
+
+            <TabsContent value="teams" className="space-y-6">
+              <TeamsTab />
+            </TabsContent>
+
+            <TabsContent value="modules" className="space-y-6">
+              <ModulesTab />
+            </TabsContent>
+
+            <TabsContent value="leaderboard" className="space-y-6">
+              <LeaderboardTab />
+            </TabsContent>
+
             <TabsContent value="monitoring" className="space-y-6">
               <MonitoringDashboard />
             </TabsContent>
@@ -1352,6 +1401,10 @@ export default function AdminPage() {
               ) : (
                 <SectionLoading label="Analytics belum tersedia..." />
               )}
+            </TabsContent>
+
+            <TabsContent value="audit-logs" className="space-y-6">
+              <AuditLogsTab />
             </TabsContent>
           </Tabs>
         </section>

@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" fill="none">
+  <defs>
+    <linearGradient id="doorG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D3E2D"/>
+      <stop offset="100%" stop-color="#0a2e22"/>
+    </linearGradient>
+    <linearGradient id="skinL" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5d0a9"/>
+      <stop offset="100%" stop-color="#e8b888"/>
+    </linearGradient>
+    <linearGradient id="lightGlow" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#fef3c7" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="400" fill="#f0fdf4"/>
+
+  <!-- Light glow from door -->
+  <ellipse cx="150" cy="200" rx="120" ry="150" fill="url(#lightGlow)" opacity="0.5"/>
+
+  <!-- Door frame -->
+  <rect x="70" y="60" width="160" height="260" rx="12" fill="#8B6914" opacity="0.3"/>
+  <rect x="78" y="65" width="144" height="250" rx="8" fill="url(#doorG)"/>
+
+  <!-- Door decoration - arch -->
+  <path d="M78 65 Q150 30 222 65" stroke="#6CA644" stroke-width="3" fill="none" opacity="0.5"/>
+
+  <!-- Vine on door frame left -->
+  <g opacity="0.7">
+    <path d="M75 80 Q68 120 72 160 Q65 200 70 240" stroke="#4a8c2a" stroke-width="2" fill="none"/>
+    <ellipse cx="68" cy="100" rx="8" ry="5" fill="#6CA644" transform="rotate(-20,68,100)"/>
+    <ellipse cx="65" cy="140" rx="7" ry="4.5" fill="#81c784" transform="rotate(15,65,140)"/>
+    <ellipse cx="67" cy="180" rx="8" ry="5" fill="#6CA644" transform="rotate(-10,67,180)"/>
+    <ellipse cx="63" cy="220" rx="6" ry="4" fill="#81c784" transform="rotate(20,63,220)"/>
+    <!-- Small flowers -->
+    <circle cx="60" cy="120" r="4" fill="#fbbf24" opacity="0.5"/>
+    <circle cx="60" cy="120" r="2" fill="#fef3c7"/>
+    <circle cx="58" cy="200" r="3.5" fill="#a78bfa" opacity="0.5"/>
+    <circle cx="58" cy="200" r="1.8" fill="#ede9fe"/>
+  </g>
+
+  <!-- Vine on door frame right -->
+  <g opacity="0.7">
+    <path d="M225 80 Q232 130 228 170 Q235 210 230 250" stroke="#4a8c2a" stroke-width="2" fill="none"/>
+    <ellipse cx="232" cy="110" rx="8" ry="5" fill="#6CA644" transform="rotate(25,232,110)"/>
+    <ellipse cx="235" cy="150" rx="7" ry="4.5" fill="#81c784" transform="rotate(-15,235,150)"/>
+    <ellipse cx="233" cy="190" rx="8" ry="5" fill="#6CA644" transform="rotate(10,233,190)"/>
+    <circle cx="240" cy="130" r="4" fill="#2dd4bf" opacity="0.5"/>
+    <circle cx="240" cy="130" r="2" fill="#ccfbf1"/>
+    <circle cx="238" cy="170" r="3.5" fill="#fbbf24" opacity="0.5"/>
+    <circle cx="238" cy="170" r="1.8" fill="#fef3c7"/>
+  </g>
+
+  <!-- Door handle -->
+  <circle cx="195" cy="195" r="6" fill="#d4a843" opacity="0.8"/>
+  <circle cx="195" cy="195" r="3.5" fill="#fbbf24" opacity="0.5"/>
+
+  <!-- Door window -->
+  <rect x="115" y="90" width="70" height="50" rx="6" fill="#14b8a6" opacity="0.2"/>
+  <rect x="118" y="93" width="30" height="44" rx="4" fill="#f0fdf4" opacity="0.3"/>
+  <rect x="152" y="93" width="30" height="44" rx="4" fill="#f0fdf4" opacity="0.3"/>
+
+  <!-- Kid waving -->
+  <g transform="translate(95,170)">
+    <!-- Body -->
+    <rect x="15" y="65" width="50" height="70" rx="14" fill="#6CA644"/>
+    <!-- Head -->
+    <circle cx="40" cy="40" r="28" fill="url(#skinL)"/>
+    <!-- Hair -->
+    <path d="M15 28 Q20 5 40 0 Q60 5 65 28 Q62 15 40 12 Q18 15 15 28Z" fill="#2c1810"/>
+    <!-- Eyes (happy) -->
+    <path d="M28 36 Q32 32 36 36" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M44 36 Q48 32 52 36" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Big smile -->
+    <path d="M27 48 Q40 60 53 48" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Teeth -->
+    <path d="M32 50 L48 50" stroke="white" stroke-width="4" stroke-linecap="round"/>
+    <!-- Blush -->
+    <ellipse cx="22" cy="44" rx="5" ry="3" fill="#fca5a5" opacity="0.2"/>
+    <ellipse cx="58" cy="44" rx="5" ry="3" fill="#fca5a5" opacity="0.2"/>
+
+    <!-- Left arm (waving!) -->
+    <g>
+      <rect x="-12" y="55" width="30" height="11" rx="5" fill="url(#skinL)" transform="rotate(-60,-12,55)"/>
+      <!-- Hand -->
+      <circle cx="-22" cy="30" r="8" fill="url(#skinL)"/>
+      <!-- Fingers -->
+      <rect x="-30" y="20" width="5" height="10" rx="2" fill="url(#skinL)" transform="rotate(10,-30,20)"/>
+      <rect x="-24" y="18" width="5" height="11" rx="2" fill="url(#skinL)"/>
+      <rect x="-18" y="19" width="5" height="10" rx="2" fill="url(#skinL)" transform="rotate(-5,-18,19)"/>
+      <rect x="-13" y="22" width="5" height="9" rx="2" fill="url(#skinL)" transform="rotate(-10,-13,22)"/>
+    </g>
+    <!-- Right arm -->
+    <rect x="60" y="80" width="22" height="11" rx="5" fill="url(#skinL)" transform="rotate(15,60,80)"/>
+
+    <!-- Legs -->
+    <rect x="22" y="130" width="14" height="30" rx="6" fill="#1e3a5f"/>
+    <rect x="44" y="130" width="14" height="30" rx="6" fill="#1e3a5f"/>
+    <!-- Shoes -->
+    <ellipse cx="29" cy="160" rx="10" ry="5" fill="white"/>
+    <ellipse cx="51" cy="160" rx="10" ry="5" fill="white"/>
+  </g>
+
+  <!-- Welcome text on doormat -->
+  <g transform="translate(100,335)">
+    <rect x="0" y="0" width="100" height="30" rx="5" fill="#8B6914" opacity="0.3"/>
+    <text x="50" y="20" font-family="sans-serif" font-size="11" fill="#0D3E2D" text-anchor="middle" font-weight="bold" opacity="0.6">SELAMAT DATANG</text>
+  </g>
+
+  <!-- Sparkles -->
+  <g fill="#fbbf24" opacity="0.4">
+    <path d="M50 100 L52 106 L58 106 L53 110 L55 116 L50 112 L45 116 L47 110 L42 106 L48 106Z" transform="scale(0.6)"/>
+    <path d="M250 80 L252 86 L258 86 L253 90 L255 96 L250 92 L245 96 L247 90 L242 86 L248 86Z" transform="scale(0.5)"/>
+    <path d="M260 280 L262 286 L268 286 L263 290 L265 296 L260 292 L255 296 L257 290 L252 286 L258 286Z" transform="scale(0.6)"/>
+  </g>
+</svg>

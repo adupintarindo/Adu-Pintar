@@ -22,7 +22,10 @@ export function verifyPinToken(pin: string, storedValue: string): boolean {
   if (!storedValue) return false
 
   if (!storedValue.startsWith(`${PIN_PREFIX}$`)) {
-    return storedValue === pin
+    const a = Buffer.from(storedValue, "utf8")
+    const b = Buffer.from(pin, "utf8")
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
   }
 
   const segments = storedValue.split("$")

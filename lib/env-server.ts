@@ -21,10 +21,6 @@ export const serverEnv = serverEnvSchema.parse({
 })
 
 export function validateCriticalServerEnv() {
-  if (serverEnv.NODE_ENV !== "production") {
-    return
-  }
-
   const missing: string[] = []
 
   if (!serverEnv.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL")
@@ -32,7 +28,11 @@ export function validateCriticalServerEnv() {
   if (!serverEnv.SUPABASE_SERVICE_ROLE_KEY) missing.push("SUPABASE_SERVICE_ROLE_KEY")
   if (!serverEnv.SESSION_COOKIE_SECRET) missing.push("SESSION_COOKIE_SECRET")
 
-  if (missing.length > 0) {
+  if (missing.length === 0) return
+
+  if (serverEnv.NODE_ENV === "production") {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
   }
+
+  console.warn(`[env] Missing environment variables (dev): ${missing.join(", ")}`)
 }

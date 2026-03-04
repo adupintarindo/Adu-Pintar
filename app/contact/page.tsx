@@ -2,10 +2,12 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import Image from "next/image"
 import { Instagram, Mail, MessageCircle, Phone, Send, ShieldCheck } from "lucide-react"
 
 import { Navbar } from "@/components/navbar"
 import { fetchWithCsrf } from "@/lib/client-security"
+import { CONTACT } from "@/lib/constants"
 
 type ContactCategory = "umum" | "kemitraan" | "sponsor" | "sekolah"
 
@@ -116,8 +118,8 @@ export default function ContactPage() {
       <Navbar />
       <main className="min-h-screen bg-background">
         <section className="relative overflow-hidden border-b border-border/50" style={{ background: "var(--gradient-hero)" }}>
-          <div className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
-          <div className="pointer-events-none absolute -right-16 top-8 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
+          <div className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-primary/15 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -right-16 top-8 h-64 w-64 rounded-full bg-accent/10 blur-3xl" aria-hidden="true" />
 
           <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-3xl text-center">
@@ -154,6 +156,8 @@ export default function ContactPage() {
               )}
               {status && (
                 <div
+                  role="alert"
+                  aria-live="polite"
                   className={`rounded-2xl border px-4 py-3 text-sm ${
                     status.type === "success"
                       ? "border-primary/30 bg-primary/10 text-primary"
@@ -171,10 +175,12 @@ export default function ContactPage() {
                 <input
                   id="contact-name"
                   type="text"
+                  required
+                  autoComplete="name"
                   value={form.name}
                   onChange={handleChange("name")}
                   placeholder="Nama lengkap"
-                  className="mt-2 h-12 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
+                  className="mt-2 h-12 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -185,10 +191,12 @@ export default function ContactPage() {
                 <input
                   id="contact-email"
                   type="email"
+                  required
+                  autoComplete="email"
                   value={form.email}
                   onChange={handleChange("email")}
                   placeholder="email@domain.com"
-                  className="mt-2 h-12 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
+                  className="mt-2 h-12 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -200,7 +208,7 @@ export default function ContactPage() {
                   id="contact-category"
                   value={form.category}
                   onChange={handleChange("category")}
-                  className="mt-2 h-12 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
+                  className="mt-2 h-12 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   {categoryOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -217,10 +225,11 @@ export default function ContactPage() {
                 <textarea
                   id="contact-message"
                   rows={6}
+                  required
                   value={form.message}
                   onChange={handleChange("message")}
                   placeholder="Jelaskan kebutuhan, kendala, atau tujuan kolaborasi Anda."
-                  className="mt-2 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary"
+                  className="mt-2 w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none ring-0 transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -258,8 +267,8 @@ export default function ContactPage() {
                     <Phone className="mt-0.5 h-4 w-4 text-primary" />
                     <div>
                       <p className="text-sm font-semibold text-foreground">WhatsApp</p>
-                      <a href="https://wa.me/6281395098825" target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
-                        +62 813 9509 8825
+                      <a href={`https://wa.me/${CONTACT.WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
+                        {CONTACT.WHATSAPP_DISPLAY}
                       </a>
                     </div>
                   </div>
@@ -299,6 +308,17 @@ export default function ContactPage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Contact illustration */}
+            <div className="hidden lg:block overflow-hidden rounded-3xl border border-border/50 bg-card/30 p-4">
+              <Image
+                src="/illustrations/contact-message.svg"
+                alt="Ilustrasi mengirim pesan"
+                width={400}
+                height={300}
+                className="h-auto w-full rounded-xl"
+              />
             </div>
           </div>
         </section>

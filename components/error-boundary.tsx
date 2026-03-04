@@ -68,7 +68,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
           {/* Recovery steps */}
           <ol className="mb-6 list-inside list-decimal space-y-1 text-left text-sm text-muted-foreground">
-            <li>Tekan tombol <strong>"Coba Lagi"</strong> di bawah</li>
+            <li>Tekan tombol <strong>&quot;Coba Lagi&quot;</strong> di bawah</li>
             <li>Kalau masih error, coba muat ulang halaman</li>
             <li>Periksa koneksi internet kamu</li>
           </ol>

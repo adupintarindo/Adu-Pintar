@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 interface AnimatedNumberProps {
   value: number
@@ -30,33 +30,7 @@ export function AnimatedNumber({
   const [hasAnimated, setHasAnimated] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el || hasAnimated) return
-
-    // Respect reduced motion
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (prefersReducedMotion) {
-      setDisplay(value)
-      setHasAnimated(true)
-      return
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          observer.unobserve(el)
-          animate()
-        }
-      },
-      { threshold: 0.3 },
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [value, hasAnimated])
-
-  function animate() {
+  const animate = useCallback(() => {
     const startTime = performance.now()
     const startValue = 0
     const endValue = value
@@ -78,7 +52,35 @@ export function AnimatedNumber({
     }
 
     requestAnimationFrame(tick)
-  }
+  }, [duration, value])
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || hasAnimated) return
+
+    // Respect reduced motion
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (prefersReducedMotion) {
+      const frame = requestAnimationFrame(() => {
+        setDisplay(value)
+        setHasAnimated(true)
+      })
+      return () => cancelAnimationFrame(frame)
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          observer.unobserve(el)
+          animate()
+        }
+      },
+      { threshold: 0.3 },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [animate, hasAnimated, value])
 
   const formatted = format ? format(display) : display.toLocaleString("id-ID")
 

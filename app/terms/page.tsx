@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 
 import { Navbar } from "@/components/navbar"
+import { CONTACT } from "@/lib/constants"
 
 const agreementHighlights = [
   {
@@ -228,7 +229,7 @@ export default function TermsPage() {
               <a href="mailto:legal@agrikulturquiz.id" className="font-semibold text-primary underline">
                 legal@agrikulturquiz.id
               </a>{" "}
-              atau WhatsApp resmi Adu Pintar di +62 811-2222-733 untuk klarifikasi terkait dokumen ini.
+              atau WhatsApp resmi Adu Pintar di {CONTACT.WHATSAPP_DISPLAY} untuk klarifikasi terkait dokumen ini.
             </p>
             <p className="mt-4 text-sm text-muted-foreground">
               Dengan terus menggunakan platform dan mengikuti event kami, Anda menyetujui seluruh Syarat & Ketentuan di

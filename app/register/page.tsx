@@ -7,8 +7,6 @@ import { useRouter } from "next/navigation"
 import type { LucideIcon } from "lucide-react"
 import {
   AlertCircle,
-  Eye,
-  EyeOff,
   GraduationCap,
   Info,
   UserCheck,
@@ -57,6 +55,10 @@ const SCHOOL_OPTIONS: SchoolOption[] = [
   { grade: "SMA", name: "SMA Negeri 5 Surabaya", city: "Surabaya", province: "Jawa Timur" },
 ] as const
 
+const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" ")
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const phoneRegex = /^(?:\+62|62|0)\d{8,13}$/
+
 type RegisterFormData = {
   username: string
   name: string
@@ -74,6 +76,60 @@ type RegisterFormData = {
   phoneNumber: string
   npsn: string
   role: "student" | "teacher" | "school"
+}
+
+type RegisterFieldKey =
+  | "name"
+  | "username"
+  | "email"
+  | "password"
+  | "confirmPassword"
+  | "npsn"
+  | "dateOfBirth"
+  | "className"
+  | "schoolName"
+  | "schoolProvince"
+  | "schoolCity"
+  | "city"
+  | "phoneNumber"
+
+const REGISTER_FIELD_ID_MAP: Record<RegisterFieldKey, string> = {
+  name: "name",
+  username: "username",
+  email: "email",
+  password: "password",
+  confirmPassword: "confirmPassword",
+  npsn: "npsn",
+  dateOfBirth: "dateOfBirth",
+  className: "className",
+  schoolName: "schoolName",
+  schoolProvince: "schoolProvinceInput",
+  schoolCity: "schoolCityInput",
+  city: "city",
+  phoneNumber: "phoneNumber",
+}
+
+const FIELD_STEP_MAP: Record<RegisterFieldKey, 1 | 2 | 3 | 4> = {
+  name: 1,
+  username: 1,
+  email: 1,
+  password: 1,
+  confirmPassword: 1,
+  npsn: 2,
+  dateOfBirth: 2,
+  className: 2,
+  schoolName: 3,
+  schoolProvince: 3,
+  schoolCity: 3,
+  city: 4,
+  phoneNumber: 4,
+}
+
+const STEP_FIELD_ORDER: Record<1 | 2 | 3 | 4, RegisterFieldKey[]> = {
+  1: ["name", "username", "email", "password", "confirmPassword"],
+  2: ["npsn", "dateOfBirth", "className"],
+  3: ["schoolName", "schoolProvince", "schoolCity"],
+  4: ["city", "phoneNumber"],
 }
 
 const STUDENT_TEACHER_STEP_LABELS = ["Akun", "Personal", "Sekolah", "Kontak", "Tinjau"] as const
@@ -102,6 +158,7 @@ export default function RegisterPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<RegisterFieldKey, string>>>({})
   const [pendingVerification, setPendingVerification] = useState<{
     schoolName: string
     email: string
@@ -175,15 +232,125 @@ export default function RegisterPage() {
     },
   ] as const
 
+  const clearFieldError = (field: RegisterFieldKey) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
+
+  const focusInvalidField = (field: RegisterFieldKey) => {
+    const targetId = REGISTER_FIELD_ID_MAP[field]
+    if (field === "schoolProvince") {
+      setShowProvinceDropdown(true)
+    }
+    if (field === "schoolCity") {
+      setShowCitiesDropdown(true)
+    }
+    window.setTimeout(() => {
+      const target = document.getElementById(targetId) as HTMLInputElement | HTMLSelectElement | null
+      target?.focus()
+    }, 0)
+  }
+
+  const validateStep = (stepNumber: 1 | 2 | 3 | 4, data: RegisterFormData) => {
+    const nextErrors: Partial<Record<RegisterFieldKey, string>> = {}
+    const schoolRegistration = data.role === "school"
+
+    const assignError = (field: RegisterFieldKey, message: string) => {
+      if (!nextErrors[field]) {
+        nextErrors[field] = message
+      }
+    }
+
+    if (stepNumber === 1) {
+      if (!data.name.trim()) {
+        assignError("name", schoolRegistration ? "Nama PIC sekolah wajib diisi." : "Nama lengkap wajib diisi.")
+      }
+      if (!schoolRegistration && !data.username.trim()) {
+        assignError("username", "Nama pengguna wajib diisi.")
+      }
+      if (!data.email.trim()) {
+        assignError("email", "Email wajib diisi.")
+      } else if (!emailRegex.test(data.email.trim())) {
+        assignError("email", "Format email belum valid.")
+      }
+      if (!data.password) {
+        assignError("password", "Kata sandi wajib diisi.")
+      } else {
+        if (data.password.length < 8) {
+          assignError("password", "Kata sandi minimal 8 karakter.")
+        } else if (!/[a-zA-Z]/.test(data.password) || !/\d/.test(data.password)) {
+          assignError("password", "Kata sandi harus mengandung huruf dan angka.")
+        }
+      }
+      if (!data.confirmPassword) {
+        assignError("confirmPassword", "Konfirmasi kata sandi wajib diisi.")
+      } else if (data.password !== data.confirmPassword) {
+        assignError("confirmPassword", "Kata sandi tidak cocok.")
+      }
+    }
+
+    if (stepNumber === 2) {
+      if (schoolRegistration && data.npsn && !/^\d{8}$/.test(data.npsn)) {
+        assignError("npsn", "NPSN harus 8 digit angka.")
+      }
+      if (data.role === "student") {
+        if (!data.dateOfBirth) {
+          assignError("dateOfBirth", "Tanggal lahir wajib diisi.")
+        }
+        if (!data.className.trim()) {
+          assignError("className", "Kelas wajib diisi.")
+        }
+      }
+    }
+
+    if (stepNumber === 3) {
+      if (!data.schoolName.trim()) {
+        assignError("schoolName", "Nama sekolah wajib diisi.")
+      }
+      if (!data.schoolProvince.trim()) {
+        assignError("schoolProvince", "Provinsi sekolah wajib dipilih.")
+      }
+      if (!data.schoolCity.trim()) {
+        assignError("schoolCity", "Kota/Kabupaten sekolah wajib dipilih.")
+      }
+    }
+
+    if (stepNumber === 4) {
+      if (data.role === "student" && !data.city.trim()) {
+        assignError("city", "Kota/Kabupaten asal wajib diisi.")
+      }
+      if (!data.phoneNumber.trim()) {
+        assignError("phoneNumber", "Nomor handphone wajib diisi.")
+      } else if (!phoneRegex.test(data.phoneNumber.trim())) {
+        assignError("phoneNumber", "Format nomor handphone belum valid.")
+      }
+    }
+
+    const firstInvalidField = STEP_FIELD_ORDER[stepNumber].find((field) => nextErrors[field])
+    return {
+      nextErrors,
+      firstInvalidField,
+      message: firstInvalidField ? nextErrors[firstInvalidField] ?? "Periksa kembali data pendaftaran." : "",
+    }
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    if (name in REGISTER_FIELD_ID_MAP) {
+      clearFieldError(name as RegisterFieldKey)
+    }
     if (error) setError("")
   }
 
   const handleRoleSelect = (role: RegisterFormData["role"]) => {
     setFormData((prev) => ({ ...prev, role }))
     setStep(1)
+    setFieldErrors({})
     setError("")
   }
 
@@ -192,6 +359,9 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, schoolProvince: province, schoolCity: "" }))
     setProvincesSearch("")
     setShowProvinceDropdown(false)
+    clearFieldError("schoolProvince")
+    clearFieldError("schoolCity")
+    if (error) setError("")
   }
 
   const filteredCities = searchCities(formData.schoolProvince, citiesSearch)
@@ -199,73 +369,55 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, schoolCity: city }))
     setCitiesSearch("")
     setShowCitiesDropdown(false)
+    clearFieldError("schoolCity")
+    if (error) setError("")
   }
 
   const handleNextStep = () => {
-    if (step === 1) {
-      if (isSchoolRegistration) {
-        if (!formData.name || !formData.email) {
-          setError("Nama PIC sekolah dan email sekolah harus diisi")
-          return
-        }
-      } else if (!formData.name || !formData.email || !formData.username) {
-        setError("Nama lengkap, username, dan email harus diisi")
-        return
-      }
-      if (formData.password.length < 8) {
-        setError("Kata sandi minimal 8 huruf")
-        return
-      }
-      if (!/[a-zA-Z]/.test(formData.password) || !/\d/.test(formData.password)) {
-        setError("Kata sandi harus mengandung huruf dan angka")
-        return
-      }
-      if (formData.password !== formData.confirmPassword) {
-        setError("Kata sandi tidak cocok")
-        return
-      }
-    } else if (step === 2) {
-      if (isSchoolRegistration && formData.npsn && !/^\d{8}$/.test(formData.npsn)) {
-        setError("NPSN harus 8 digit angka")
-        return
-      }
-      if (formData.role === "student" && (!formData.dateOfBirth || !formData.className)) {
-        setError("Tanggal lahir dan kelas harus diisi")
-        return
-      }
-    } else if (step === 3) {
-      if (!formData.schoolName || !formData.schoolProvince || !formData.schoolCity) {
-        setError("Nama sekolah dan lokasi sekolah harus diisi")
-        return
-      }
-    } else if (step === 4) {
-      if (!formData.phoneNumber) {
-        setError("Nomor handphone harus diisi")
-        return
-      }
-
-      if (formData.role === "student" && !formData.city) {
-        setError("Kota/Kabupaten asal harus diisi")
+    if (step >= 1 && step <= 4) {
+      const validation = validateStep(step as 1 | 2 | 3 | 4, formData)
+      setFieldErrors(validation.nextErrors)
+      if (validation.firstInvalidField) {
+        setError(validation.message)
+        focusInvalidField(validation.firstInvalidField)
         return
       }
     }
+    setError("")
+    setFieldErrors({})
     setStep(step + 1)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    const mergedErrors: Partial<Record<RegisterFieldKey, string>> = {}
+    let firstInvalidField: RegisterFieldKey | null = null
+    ;([1, 2, 3, 4] as const).forEach((validationStep) => {
+      const validation = validateStep(validationStep, formData)
+      Object.entries(validation.nextErrors).forEach(([field, message]) => {
+        const typedField = field as RegisterFieldKey
+        if (!mergedErrors[typedField]) {
+          mergedErrors[typedField] = message
+        }
+      })
+      if (!firstInvalidField && validation.firstInvalidField) {
+        firstInvalidField = validation.firstInvalidField
+      }
+    })
 
-    if (!formData.phoneNumber) {
-      setError("Nomor handphone harus diisi")
+    if (firstInvalidField) {
+      setFieldErrors(mergedErrors)
+      setError("Periksa kembali data pendaftaran sebelum dikirim.")
+      const targetStep = FIELD_STEP_MAP[firstInvalidField]
+      if (targetStep !== step) {
+        setStep(targetStep)
+      }
+      focusInvalidField(firstInvalidField)
       return
     }
 
-    if (formData.role === "student" && !formData.city) {
-      setError("Kota/Kabupaten asal harus diisi")
-      return
-    }
-
+    setFieldErrors({})
     setLoading(true)
 
     try {
@@ -471,17 +623,35 @@ export default function RegisterPage() {
       />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4 py-8">
-        <div className="w-full max-w-lg">
-          {/* Logo */}
-          <div className="mb-6 flex flex-col items-center animate-fade-up">
+        <div className="mx-auto w-full max-w-4xl lg:grid lg:grid-cols-[0.8fr,1.2fr] lg:items-center lg:gap-10">
+          {/* Illustration - desktop only */}
+          <div className="hidden lg:flex lg:flex-col lg:items-center lg:justify-center">
             <Image
-              src="/adu_pintar_logo_horizontal_dark.png"
-              alt="Adu Pintar"
-              width={220}
-              height={72}
-              className="object-contain h-14 w-auto"
+              src="/illustrations/register-join.svg"
+              alt="Ilustrasi bergabung bersama"
+              width={300}
+              height={400}
+              className="h-auto w-full max-w-[260px] drop-shadow-xl animate-fade-up"
               priority
             />
+            <div className="mt-5 text-center animate-fade-up" style={{ animationDelay: "150ms" }}>
+              <p className="font-display text-xl font-bold text-foreground">Ayo Bergabung!</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">Buat akun dan mulai belajar pertanian yang seru</p>
+            </div>
+          </div>
+        <div className="w-full max-w-lg mx-auto">
+          {/* Logo */}
+          <div className="mb-6 flex flex-col items-center animate-fade-up">
+            <Link href="/" aria-label="Kembali ke beranda Adu Pintar">
+              <Image
+                src="/adu_pintar_logo_horizontal_dark.png"
+                alt="Adu Pintar"
+                width={220}
+                height={72}
+                className="object-contain h-14 w-auto"
+                priority
+              />
+            </Link>
           </div>
 
           {/* Register card */}
@@ -628,9 +798,19 @@ export default function RegisterPage() {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className={inputClassName}
+                        aria-invalid={Boolean(fieldErrors.name)}
+                        aria-describedby={fieldErrors.name ? "name-error" : undefined}
+                        className={cn(
+                          inputClassName,
+                          fieldErrors.name && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                        )}
                       />
                     </div>
+                    {fieldErrors.name ? (
+                      <p id="name-error" className="text-xs font-medium text-destructive">
+                        {fieldErrors.name}
+                      </p>
+                    ) : null}
                   </div>
 
                   {!isSchoolRegistration && (
@@ -650,9 +830,19 @@ export default function RegisterPage() {
                           value={formData.username}
                           onChange={handleChange}
                           required
-                          className={inputClassName}
+                          aria-invalid={Boolean(fieldErrors.username)}
+                          aria-describedby={fieldErrors.username ? "username-error" : undefined}
+                          className={cn(
+                            inputClassName,
+                            fieldErrors.username && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                          )}
                         />
                       </div>
+                      {fieldErrors.username ? (
+                        <p id="username-error" className="text-xs font-medium text-destructive">
+                          {fieldErrors.username}
+                        </p>
+                      ) : null}
                       <p className="text-[10px] text-muted-foreground">
                         Gunakan 3-20 huruf tanpa spasi. Username masih bisa diganti dari halaman profil.
                       </p>
@@ -673,9 +863,19 @@ export default function RegisterPage() {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className={inputClassName}
+                        aria-invalid={Boolean(fieldErrors.email)}
+                        aria-describedby={fieldErrors.email ? "email-error" : undefined}
+                        className={cn(
+                          inputClassName,
+                          fieldErrors.email && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                        )}
                       />
                     </div>
+                    {fieldErrors.email ? (
+                      <p id="email-error" className="text-xs font-medium text-destructive">
+                        {fieldErrors.email}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="space-y-2">
@@ -693,10 +893,20 @@ export default function RegisterPage() {
                         onChange={handleChange}
                         required
                         minLength={8}
-                        className={inputClassName}
+                        aria-invalid={Boolean(fieldErrors.password)}
+                        aria-describedby={fieldErrors.password ? "password-error" : undefined}
+                        className={cn(
+                          inputClassName,
+                          fieldErrors.password && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                        )}
                       />
                     </div>
                     <PasswordStrength password={formData.password} />
+                    {fieldErrors.password ? (
+                      <p id="password-error" className="text-xs font-medium text-destructive">
+                        {fieldErrors.password}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="space-y-2">
@@ -713,15 +923,26 @@ export default function RegisterPage() {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         required
-                        className={`${inputClassName} ${formData.confirmPassword && formData.password !== formData.confirmPassword ? "border-destructive/50 focus:border-destructive focus:ring-destructive/20" : ""}`}
+                        aria-invalid={Boolean(fieldErrors.confirmPassword) || Boolean(formData.confirmPassword && formData.password !== formData.confirmPassword)}
+                        aria-describedby={fieldErrors.confirmPassword ? "confirm-password-error" : undefined}
+                        className={cn(
+                          inputClassName,
+                          (fieldErrors.confirmPassword || (formData.confirmPassword && formData.password !== formData.confirmPassword))
+                            && "border-destructive/50 focus:border-destructive focus:ring-destructive/20",
+                        )}
                       />
                     </div>
-                    {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    {fieldErrors.confirmPassword ? (
+                      <p id="confirm-password-error" className="flex items-center gap-1.5 text-xs text-destructive">
+                        <AlertCircle className="h-3 w-3" />
+                        {fieldErrors.confirmPassword}
+                      </p>
+                    ) : formData.confirmPassword && formData.password !== formData.confirmPassword ? (
                       <p className="flex items-center gap-1.5 text-xs text-destructive">
                         <AlertCircle className="h-3 w-3" />
                         Kata sandi belum cocok
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               )}
@@ -768,9 +989,19 @@ export default function RegisterPage() {
                             placeholder="Contoh: 20123456"
                             value={formData.npsn}
                             onChange={handleChange}
-                            className={inputClassName}
+                            aria-invalid={Boolean(fieldErrors.npsn)}
+                            aria-describedby={fieldErrors.npsn ? "npsn-error" : undefined}
+                            className={cn(
+                              inputClassName,
+                              fieldErrors.npsn && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                            )}
                           />
                         </div>
+                        {fieldErrors.npsn ? (
+                          <p id="npsn-error" className="text-xs font-medium text-destructive">
+                            {fieldErrors.npsn}
+                          </p>
+                        ) : null}
                       </div>
                     </>
                   ) : formData.role === "teacher" ? (
@@ -839,9 +1070,19 @@ export default function RegisterPage() {
                             value={formData.dateOfBirth}
                             onChange={handleChange}
                             required
-                            className={inputClassName}
+                            aria-invalid={Boolean(fieldErrors.dateOfBirth)}
+                            aria-describedby={fieldErrors.dateOfBirth ? "date-of-birth-error" : undefined}
+                            className={cn(
+                              inputClassName,
+                              fieldErrors.dateOfBirth && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                            )}
                           />
                         </div>
+                        {fieldErrors.dateOfBirth ? (
+                          <p id="date-of-birth-error" className="text-xs font-medium text-destructive">
+                            {fieldErrors.dateOfBirth}
+                          </p>
+                        ) : null}
                       </div>
 
                       <div className="space-y-2">
@@ -874,9 +1115,19 @@ export default function RegisterPage() {
                             value={formData.className}
                             onChange={handleChange}
                             required
-                            className={inputClassName}
+                            aria-invalid={Boolean(fieldErrors.className)}
+                            aria-describedby={fieldErrors.className ? "class-name-error" : undefined}
+                            className={cn(
+                              inputClassName,
+                              fieldErrors.className && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                            )}
                           />
                         </div>
+                        {fieldErrors.className ? (
+                          <p id="class-name-error" className="text-xs font-medium text-destructive">
+                            {fieldErrors.className}
+                          </p>
+                        ) : null}
                       </div>
                     </>
                   )}
@@ -899,27 +1150,45 @@ export default function RegisterPage() {
                         value={formData.schoolName}
                         onChange={handleChange}
                         required
-                        className={inputClassName}
+                        aria-invalid={Boolean(fieldErrors.schoolName)}
+                        aria-describedby={fieldErrors.schoolName ? "school-name-error" : undefined}
+                        className={cn(
+                          inputClassName,
+                          fieldErrors.schoolName && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                        )}
                       />
                     </div>
+                    {fieldErrors.schoolName ? (
+                      <p id="school-name-error" className="text-xs font-medium text-destructive">
+                        {fieldErrors.schoolName}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="schoolProvince" className={labelClassName}>
+                    <label htmlFor="schoolProvinceInput" className={labelClassName}>
                       Provinsi Sekolah
                     </label>
                     <div className="relative">
                       <MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none z-10" />
                       <input
+                        id="schoolProvinceInput"
                         type="text"
                         placeholder="Cari atau pilih provinsi..."
                         value={showProvinceDropdown ? provincesSearch : formData.schoolProvince}
                         onChange={(e) => {
                           setProvincesSearch(e.target.value)
                           setShowProvinceDropdown(true)
+                          clearFieldError("schoolProvince")
+                          if (error) setError("")
                         }}
                         onFocus={() => setShowProvinceDropdown(true)}
-                        className={inputClassName}
+                        aria-invalid={Boolean(fieldErrors.schoolProvince)}
+                        aria-describedby={fieldErrors.schoolProvince ? "school-province-error" : undefined}
+                        className={cn(
+                          inputClassName,
+                          fieldErrors.schoolProvince && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                        )}
                       />
                       {showProvinceDropdown && (
                         <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-border/50 bg-card shadow-lg">
@@ -940,25 +1209,38 @@ export default function RegisterPage() {
                         </div>
                       )}
                     </div>
+                    {fieldErrors.schoolProvince ? (
+                      <p id="school-province-error" className="text-xs font-medium text-destructive">
+                        {fieldErrors.schoolProvince}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="schoolCity" className={labelClassName}>
+                    <label htmlFor="schoolCityInput" className={labelClassName}>
                       Kota/Kabupaten Sekolah
                     </label>
                     <div className="relative">
                       <MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none z-10" />
                       <input
+                        id="schoolCityInput"
                         type="text"
                         placeholder="Cari atau pilih kota/kabupaten..."
                         value={showCitiesDropdown ? citiesSearch : formData.schoolCity}
                         onChange={(e) => {
                           setCitiesSearch(e.target.value)
                           setShowCitiesDropdown(true)
+                          clearFieldError("schoolCity")
+                          if (error) setError("")
                         }}
                         onFocus={() => setShowCitiesDropdown(true)}
                         disabled={!formData.schoolProvince}
-                        className={inputClassName}
+                        aria-invalid={Boolean(fieldErrors.schoolCity)}
+                        aria-describedby={fieldErrors.schoolCity ? "school-city-error" : undefined}
+                        className={cn(
+                          inputClassName,
+                          fieldErrors.schoolCity && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                        )}
                       />
                       {showCitiesDropdown && formData.schoolProvince && (
                         <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-border/50 bg-card shadow-lg">
@@ -979,6 +1261,11 @@ export default function RegisterPage() {
                         </div>
                       )}
                     </div>
+                    {fieldErrors.schoolCity ? (
+                      <p id="school-city-error" className="text-xs font-medium text-destructive">
+                        {fieldErrors.schoolCity}
+                      </p>
+                    ) : null}
                   </div>
 
                   {isSchoolRegistration && (
@@ -1007,9 +1294,19 @@ export default function RegisterPage() {
                           value={formData.city}
                           onChange={handleChange}
                           required
-                          className={inputClassName}
+                          aria-invalid={Boolean(fieldErrors.city)}
+                          aria-describedby={fieldErrors.city ? "city-error" : undefined}
+                          className={cn(
+                            inputClassName,
+                            fieldErrors.city && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                          )}
                         />
                       </div>
+                      {fieldErrors.city ? (
+                        <p id="city-error" className="text-xs font-medium text-destructive">
+                          {fieldErrors.city}
+                        </p>
+                      ) : null}
                     </div>
                   )}
 
@@ -1026,9 +1323,19 @@ export default function RegisterPage() {
                         value={formData.phoneNumber}
                         onChange={handleChange}
                         required
-                        className={inputClassName}
+                        aria-invalid={Boolean(fieldErrors.phoneNumber)}
+                        aria-describedby={fieldErrors.phoneNumber ? "phone-number-error" : undefined}
+                        className={cn(
+                          inputClassName,
+                          fieldErrors.phoneNumber && "border-destructive focus:border-destructive focus:ring-destructive/20",
+                        )}
                       />
                     </div>
+                    {fieldErrors.phoneNumber ? (
+                      <p id="phone-number-error" className="text-xs font-medium text-destructive">
+                        {fieldErrors.phoneNumber}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="glass-card rounded-xl p-4">
@@ -1133,6 +1440,7 @@ export default function RegisterPage() {
                     type="button"
                     onClick={() => {
                       setStep(step - 1)
+                      setFieldErrors({})
                       setError("")
                     }}
                     className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border/50 bg-card/50 px-4 py-3 font-semibold text-foreground transition hover:bg-muted/50 active:scale-95"
@@ -1178,6 +1486,7 @@ export default function RegisterPage() {
               </Link>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </main>

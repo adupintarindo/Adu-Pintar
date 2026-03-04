@@ -43,14 +43,14 @@ const badgeCollections = [
     description: "Bantu forum diskusi peternakan dan selesaikan kuis kesehatan hewan.",
     criteria: "10 jawaban forum",
     icon: Trophy,
-    accent: "from-violet-500 via-indigo-500 to-violet-600",
+    accent: "from-teal-500 via-teal-600 to-emerald-500",
   },
   {
     title: "Penjaga Iklim",
     description: "Pertahankan streak login 14 hari dan kirim laporan iklim mikro.",
     criteria: "Streak 14 hari",
     icon: Star,
-    accent: "from-sky-500 via-cyan-500 to-blue-500",
+    accent: "from-sky-500 via-teal-500 to-emerald-500",
   },
 ]
 
@@ -70,13 +70,13 @@ const badgeAwards = [
   {
     title: "Pahlawan Ternak",
     description: "Menang 5 duel peternakan",
-    gradient: "from-violet-400 via-indigo-500 to-violet-600",
-    glow: "shadow-violet-500/40",
+    gradient: "from-teal-400 via-teal-500 to-emerald-500",
+    glow: "shadow-teal-500/40",
   },
   {
     title: "Pengamat Cuaca",
     description: "Login 7 hari",
-    gradient: "from-sky-400 via-cyan-500 to-blue-500",
+    gradient: "from-sky-400 via-teal-500 to-emerald-500",
     glow: "shadow-sky-500/40",
   },
 ]
@@ -128,22 +128,22 @@ const journeyExperience = [
 
 const tierLevels = [
   {
-    tier: "Akar Perunggu",
+    tier: "Tunas Muda",
     requirement: "0 - 1.499 EXP",
     perks: ["Akses modul dasar", "Badge Inovator Hijau"],
   },
   {
-    tier: "Panen Perak",
+    tier: "Petani Cerdas",
     requirement: "1.500 - 3.499 EXP",
     perks: ["Slot event prioritas", "Badge Peneliti Tanah & Penjaga Ternak"],
   },
   {
-    tier: "Kanopi Emas",
+    tier: "Jagoan Kebun",
     requirement: "3.500 - 5.999 EXP",
     perks: ["Mentoring mingguan", "Undangan Penghargaan Mentor Inspirasi"],
   },
   {
-    tier: "Mutiara Platinum",
+    tier: "Legenda Tani",
     requirement: "6.000+ EXP",
     perks: ["Pembuat tantangan nasional", "Hak memilih lencana baru"],
   },
@@ -180,12 +180,12 @@ const levelBadgeCharacters = [
   { name: "Tunas Nara", title: "Penjaga Benih", icon: Leaf, accent: "from-emerald-500 to-teal-500" },
   { name: "Ari Sawah", title: "Perawat Lahan", icon: Sparkles, accent: "from-lime-500 to-emerald-500" },
   { name: "Raka Akar", title: "Pembaca Tanah", icon: Flame, accent: "from-lime-500 to-yellow-500" },
-  { name: "Mira Air", title: "Penata Irigasi", icon: Zap, accent: "from-cyan-500 to-blue-500" },
-  { name: "Sora Cuaca", title: "Pengamat Iklim", icon: Star, accent: "from-sky-500 to-indigo-500" },
-  { name: "Diva Ternak", title: "Penjaga Kandang", icon: ShieldCheck, accent: "from-fuchsia-500 to-violet-500" },
-  { name: "Bima Peta", title: "Navigator Pangan", icon: Map, accent: "from-violet-500 to-indigo-600" },
+  { name: "Mira Air", title: "Penata Irigasi", icon: Zap, accent: "from-teal-500 to-sky-500" },
+  { name: "Sora Cuaca", title: "Pengamat Iklim", icon: Star, accent: "from-sky-500 to-teal-500" },
+  { name: "Diva Ternak", title: "Penjaga Kandang", icon: ShieldCheck, accent: "from-teal-600 to-emerald-500" },
+  { name: "Bima Peta", title: "Navigator Pangan", icon: Map, accent: "from-sky-500 to-emerald-600" },
   { name: "Kirana Tim", title: "Kapten Kolaborasi", icon: Users, accent: "from-teal-500 to-emerald-500" },
-  { name: "Genta Prestasi", title: "Juara Wilayah", icon: Trophy, accent: "from-yellow-500 to-lime-500" },
+  { name: "Genta Prestasi", title: "Juara Wilayah", icon: Trophy, accent: "from-lime-500 to-emerald-500" },
   { name: "Maheswara", title: "Legenda Nasional", icon: Crown, accent: "from-primary to-accent" },
 ] as const
 
@@ -207,10 +207,10 @@ type ViewerSession = {
 }
 
 function resolveTierLabel(totalExp: number) {
-  if (totalExp >= 6000) return "Mutiara Platinum"
-  if (totalExp >= 3500) return "Kanopi Emas"
-  if (totalExp >= 1500) return "Panen Perak"
-  return "Akar Perunggu"
+  if (totalExp >= 6000) return "Legenda Tani"
+  if (totalExp >= 3500) return "Jagoan Kebun"
+  if (totalExp >= 1500) return "Petani Cerdas"
+  return "Tunas Muda"
 }
 
 function formatExpRange(minExp: number, maxExp: number) {
@@ -330,10 +330,10 @@ export default function AchievementsPage() {
               <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border/50 bg-card/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground">
                 <UserRound className="h-3.5 w-3.5 text-primary" />
                 {viewerLoading
-                  ? "Memuat data akun aktif..."
+                  ? "Sedang memuat data kamu..."
                   : viewer
-                    ? `${viewer.name}${viewer.schoolName ? ` · ${viewer.schoolName}` : ""} · source ${viewerSource}`
-                    : "Belum login · menampilkan pratinjau"}
+                    ? `${viewer.name}${viewer.schoolName ? ` · ${viewer.schoolName}` : ""}`
+                    : "Belum login · menampilkan contoh"}
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 {dynamicHighlightStats.map((stat) => {
@@ -355,8 +355,17 @@ export default function AchievementsPage() {
               </div>
             </div>
             <div className="space-y-4">
+              <div className="hidden lg:flex items-center justify-center">
+                <Image
+                  src="/illustrations/achievements-trophy.svg"
+                  alt="Ilustrasi anak merayakan pencapaian dengan trofi"
+                  width={400}
+                  height={300}
+                  className="h-auto w-48 drop-shadow-md"
+                />
+              </div>
               <div className="relative overflow-hidden glass-card rounded-3xl p-5">
-                <div className="pointer-events-none absolute -right-6 -top-8 text-primary/20">
+                <div className="pointer-events-none absolute -right-6 -top-8 text-primary/20" aria-hidden="true">
                   <Star className="h-28 w-28 opacity-40" />
                 </div>
                 <div className="relative h-56 w-full overflow-hidden rounded-2xl border border-border/50">
@@ -396,7 +405,7 @@ export default function AchievementsPage() {
                 </div>
                 <p className="mt-3 text-sm font-semibold text-muted-foreground">Tier Saat Ini</p>
                 <p className="text-4xl font-display font-bold text-primary">
-                  {viewerSource === "real" ? derived.tierLabel : "Kanopi Emas"}
+                  {viewerSource === "real" ? derived.tierLabel : "Jagoan Kebun"}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {viewerSource === "real"
@@ -641,7 +650,7 @@ export default function AchievementsPage() {
                         isCurrent
                           ? "bg-primary text-primary-foreground"
                           : isUnlocked
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                            ? "bg-primary/10 text-primary"
                             : "bg-muted text-muted-foreground"
                       }`}
                     >

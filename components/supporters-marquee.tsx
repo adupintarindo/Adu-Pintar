@@ -1,17 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import type { CSSProperties } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
-
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from "@/components/ui/carousel"
 
 export type SupporterInfo = {
   name: string
@@ -27,42 +19,14 @@ type SupportersMarqueeProps = {
 
 export function SupportersMarquee({ supporters, durationMs = 35000 }: SupportersMarqueeProps) {
   const [selected, setSelected] = useState<SupporterInfo | null>(null)
-  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
-
-  useEffect(() => {
-    if (!carouselApi) return
-
-    const handleSelect = () => {
-      setCurrentIndex(carouselApi.selectedScrollSnap())
-    }
-
-    handleSelect()
-    carouselApi.on("select", handleSelect)
-
-    return () => {
-      carouselApi.off("select", handleSelect)
-    }
-  }, [carouselApi])
-
-  useEffect(() => {
-    if (!carouselApi) return
-
-    const intervalMs = Math.max(4000, Math.round(durationMs / Math.max(supporters.length, 1)))
-    const interval = setInterval(() => {
-      if (carouselApi.canScrollNext()) {
-        carouselApi.scrollNext()
-      } else {
-        carouselApi.scrollTo(0)
-      }
-    }, intervalMs)
-
-    return () => clearInterval(interval)
-  }, [carouselApi, durationMs, supporters.length])
+  const marqueeStyle: CSSProperties = {
+    animationDuration: `${Math.max(durationMs, 12000)}ms`,
+    animationDirection: "reverse",
+  }
 
   return (
     <>
-      <div className="relative" aria-label="Daftar organisasi pendukung">
+      <div className="relative overflow-hidden" aria-label="Daftar organisasi pendukung">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-16 bg-linear-to-r from-card/95 via-card/75 to-transparent md:block"
@@ -72,62 +36,40 @@ export function SupportersMarquee({ supporters, durationMs = 35000 }: Supporters
           className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 bg-linear-to-l from-card/95 via-card/75 to-transparent md:block"
         />
 
-        <Carousel
-          className="pb-7 md:pb-0"
-          opts={{ align: "start", loop: true }}
-          setApi={setCarouselApi}
-        >
-          <CarouselContent className="-ml-3 md:-ml-4">
-            {supporters.map((supporter, index) => {
-              const isActive = index === currentIndex
-
-              return (
-                <CarouselItem
-                  key={supporter.name}
-                  className="basis-[88%] pl-3 sm:basis-1/2 md:pl-4 lg:basis-1/3 xl:basis-1/4"
+        <div className="supporters-marquee flex w-max py-1" style={marqueeStyle}>
+          {[0, 1].map((copyIndex) => (
+            <div
+              key={`supporters-copy-${copyIndex}`}
+              className={`flex gap-3 pr-3 md:gap-4 md:pr-4 ${copyIndex === 1 ? "pointer-events-none" : ""}`}
+              aria-hidden={copyIndex === 1}
+            >
+              {supporters.map((supporter) => (
+                <button
+                  key={`${copyIndex}-${supporter.name}`}
+                  type="button"
+                  tabIndex={copyIndex === 1 ? -1 : 0}
+                  className="group flex min-h-32 min-w-[220px] flex-col items-center justify-center gap-3 rounded-3xl border border-border/70 bg-card/90 px-5 py-6 text-center shadow-[0_10px_24px_-22px_rgba(13,62,32,0.55)] transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card hover:shadow-[0_18px_38px_-24px_rgba(13,62,32,0.7)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 sm:min-w-[260px]"
+                  onClick={() => setSelected(supporter)}
                 >
-                  <button
-                    type="button"
-                    className={`group flex h-full min-h-36 w-full flex-col items-center justify-center gap-3 rounded-3xl border px-5 py-6 text-center transition duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 ${
-                      isActive
-                        ? "border-primary/45 bg-card ring-1 ring-primary/20 shadow-[0_14px_36px_-24px_rgba(13,62,32,0.7)]"
-                        : "border-border/70 bg-card/85 shadow-[0_10px_24px_-22px_rgba(13,62,32,0.55)] hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card hover:shadow-[0_18px_38px_-24px_rgba(13,62,32,0.7)]"
-                    }`}
-                    onClick={() => setSelected(supporter)}
-                  >
-                    {supporter.logo ? (
-                      <Image
-                        src={supporter.logo}
-                        alt={supporter.name}
-                        width={supporter.width ?? 140}
-                        height={70}
-                        className="h-12 w-auto object-contain sm:h-14"
-                      />
-                    ) : (
-                      <span className="text-base font-display font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">
-                        {supporter.name}
-                      </span>
-                    )}
-                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground/85">
-                      Ketuk untuk cerita dukungan
-                    </p>
-                  </button>
-                </CarouselItem>
-              )
-            })}
-          </CarouselContent>
-          <CarouselPrevious className="hidden md:flex left-2 top-1/2 size-10 -translate-y-1/2 border border-border/70 bg-card/95 text-foreground shadow-md hover:bg-card disabled:pointer-events-none disabled:opacity-35" />
-          <CarouselNext className="hidden md:flex right-2 top-1/2 size-10 -translate-y-1/2 border border-border/70 bg-card/95 text-foreground shadow-md hover:bg-card disabled:pointer-events-none disabled:opacity-35" />
-        </Carousel>
-
-        <div className="mt-4 flex justify-center gap-2 md:hidden">
-          {supporters.map((_, index) => (
-            <span
-              key={`supporter-indicator-${index}`}
-              className={`h-1.5 rounded-full transition-all ${
-                index === currentIndex ? "w-8 bg-primary" : "w-2.5 bg-border"
-              }`}
-            />
+                  {supporter.logo ? (
+                    <Image
+                      src={supporter.logo}
+                      alt={supporter.name}
+                      width={supporter.width ?? 140}
+                      height={70}
+                      className="h-12 w-auto object-contain sm:h-14"
+                    />
+                  ) : (
+                    <span className="text-base font-display font-semibold text-foreground transition-colors duration-300 group-hover:text-primary">
+                      {supporter.name}
+                    </span>
+                  )}
+                  <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground/85">
+                    Ketuk untuk cerita dukungan
+                  </p>
+                </button>
+              ))}
+            </div>
           ))}
         </div>
       </div>

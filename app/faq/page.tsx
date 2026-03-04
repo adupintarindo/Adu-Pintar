@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, HelpCircle, Laptop, School, ShieldCheck, Trophy } from "lucide-react"
 
@@ -198,13 +199,13 @@ const faqSectionThemes: Record<
     numberBadge: "bg-secondary/10 text-secondary ring-secondary/15",
   },
   teknis: {
-    surface: "bg-linear-to-br from-sky-500/8 via-card/95 to-background/90",
-    topBar: "bg-linear-to-r from-sky-600/65 via-accent/35 to-transparent",
-    glow: "bg-sky-500/10",
-    iconWrap: "bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:text-sky-300",
-    labelPill: "border-sky-500/20 bg-sky-500/8 text-sky-700 dark:text-sky-300",
-    countBox: "border-sky-500/20 bg-sky-500/5",
-    numberBadge: "bg-sky-500/10 text-sky-700 ring-sky-500/15 dark:text-sky-300",
+    surface: "bg-linear-to-br from-teal-500/8 via-card/95 to-background/90",
+    topBar: "bg-linear-to-r from-teal-600/65 via-accent/35 to-transparent",
+    glow: "bg-teal-500/10",
+    iconWrap: "bg-teal-500/10 text-teal-700 ring-teal-500/20 dark:text-teal-300",
+    labelPill: "border-teal-500/20 bg-teal-500/8 text-teal-700 dark:text-teal-300",
+    countBox: "border-teal-500/20 bg-teal-500/5",
+    numberBadge: "bg-teal-500/10 text-teal-700 ring-teal-500/15 dark:text-teal-300",
   },
   "untuk-sekolah": {
     surface: "bg-linear-to-br from-lime-500/8 via-card/95 to-background/90",
@@ -227,9 +228,9 @@ export default function FAQPage() {
       <Navbar />
       <main className="min-h-screen bg-background">
         <section className="relative overflow-hidden border-b border-border/50" style={{ background: "var(--gradient-hero)" }}>
-          <div className="pointer-events-none absolute -left-32 -top-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
-          <div className="pointer-events-none absolute -right-24 top-8 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
-          <div className="pointer-events-none absolute left-1/2 top-10 h-40 w-40 -translate-x-1/2 rounded-full bg-white/40 dark:bg-white/5 blur-3xl" />
+          <div className="pointer-events-none absolute -left-32 -top-24 h-72 w-72 rounded-full bg-primary/15 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -right-24 top-8 h-64 w-64 rounded-full bg-accent/10 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute left-1/2 top-10 h-40 w-40 -translate-x-1/2 rounded-full bg-white/40 dark:bg-white/5 blur-3xl" aria-hidden="true" />
 
           <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
             <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
@@ -281,6 +282,16 @@ export default function FAQPage() {
                 <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-white/40 dark:via-white/5 to-accent/10" />
                 <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/15 blur-2xl" />
                 <div className="relative">
+                  {/* FAQ illustration */}
+                  <div className="mb-4 overflow-hidden rounded-2xl border border-border/40 bg-card/30 p-2">
+                    <Image
+                      src="/illustrations/faq-help.svg"
+                      alt="Ilustrasi bantuan FAQ"
+                      width={400}
+                      height={300}
+                      className="h-auto w-full rounded-xl"
+                    />
+                  </div>
                   <p className="section-badge">Ringkasan Cepat</p>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">

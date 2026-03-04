@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/adu_pintar_symbol_dark.png",
+        url: "/adu_pintar_appicon_dark.png",
         media: "(prefers-color-scheme: light)",
       },
       {
